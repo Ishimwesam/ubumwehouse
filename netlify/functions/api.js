@@ -17,6 +17,6 @@ process.env.DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admi
 process.env.DEFAULT_ADMIN_EMAIL = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
 process.env.DISABLE_PUBLIC_REGISTRATION = process.env.DISABLE_PUBLIC_REGISTRATION || 'true';
 
-const app = require('../../backend/src/index');
+const { app } = require('../../backend/src/index');
 
 module.exports.handler = serverless(app);
