@@ -1,25 +1,24 @@
 [build]
   command = "npm run build"
   publish = "frontend/dist"
-  functions = "netlify/functions"
-
-[functions]
-  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/api/:splat"
+  to = "https://ubumwehouse-prod.onrender.com/api/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/health"
-  to = "/.netlify/functions/api/health"
+  to = "https://ubumwehouse-prod.onrender.com/health"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/uploads/*"
-  to = "/.netlify/functions/api/uploads/:splat"
+  to = "https://ubumwehouse-prod.onrender.com/uploads/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
