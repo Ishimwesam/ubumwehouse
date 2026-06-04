@@ -47,7 +47,9 @@ const enforceDeviceLock = () => {
   const currentFingerprint = getDeviceFingerprint();
   const candidateFingerprints = new Set([currentFingerprint, getLegacyNetworkFingerprint()]);
   const allowedFingerprints = getAllowedFingerprints();
-  const requireLock = process.env.REQUIRE_DEVICE_LOCK === 'true' || process.env.NODE_ENV === 'production';
+  const lockExplicitlyDisabled = process.env.REQUIRE_DEVICE_LOCK === 'false';
+  const requireLock = !lockExplicitlyDisabled
+    && (process.env.REQUIRE_DEVICE_LOCK === 'true' || process.env.NODE_ENV === 'production');
 
   if (allowedFingerprints.length === 0) {
     if (requireLock) {
