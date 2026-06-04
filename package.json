@@ -1,0 +1,31 @@
+{
+  "name": "gad",
+  "private": true,
+  "main": "app.js",
+  "engines": {
+    "node": "20.x",
+    "npm": "10.x"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "postinstall": "npm --prefix backend install && npm --prefix frontend install --include=dev && npm --prefix frontend run build",
+    "dev": "npm --prefix backend run dev",
+    "dev:lan:backend": "npm --prefix backend run dev:lan",
+    "dev:lan:frontend": "npm --prefix frontend run dev:lan",
+    "backend": "npm --prefix backend run dev",
+    "frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build",
+    "qa:browser": "node browser-main-smoke.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "express-session": "^1.19.0",
+    "nodemon": "^3.1.14",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "serverless-http": "^4.0.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^13.0.0"
+  }
+}

@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: ubumwehouse
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    disk:
+      name: ubumwehouse-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_URL
+        value: https://ubumwehouse.onrender.com
+      - key: DB_PATH
+        value: /data/rental_management.db
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: BACKUP_DIR
+        value: /data/secure-backups
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: VITE_API_BASE_URL
+        value: /api
+      - key: WHATSAPP_REMINDERS_ENABLED
+        value: false
+      - key: ALLOW_DEV_TOKEN
+        value: false

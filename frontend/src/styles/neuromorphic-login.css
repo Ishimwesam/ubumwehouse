@@ -1,0 +1,139 @@
+/* Neuromorphic Login Styles */
+.neuromorphic-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0e5ec 0%, #f9f9f9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.neuromorphic-login-container {
+  background: #e0e5ec;
+  border-radius: 2rem;
+  box-shadow: 8px 8px 24px #c8c9ce, -8px -8px 24px #ffffff;
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 350px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.neuromorphic-login-container h2 {
+  margin-bottom: 2rem;
+  color: #333;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.neuromorphic-login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+
+.neuromorphic-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0e5ec 0%, #f9f9f9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.neuromorphic-login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  gap: 0;
+  background: none;
+}
+
+.neuromorphic-login-container {
+  background: #e0e5ec;
+  border-radius: 2rem 0 0 2rem;
+  box-shadow: 8px 8px 24px #c8c9ce, -8px -8px 24px #ffffff;
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 350px;
+  max-width: 400px;
+  width: 100%;
+  height: 420px;
+  justify-content: center;
+}
+  font-size: 1rem;
+.neuromorphic-switch-panel {
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 300px;
+  max-width: 350px;
+  width: 100%;
+  background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%);
+  border-radius: 0 2rem 2rem 0;
+  color: #fff;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 8px 8px 24px #c8c9ce, -8px -8px 24px #ffffff;
+}
+.neuromorphic-login-btn {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: none;
+  border-radius: 1rem;
+  background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 4px 4px 16px #c8c9ce, -4px -4px 16px #ffffff;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.neuromorphic-login-btn:active {
+  box-shadow: inset 2px 2px 8px #c8c9ce, inset -2px -2px 8px #ffffff;
+}
+
+.neuromorphic-social {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.neuromorphic-social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e5ec;
+  box-shadow: 4px 4px 12px #c8c9ce, -4px -4px 12px #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #2193b0;
+  border: none;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.neuromorphic-social-btn:active {
+  box-shadow: inset 2px 2px 8px #c8c9ce, inset -2px -2px 8px #ffffff;
+}
+
+.neuromorphic-switch-panel {
+  margin-top: 2rem;
+  background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+  border-radius: 1.5rem;
+  color: #fff;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 4px 4px 16px #c8c9ce, -4px -4px 16px #ffffff;
+}

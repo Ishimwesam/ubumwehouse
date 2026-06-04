@@ -1,0 +1,257 @@
+@media (max-width: 600px) {
+  .neuromorphic-login-wrapper,
+  .neuromorphic-login-wrapper.exact-match {
+    padding: 0.5rem;
+    min-height: 100vh;
+  }
+  .neuromorphic-login-card {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 98vw;
+    max-width: 100vw;
+    box-shadow: none;
+    border-radius: 1.2rem;
+    padding: 0;
+  }
+  .neuromorphic-login-left,
+  .neuromorphic-login-right {
+    min-width: 98vw;
+    max-width: 100vw;
+    border-radius: 1.2rem;
+    padding: 1.2rem 0.7rem;
+    margin: 0;
+    box-shadow: none;
+  }
+  .neuromorphic-login-left {
+    margin-bottom: 1.2rem;
+  }
+  .neuromorphic-login-right {
+    margin-top: 0;
+  }
+  .neuromorphic-login-container, .neuromorphic-switch-panel {
+    min-width: 98vw;
+    max-width: 100vw;
+    border-radius: 1.2rem;
+    padding: 1.2rem 0.7rem;
+    box-shadow: none;
+  }
+  .neuromorphic-input {
+    font-size: 0.98rem;
+    padding: 0.7rem 1rem;
+  }
+  .neuromorphic-login-btn {
+    font-size: 1rem;
+    padding: 0.7rem 1rem;
+  }
+}
+body.neuromorphic-bg {
+  background: linear-gradient(135deg, #e0e7ef 0%, #b6d0e2 100%);
+    background: linear-gradient(135deg, #38bdf8cc 0%, #6366f1cc 100%), url('/sasa.jpg') center center / cover no-repeat fixed;
+  min-height: 100vh;
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+.neuromorphic-login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.neuromorphic-login-wrapper.exact-match {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.neuromorphic-login-container {
+  background: #e6eef7;
+  border-radius: 2.5rem;
+  box-shadow: 12px 12px 32px #c3d0e6, -12px -12px 32px #ffffff;
+  padding: 3rem 2.5rem;
+  min-width: 340px;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 2.5rem;
+}
+
+.neuromorphic-login-container h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+}
+
+.neuromorphic-social {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.neuromorphic-social-btn {
+  background: #e6eef7;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 6px 6px 16px #c3d0e6, -6px -6px 16px #ffffff;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.neuromorphic-social-btn:active {
+  box-shadow: 2px 2px 8px #c3d0e6, -2px -2px 8px #ffffff;
+  transform: scale(0.96);
+}
+
+.neuromorphic-login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.neuromorphic-input {
+  background: #e6eef7;
+  border: none;
+  border-radius: 1.2rem;
+  box-shadow: inset 4px 4px 12px #c3d0e6, inset -4px -4px 12px #ffffff;
+  padding: 0.9rem 1.2rem;
+  font-size: 1rem;
+  color: #1e293b;
+  outline: none;
+  margin-bottom: 0.2rem;
+  transition: box-shadow 0.2s;
+}
+
+.neuromorphic-input:focus {
+  box-shadow: 0 0 0 2px #38bdf8, inset 4px 4px 12px #c3d0e6, inset -4px -4px 12px #ffffff;
+}
+
+.neuromorphic-login-btn {
+  background: linear-gradient(90deg, #38bdf8 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 1.2rem;
+  box-shadow: 4px 4px 16px #c3d0e6, -4px -4px 16px #ffffff;
+  padding: 0.9rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.2rem;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+.neuromorphic-login-btn:active {
+  box-shadow: 2px 2px 8px #c3d0e6, -2px -2px 8px #ffffff;
+}
+
+.success-message {
+  color: #22c55e;
+  background: #e0fbe6;
+  border-radius: 0.7rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.98rem;
+}
+
+.error-message {
+  color: #ef4444;
+  background: #fee2e2;
+  border-radius: 0.7rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.98rem;
+}
+
+.login-links {
+  width: 100%;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.login-links a {
+  color: #2563eb;
+  text-decoration: underline;
+  font-size: 0.98rem;
+}
+
+.neuromorphic-switch-panel {
+  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+  border-radius: 2.5rem;
+  box-shadow: 12px 12px 32px #c3d0e6, -12px -12px 32px #ffffff;
+  padding: 3rem 2.5rem;
+  min-width: 320px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  justify-content: center;
+}
+
+.neuromorphic-login-card {
+  display: flex;
+  flex-direction: row;
+  background: none;
+  border-radius: 2.5rem;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.neuromorphic-login-left {
+  background: #e6eef7;
+  border-radius: 2.5rem 0 0 2.5rem;
+  box-shadow: 12px 12px 32px #c3d0e6, -12px -12px 32px #ffffff;
+  padding: 3rem 2.5rem;
+  min-width: 340px;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.neuromorphic-login-right {
+  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+  border-radius: 0 2.5rem 2.5rem 0;
+  box-shadow: 12px 12px 32px #c3d0e6, -12px -12px 32px #ffffff;
+  padding: 3rem 2.5rem;
+  min-width: 320px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .neuromorphic-login-wrapper {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  .neuromorphic-login-container, .neuromorphic-switch-panel {
+    margin: 0 0 2rem 0;
+    min-width: 90vw;
+    max-width: 98vw;
+  }
+  .neuromorphic-login-card {
+    flex-direction: column;
+    align-items: center;
+  }
+  .neuromorphic-login-left, .neuromorphic-login-right {
+    border-radius: 2.5rem;
+    min-width: 90vw;
+    max-width: 98vw;
+    margin: 0 0 2rem 0;
+  }
+}

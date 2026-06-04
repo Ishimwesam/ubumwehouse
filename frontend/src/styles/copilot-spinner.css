@@ -1,0 +1,33 @@
+/* Copilot Spinner Styles */
+.copilot-spinner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.copilot-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.copilot-spinner-img {
+  width: 64px;
+  height: 64px;
+  animation: copilot-spin 1.2s linear infinite;
+  margin-bottom: 12px;
+}
+@keyframes copilot-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.copilot-spinner-text {
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-align: center;
+}

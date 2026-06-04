@@ -1,0 +1,683 @@
+body.copilot-login-bg {
+  min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(180deg, #f6f8fc 0%, #eef3fb 100%);
+  font-family: "Manrope", "Poppins", "Aptos", "Segoe UI", Arial, sans-serif;
+}
+
+.copilot-login-shell {
+  min-height: 100vh;
+  padding: 48px 28px 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.copilot-login-card {
+  width: min(1240px, 100%);
+  min-height: 760px;
+  background: #ffffff;
+  border: 1px solid #dde5f3;
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(30, 55, 110, 0.12);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(380px, 0.95fr) minmax(420px, 1.2fr);
+}
+
+.copilot-login-left {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(22, 48, 109, 0.68) 0%, rgba(17, 40, 96, 0.82) 100%),
+    url('/login-bg.jpg') center center / cover no-repeat;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 44px 38px;
+  min-height: 100%;
+}
+
+.copilot-login-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(26, 58, 132, 0.28) 0%, rgba(8, 17, 43, 0.44) 100%);
+  pointer-events: none;
+}
+
+.copilot-login-branding,
+.copilot-login-features {
+  position: relative;
+  z-index: 1;
+}
+
+.copilot-login-branding {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.copilot-login-logo {
+  margin-bottom: 26px;
+}
+
+.copilot-login-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: "Poppins", "Manrope", "Aptos", sans-serif;
+  font-size: 3.08rem;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.copilot-login-title span {
+  font-size: 1.72rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.copilot-login-brand-divider {
+  width: 282px;
+  max-width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(71, 115, 244, 0.75) 15%, rgba(94, 135, 255, 0.95) 50%, rgba(71, 115, 244, 0.75) 85%, transparent 100%);
+  margin: 28px 0 24px;
+}
+
+.copilot-login-slogan {
+  max-width: 320px;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.94);
+  font-weight: 600;
+}
+
+.copilot-login-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.copilot-login-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #ffffff;
+}
+
+.copilot-login-feature-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #4e7bff;
+  flex-shrink: 0;
+}
+
+.copilot-login-feature b {
+  display: block;
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.copilot-login-feature span {
+  display: block;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(235, 242, 255, 0.94);
+}
+
+.copilot-login-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 42px;
+  background: #ffffff;
+}
+
+.copilot-login-formwrap {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.copilot-login-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.copilot-login-welcome {
+  margin: 0 0 8px;
+  font-family: "Poppins", "Manrope", "Aptos", sans-serif;
+  color: #1c2a65;
+  font-size: clamp(2.4rem, 3vw, 3.15rem);
+  line-height: 1.06;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.copilot-login-welcome-sub {
+  color: #5f6f92;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.copilot-login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.copilot-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.copilot-field-label {
+  color: #1d2756;
+  font-size: 0.97rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.copilot-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.copilot-input-icon {
+  position: absolute;
+  left: 18px;
+  color: #68799d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.copilot-input {
+  width: 100%;
+  height: 56px;
+  border-radius: 12px;
+  border: 1px solid #d9e2f0;
+  background: #ffffff;
+  color: #1b2751;
+  padding: 0 54px 0 60px;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: "Manrope", "Poppins", "Aptos", sans-serif;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  box-sizing: border-box;
+}
+
+.copilot-input::placeholder {
+  color: #7a89a8;
+  font-weight: 500;
+}
+
+.copilot-input:focus {
+  border-color: #4b74f6;
+  box-shadow: 0 0 0 4px rgba(75, 116, 246, 0.12);
+}
+
+.copilot-password-toggle {
+  position: absolute;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: #72819f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.copilot-error-message {
+  margin-top: -4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff3f2;
+  border: 1px solid #fecaca;
+  color: #c2410c;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.copilot-form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: -2px;
+}
+
+.copilot-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #5c6d91;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.copilot-checkbox-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: #2f61eb;
+  margin: 0;
+}
+
+.copilot-forgot-link {
+  color: #2f61eb;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.copilot-login-btn {
+  width: 100%;
+  height: 58px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #2f61eb 0%, #3a6df2 100%);
+  color: #ffffff;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(47, 97, 235, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.copilot-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 30px rgba(47, 97, 235, 0.28);
+}
+
+.copilot-login-btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.12);
+  opacity: 0.88;
+}
+
+.copilot-login-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copilot-login-divider {
+  width: 100%;
+  text-align: center;
+  color: #5c6d91;
+  font-size: 0.98rem;
+  font-weight: 500;
+  margin: 4px 0 2px;
+  position: relative;
+}
+
+.copilot-login-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #dce4f1;
+}
+
+.copilot-login-divider span {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  padding: 0 18px;
+}
+
+.copilot-login-admin-btn {
+  width: 100%;
+  height: 58px;
+  border-radius: 12px;
+  border: 1.5px solid #4f7bff;
+  background: #ffffff;
+  color: #2f61eb;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.copilot-login-admin-btn:hover {
+  background: #f7faff;
+}
+
+.copilot-login-admin-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copilot-login-contact {
+  margin-top: 18px;
+  text-align: center;
+  color: #5f6f92;
+  font-size: 0.97rem;
+  line-height: 1.4;
+}
+
+.copilot-login-contact-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: #2f61eb;
+  text-decoration: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copilot-login-contact-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.copilot-contact-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.copilot-contact-card {
+  width: min(460px, 100%);
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  background: #ffffff;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28);
+  animation: copilot-contact-open 180ms ease-out both;
+}
+
+.copilot-contact-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, #172554 0%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+.copilot-contact-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: #bfdbfe;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.copilot-contact-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.copilot-contact-close {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.copilot-contact-body {
+  padding: 24px;
+}
+
+.copilot-contact-body p {
+  margin: 0 0 18px;
+  color: #475569;
+  font-size: 0.96rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.copilot-contact-email {
+  padding: 14px 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.copilot-contact-email span {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.copilot-contact-email strong {
+  color: #172554;
+  font-size: 0.98rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.copilot-contact-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.copilot-contact-primary,
+.copilot-contact-secondary {
+  min-height: 48px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.copilot-contact-primary {
+  border: 1px solid #2563eb;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+.copilot-contact-secondary {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e3a8a;
+  cursor: pointer;
+}
+
+@keyframes copilot-contact-open {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.copilot-login-copyright {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #6f7f9d;
+  font-size: 0.96rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+@media (max-width: 1180px) {
+  .copilot-login-card {
+    grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  }
+
+  .copilot-login-left {
+    padding: 38px 30px 28px;
+  }
+
+  .copilot-login-right {
+    padding: 30px 28px;
+  }
+
+  .copilot-login-title {
+    font-size: 2.7rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .copilot-contact-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .copilot-contact-card {
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 920px) {
+  .copilot-login-shell {
+    padding: 24px 16px 56px;
+  }
+
+  .copilot-login-card {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .copilot-login-left {
+    min-height: 340px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .copilot-login-branding {
+    justify-content: flex-start;
+    padding-top: 8px;
+  }
+
+  .copilot-login-features {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .copilot-login-right {
+    padding: 28px 22px 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .copilot-login-shell {
+    padding: 12px 10px 52px;
+  }
+
+  .copilot-login-card {
+    border-radius: 20px;
+  }
+
+  .copilot-login-left {
+    padding: 28px 18px 20px;
+    min-height: 290px;
+  }
+
+  .copilot-login-title {
+    font-size: 2.25rem;
+  }
+
+  .copilot-login-title span {
+    font-size: 1.5rem;
+  }
+
+  .copilot-login-brand-divider {
+    margin: 20px 0 18px;
+  }
+
+  .copilot-login-slogan {
+    font-size: 0.95rem;
+  }
+
+  .copilot-login-right {
+    padding: 24px 16px 26px;
+  }
+
+  .copilot-login-header {
+    margin-bottom: 30px;
+  }
+
+  .copilot-login-welcome {
+    font-size: 2.15rem;
+  }
+
+  .copilot-form-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .copilot-login-copyright {
+    font-size: 0.88rem;
+    padding: 0 12px;
+  }
+}

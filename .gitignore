@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Production
+dist/
+build/
+
+# Environment
+.env
+.env.*
+.env.local
+.env.*.local
+!.env.example
+!.env.production.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Local archives and encrypted backups
+*.zip
+secure-backups/
+backend/secure-backups/
+backend/backups/
+
+# Uploads
+backend/src/uploads/*
+!backend/src/uploads/.gitkeep
+
+# Local Netlify folder
+.netlify
+
+# Local agent/skill installer state
+.agents/
+skills-lock.json
+
+# Generated local command output
+output*.txt

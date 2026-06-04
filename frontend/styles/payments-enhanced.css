@@ -1,0 +1,71 @@
+/* Payments Enhancements */
+.payments-card {
+  box-shadow: 0 4px 24px rgba(30, 55, 110, 0.10);
+  border-radius: 18px;
+  background: #fff;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  transition: box-shadow 0.2s;
+}
+.payments-card:hover {
+  box-shadow: 0 8px 32px rgba(30, 55, 110, 0.16);
+}
+.payments-table tr:nth-child(even) {
+  background: #f9fafb;
+}
+.payments-table tr:hover {
+  background: #e0e7ef;
+}
+.payments-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-weight: 700;
+  border-radius: 0.25em;
+  padding: 0.2em 0.7em;
+}
+.payments-status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.payments-status-badge.confirmed {
+  background: #d1fae5;
+  color: #065f46;
+}
+.payments-progress-bar {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+.payments-progress-bar-inner {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.4s;
+}
+.payments-empty-state {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+.payments-search-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+.payments-search-input {
+  padding: 0.6rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  width: 260px;
+}
+.payments-filter-select {
+  padding: 0.6rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}

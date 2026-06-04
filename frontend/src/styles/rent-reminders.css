@@ -1,0 +1,475 @@
+.rent-reminder-launch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: minmax(0, auto) auto auto;
+  align-items: center;
+  gap: 0.62rem;
+  min-height: 50px;
+  width: fit-content;
+  padding: 0.58rem 0.66rem 0.58rem 1rem;
+  border: 1px solid rgba(254, 202, 202, 0.86);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, #991b1b 0%, #dc2626 54%, #f97316 100%);
+  color: #ffffff;
+  box-shadow:
+    0 18px 34px rgba(153, 27, 27, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  overflow: hidden;
+}
+
+.rent-reminder-launch::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+.rent-reminder-launch:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 22px 42px rgba(153, 27, 27, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.rent-reminder-launch:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.32);
+  outline-offset: 3px;
+}
+
+.rent-reminder-launch__label {
+  position: relative;
+  font-size: 0.82rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.rent-reminder-launch__count {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #991b1b;
+  font-size: 0.95rem;
+  font-weight: 950;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(127, 29, 29, 0.2);
+}
+
+.rent-reminder-launch__pulse {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.22),
+    0 0 18px rgba(255, 255, 255, 0.78);
+}
+
+.rent-reminders-window {
+  min-height: 100%;
+  padding: 0 0 28px;
+  background:
+    linear-gradient(180deg, rgba(239, 246, 255, 0.86) 0%, rgba(248, 250, 252, 0.98) 42%),
+    #f8fafc;
+  color: #0f172a;
+}
+
+.rent-reminders-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px;
+  border: 1px solid rgba(191, 219, 254, 0.9);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 64, 175, 0.92) 58%, rgba(15, 118, 110, 0.88) 100%);
+  box-shadow: 0 24px 54px rgba(15, 23, 42, 0.16);
+}
+
+.rent-reminders-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 14px 0 0;
+}
+
+.rent-reminders-back {
+  min-height: 40px;
+  padding: 0.55rem 0.82rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 900;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.07);
+}
+
+.rent-reminders-back:hover {
+  color: #1d4ed8;
+}
+
+.rent-reminders-eyebrow,
+.rent-reminders-panel-kicker {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 10px;
+  color: #2563eb;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.rent-reminders-hero .rent-reminders-eyebrow {
+  padding: 0.34rem 0.64rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #bfdbfe;
+}
+
+.rent-reminders-hero h1,
+.rent-reminders-panel h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.rent-reminders-hero h1 {
+  color: #ffffff;
+}
+
+.rent-reminders-panel h2 {
+  color: #0f172a;
+}
+
+.rent-reminders-hero h1 {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.rent-reminders-hero p {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: #dbeafe;
+  font-size: 0.98rem;
+}
+
+.rent-reminders-total {
+  min-width: 112px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.rent-reminders-total strong {
+  display: block;
+  color: #ffffff;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.rent-reminders-total span {
+  color: #bfdbfe;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rent-reminders-alert {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.rent-reminders-alert--error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.rent-reminders-alert--success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.rent-reminders-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.rent-reminders-stat {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 76px;
+  padding: 17px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07);
+  overflow: hidden;
+}
+
+.rent-reminders-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #2563eb;
+}
+
+.rent-reminders-stat span {
+  color: #526581;
+  font-weight: 800;
+}
+
+.rent-reminders-stat strong {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.rent-reminders-stat--danger {
+  border-color: #fecaca;
+  background: #fff7f7;
+}
+
+.rent-reminders-stat--danger::before {
+  background: #dc2626;
+}
+
+.rent-reminders-stat--danger strong {
+  color: #dc2626;
+}
+
+.rent-reminders-stat--warn {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.rent-reminders-stat--warn::before {
+  background: #d97706;
+}
+
+.rent-reminders-stat--warn strong {
+  color: #b45309;
+}
+
+.rent-reminders-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.rent-reminders-panel {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.09);
+  overflow: hidden;
+}
+
+.rent-reminders-panel::before {
+  content: "";
+  display: block;
+  height: 4px;
+  background: #2563eb;
+}
+
+.rent-reminders-panel--danger::before {
+  background: linear-gradient(90deg, #dc2626 0%, #f97316 100%);
+}
+
+.rent-reminders-panel--warn::before {
+  background: linear-gradient(90deg, #d97706 0%, #0f766e 100%);
+}
+
+.rent-reminders-panel header {
+  padding: 18px 18px 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rent-reminders-panel--danger header {
+  background: #fff7f7;
+}
+
+.rent-reminders-panel--warn header {
+  background: #fffbeb;
+}
+
+.rent-reminders-list {
+  display: grid;
+  gap: 11px;
+  padding: 16px;
+}
+
+.rent-reminders-item {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.045);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.rent-reminders-item:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.rent-reminders-person {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rent-reminders-person button {
+  display: inline;
+  width: fit-content;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  box-shadow: none;
+  font-size: 0.94rem;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: left;
+  white-space: normal;
+}
+
+.rent-reminders-person button:hover {
+  color: #2563eb;
+  box-shadow: none;
+  transform: none;
+}
+
+.rent-reminders-person span {
+  width: fit-content;
+  padding: 0.18rem 0.46rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.rent-reminders-chip {
+  justify-self: start;
+  padding: 0.34rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.rent-reminders-chip--danger {
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.rent-reminders-chip--warn {
+  border: 1px solid #fcd34d;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.rent-reminders-action {
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.48rem 0.76rem;
+  border: 1px solid #0f766e;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  box-shadow: 0 10px 18px rgba(15, 118, 110, 0.16);
+}
+
+.rent-reminders-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(15, 118, 110, 0.2);
+}
+
+.rent-reminders-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rent-reminders-empty {
+  padding: 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 800;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .rent-reminders-board,
+  .rent-reminders-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .rent-reminders-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rent-reminders-total {
+    width: 100%;
+  }
+
+  .rent-reminders-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .rent-reminders-window {
+    padding-bottom: 14px;
+  }
+
+  .rent-reminders-hero,
+  .rent-reminders-stat,
+  .rent-reminders-panel header {
+    padding: 16px;
+  }
+
+  .rent-reminders-hero h1 {
+    font-size: 1.6rem;
+  }
+}
