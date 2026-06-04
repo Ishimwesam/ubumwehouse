@@ -77,6 +77,7 @@ const getTenantDueInfo = (tenant, referenceDate = new Date()) => {
   }
 
   const daysUntilDue = Math.round((dueDate - today) / MS_PER_DAY);
+  const duePeriod = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}`;
   const isDueToday = daysUntilDue === 0;
   const isReminderWindow = daysUntilDue > 0 && daysUntilDue <= 3;
 
@@ -86,6 +87,7 @@ const getTenantDueInfo = (tenant, referenceDate = new Date()) => {
 
   return {
     dueDate,
+    duePeriod,
     daysUntilDue,
     isDueToday,
     isReminderWindow,
@@ -186,7 +188,6 @@ const unitNumberSorter = new Intl.Collator(undefined, {
 });
 
 const getTenantBuildingLabel = (tenant) => String(tenant.building_name || 'NO BUILDING ASSIGNED').trim().toUpperCase();
-const getCurrentPaymentPeriod = () => new Date().toISOString().slice(0, 7);
 const getTenantRentForPeriod = (tenant, period) => {
   const history = Array.isArray(tenant.rent_history) ? tenant.rent_history : [];
   const matchingRecord = history
@@ -215,67 +216,6 @@ const getTenantLifecycleLabel = (tenant) => {
   if (lifecycle === 'expired') return 'Expired';
   if (lifecycle === 'inactive') return 'Inactive';
   return 'Active';
-};
-
-const normalizeReminderText = (value = '') => String(value || '').trim().toLowerCase();
-
-const MANUAL_RENT_REMINDERS = {
-  dueToday: [
-    { name: 'OMNI AGRICULTURE', unit: '1F 01&02' },
-    { name: 'MATOVU', unit: '1F 10' },
-    { name: 'NZABAHIMANA GAD', unit: '1F 12' },
-    { name: 'BABRA COSMETIC', unit: '1F 13' },
-    { name: 'TORINGABO', unit: '1F 14' },
-    { name: 'KAMPIRE', unit: '1F 15&16' },
-    { name: 'ALEX SALON', unit: '1F 17&18&19' },
-    { name: 'UFITAMAHORO THEONESTE', unit: '2F 13/14' },
-    { name: 'NIYOMFURA MARC', unit: '2F 01' },
-    { name: 'FULL PEACE', unit: '2F 02' },
-    { name: 'MWAMBUTSA JEAN CLAUDE', unit: '2F 03 UP TO 08' },
-    { name: 'FLORENCE DEPO', unit: '2F 10' },
-    { name: 'ANDRE', unit: '2F 11/12' },
-    { name: 'MUKANYIRISHEMA JUSTINE', unit: '2F 15/16' },
-    { name: 'MUKESHARUGO JEANNE', unit: '2F 17' },
-    { name: 'KIDENDEZI/NDAYAMBAJE', unit: '2F 17' },
-    { name: 'NSHIMIYIMANA REGIS', unit: '2F 18' },
-    { name: 'MUKARUMANZI MONIQUE', unit: '2F 19' },
-    { name: 'HAMID', unit: '2F 20' },
-    { name: 'PACCY', unit: '2F 21' },
-    { name: 'KANYOMBYA', unit: '2F 22' },
-    { name: 'KAIZEN SAWKAIZEN JIM,SAUNA& MASSAGE', unit: '3F' },
-    { name: 'BAYISENGE GRACE', unit: '3F 01' },
-    { name: 'ALAME BUSINESS/MAMA ALLY', unit: 'GF 01' }
-  ],
-  dueSoon: [
-    { name: 'Jaques poshete ( stock)', unit: '2F 18', daysUntilDue: 1 },
-    { name: 'KAIZEN HOTEL', unit: '3rd FOOR', daysUntilDue: 1 },
-    { name: 'UWIJURU Erneste', unit: 'B3 03 & 04', daysUntilDue: 2 },
-    { name: 'NZAYISENGA Emmanuel', unit: 'CONT 01', daysUntilDue: 1 },
-    { name: 'MUREKATETE Beathe', unit: 'CONT 02', daysUntilDue: 1 },
-    { name: 'UWANYIRIGIRA Julie/pascal', unit: 'CONT 03', daysUntilDue: 1 },
-    { name: 'MUKESHARUGO Jeanne', unit: 'CONT 04', daysUntilDue: 1 },
-    { name: 'HAKIZIMANA ISHIMWE Ange', unit: 'CONT 06', daysUntilDue: 1 },
-    { name: 'NYIRAHABIMANA Beathe', unit: 'CONT 08 & 09', daysUntilDue: 1 },
-    { name: 'ERISHOP', unit: 'CONT 10', daysUntilDue: 1 },
-    { name: 'ERNEST cont', unit: 'CONT 11', daysUntilDue: 1 },
-    { name: 'MUGISHA Pascal/paccy', unit: 'CONT 12', daysUntilDue: 1 },
-    { name: 'KAYITESI Alice', unit: 'CONT 13', daysUntilDue: 1 },
-    { name: 'NDAYAMBAJE Ismail/ amafi', unit: 'CONT 14', daysUntilDue: 1 },
-    { name: 'ITANGISHAKA Grace/mujawayesu', unit: 'CONT 15', daysUntilDue: 1 },
-    { name: 'IZERE Arlette/ imikati', unit: 'CONT 16', daysUntilDue: 1 },
-    { name: 'Martin', unit: 'CONT 17', daysUntilDue: 1 },
-    { name: 'MIHIGO Janvier/ techenisian', unit: 'CONT 18', daysUntilDue: 1 },
-    { name: 'UMUTONIWASE Walda', unit: 'CONT 19', daysUntilDue: 1 },
-    { name: 'USANASE Claude', unit: 'CONT 20', daysUntilDue: 1 },
-    { name: 'DUSHIMIRIMANA Claude', unit: 'CONT 21', daysUntilDue: 1 },
-    { name: 'BWIMBA Fred', unit: 'CONT 23', daysUntilDue: 1 },
-    { name: 'MUSHIMIYUMUREMYI ELENA', unit: 'CONT 24', daysUntilDue: 1 },
-    { name: 'NKURIKIYUMUKIZA Eugenie', unit: 'CONT 25', daysUntilDue: 1 },
-    { name: 'ANDRE', unit: 'CONT 26', daysUntilDue: 1 },
-    { name: 'USABYIMFURA Esperance', unit: 'CONT 27', daysUntilDue: 1 },
-    { name: 'IGIRANEZA Diane', unit: 'CONT 29', daysUntilDue: 1 },
-    { name: 'THEO/Container', unit: 'CONT 30', daysUntilDue: 1 }
-  ]
 };
 
 const Tenants = ({ reminderWindowOnly = false }) => {
@@ -355,6 +295,18 @@ const Tenants = ({ reminderWindowOnly = false }) => {
     if (isReminderPopupWindow) {
       setShowReminderPanel(true);
     }
+  }, [isReminderPopupWindow]);
+
+  useEffect(() => {
+    if (!isReminderPopupWindow) return undefined;
+
+    const refreshReminderData = () => {
+      fetchTenants();
+      fetchPayments();
+    };
+    const intervalId = window.setInterval(refreshReminderData, 30000);
+
+    return () => window.clearInterval(intervalId);
   }, [isReminderPopupWindow]);
 
   const fetchTenants = async () => {
@@ -608,8 +560,9 @@ const Tenants = ({ reminderWindowOnly = false }) => {
     acc[tenant.id] = getTenantDueInfo(tenant);
     return acc;
   }, {});
-  const currentPaymentPeriod = getCurrentPaymentPeriod();
   const tenantMonthlyPaymentTotals = payments.reduce((acc, payment) => {
+    if ((payment.payment_status || 'confirmed') !== 'confirmed') return acc;
+
     const period = payment.payment_period || payment.payment_date?.slice(0, 7);
     if (!period) return acc;
 
@@ -618,8 +571,11 @@ const Tenants = ({ reminderWindowOnly = false }) => {
     return acc;
   }, {});
   const hasTenantPaidCurrentMonth = (tenant) => {
-    const expectedRent = getTenantRentForPeriod(tenant, currentPaymentPeriod);
-    const paidAmount = tenantMonthlyPaymentTotals[`${String(tenant.id)}:${String(tenant.unit_id)}:${currentPaymentPeriod}`] || 0;
+    const duePeriod = tenantDueMap[tenant.id]?.duePeriod;
+    if (!duePeriod) return false;
+
+    const expectedRent = getTenantRentForPeriod(tenant, duePeriod);
+    const paidAmount = tenantMonthlyPaymentTotals[`${String(tenant.id)}:${String(tenant.unit_id)}:${duePeriod}`] || 0;
     return expectedRent > 0 && paidAmount >= expectedRent;
   };
 
@@ -667,65 +623,21 @@ const Tenants = ({ reminderWindowOnly = false }) => {
     .filter((tenant) => tenantDueMap[tenant.id]?.isReminderWindow && !hasTenantPaidCurrentMonth(tenant))
     .sort((firstTenant, secondTenant) => unitNumberSorter.compare(firstTenant.unit_number || '', secondTenant.unit_number || ''));
 
-  const reminderTenantByName = tenants.reduce((acc, tenant) => {
-    const nameKey = normalizeReminderText(tenant.full_name);
-    if (!nameKey) return acc;
-
-    if (!acc[nameKey]) {
-      acc[nameKey] = [];
-    }
-
-    acc[nameKey].push(tenant);
-    return acc;
-  }, {});
-
-  const resolveTenantFromReminder = (name, unit) => {
-    const candidates = reminderTenantByName[normalizeReminderText(name)] || [];
-    if (candidates.length === 0) return null;
-    if (!unit) return candidates[0];
-
-    const normalizedUnit = normalizeReminderText(unit);
-    return candidates.find((tenant) => normalizeReminderText(tenant.unit_number).includes(normalizedUnit)) || candidates[0];
-  };
-
-  const manualDueTodayEntries = MANUAL_RENT_REMINDERS.dueToday.map((item, index) => ({
-    id: `manual-today-${index}`,
-    name: item.name,
-    unit: item.unit,
+  const dueTodayReminderEntries = dueTodayTenants.map((tenant) => ({
+    id: `today-${tenant.id}`,
+    name: tenant.full_name,
+    unit: tenant.unit_number || '-',
     dueText: 'Due today',
-    tenant: resolveTenantFromReminder(item.name, item.unit)
+    tenant
   }));
 
-  const manualUpcomingEntries = MANUAL_RENT_REMINDERS.dueSoon.map((item, index) => ({
-    id: `manual-soon-${index}`,
-    name: item.name,
-    unit: item.unit,
-    dueText: `Due in ${item.daysUntilDue} day${item.daysUntilDue === 1 ? '' : 's'}`,
-    tenant: resolveTenantFromReminder(item.name, item.unit)
+  const upcomingReminderEntries = upcomingDueTenants.map((tenant) => ({
+    id: `soon-${tenant.id}`,
+    name: tenant.full_name,
+    unit: tenant.unit_number || '-',
+    dueText: tenantDueMap[tenant.id]?.reminderText || 'Due soon',
+    tenant
   }));
-
-  const appendedDynamicDueToday = dueTodayTenants
-    .filter((tenant) => !manualDueTodayEntries.some((entry) => entry.tenant?.id === tenant.id))
-    .map((tenant) => ({
-      id: `dynamic-today-${tenant.id}`,
-      name: tenant.full_name,
-      unit: tenant.unit_number || '-',
-      dueText: 'Due today',
-      tenant
-    }));
-
-  const appendedDynamicUpcoming = upcomingDueTenants
-    .filter((tenant) => !manualUpcomingEntries.some((entry) => entry.tenant?.id === tenant.id))
-    .map((tenant) => ({
-      id: `dynamic-soon-${tenant.id}`,
-      name: tenant.full_name,
-      unit: tenant.unit_number || '-',
-      dueText: tenantDueMap[tenant.id]?.reminderText || 'Due soon',
-      tenant
-    }));
-
-  const dueTodayReminderEntries = [...manualDueTodayEntries, ...appendedDynamicDueToday];
-  const upcomingReminderEntries = [...manualUpcomingEntries, ...appendedDynamicUpcoming];
   const totalReminderCount = dueTodayReminderEntries.length + upcomingReminderEntries.length;
 
   const groupedTenantsByFloor = Object.values(
