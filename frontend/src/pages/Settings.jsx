@@ -217,6 +217,22 @@ const Settings = () => {
 
   const handleProfileImageSelect = (e) => {
     const file = e.target.files?.[0] || null;
+
+    setError('');
+    setSuccess('');
+
+    if (!file) {
+      setSelectedImage(null);
+      return;
+    }
+
+    if (!file.type?.startsWith('image/')) {
+      setSelectedImage(null);
+      e.target.value = '';
+      setError('Please choose a JPG or PNG image.');
+      return;
+    }
+
     setSelectedImage(file);
   };
 
@@ -280,8 +296,8 @@ const Settings = () => {
   };
 
   const handleProfileImageUpload = async () => {
-    if (!selectedImage) {
-      setError('Please select an image first');
+    if (!selectedImage || selectedImage.size === 0) {
+      setError('Choose an image before uploading.');
       return;
     }
 

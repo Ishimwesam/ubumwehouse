@@ -130,6 +130,12 @@ export const authService = {
   resetPassword: (data) => apiClient.post('/auth/reset-password', data),
   resetPasswordOtp: (data) => apiClient.post('/auth/reset-password-otp', data),
   uploadProfilePicture: (file) => {
+    const isBrowserFile = typeof File !== 'undefined' && file instanceof File;
+
+    if (!file || !isBrowserFile || file.size === 0) {
+      throw new Error('Choose an image before uploading.');
+    }
+
     const formData = new FormData();
     formData.append('profile_picture', file);
 

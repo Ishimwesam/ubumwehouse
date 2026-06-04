@@ -935,7 +935,7 @@ const uploadProfilePicture = (req, res) => {
   const userId = req.user.id;
 
   if (!req.file) {
-    return res.status(400).json({ error: 'Profile image file is required' });
+    return res.status(400).json({ error: 'Choose a profile image before uploading.' });
   }
 
   const profileImagePath = `/uploads/${req.file.filename}`;
