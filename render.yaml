@@ -16,13 +16,17 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: APP_URL
-        value: https://ubumwehouse.onrender.com
+        value: https://ubumwehouse-prod.onrender.com,https://ubumwehouse.netlify.app
       - key: DB_PATH
         value: /data/rental_management.db
+      - key: PERSISTENT_DB_ROOT
+        value: /data
       - key: UPLOAD_DIR
         value: /data/uploads
       - key: BACKUP_DIR
         value: /data/secure-backups
+      - key: BACKUPS_ENABLED
+        value: false
       - key: JWT_SECRET
         sync: false
       - key: SESSION_SECRET
