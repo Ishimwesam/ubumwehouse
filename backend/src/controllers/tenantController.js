@@ -257,6 +257,22 @@ const validateUniqueTenantIdentity = ({ email, phone, nationalId, tenantId = nul
   );
 };
 
+const getTenantCreateErrorMessage = (err) => {
+  const message = String(err?.message || '');
+
+  if (/no column named/i.test(message)) {
+    return 'Tenant database fields are not ready yet. Please try again after the latest update finishes.';
+  }
+  if (/FOREIGN KEY constraint failed/i.test(message)) {
+    return 'Selected unit was not found. Refresh the page and choose the unit again.';
+  }
+  if (/UNIQUE constraint failed/i.test(message)) {
+    return 'A tenant with matching details already exists.';
+  }
+
+  return 'Error creating tenant';
+};
+
 // Get all tenants
 const getAllTenants = (req, res) => {
   db.all(`
@@ -423,7 +439,8 @@ const createTenant = (req, res) => {
       ],
       function(err) {
         if (err) {
-          return res.status(500).json({ error: 'Error creating tenant' });
+          console.error('Error creating tenant:', err.message);
+          return res.status(500).json({ error: getTenantCreateErrorMessage(err) });
         }
 
         const balanceId = uuidv4();
