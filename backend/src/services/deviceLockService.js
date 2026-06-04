@@ -51,6 +51,11 @@ const enforceDeviceLock = () => {
   const requireLock = !lockExplicitlyDisabled
     && (process.env.REQUIRE_DEVICE_LOCK === 'true' || process.env.NODE_ENV === 'production');
 
+  if (lockExplicitlyDisabled) {
+    console.warn(`Device lock is disabled. Current machine fingerprint: ${currentFingerprint}`);
+    return currentFingerprint;
+  }
+
   if (allowedFingerprints.length === 0) {
     if (requireLock) {
       throw new Error(
