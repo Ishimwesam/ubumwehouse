@@ -36,6 +36,40 @@ const getFloorSortValue = (floor = '') => {
   return 500;
 };
 
+const parseLocalDate = (dateValue) => {
+  if (!dateValue) return null;
+
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
+    const [year, month, day] = dateValue.slice(0, 10).split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  const parsed = new Date(dateValue);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isPastOrToday = (dateValue) => {
+  const date = parseLocalDate(dateValue);
+  if (!date) return false;
+  const today = new Date();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return date <= localToday;
+};
+
+const isFutureDate = (dateValue) => {
+  const date = parseLocalDate(dateValue);
+  if (!date) return false;
+  const today = new Date();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return date > localToday;
+};
+
+const isCurrentOccupant = (tenant) => (
+  tenant?.status === 'active'
+  && !isFutureDate(tenant?.move_in_date)
+  && !(tenant?.move_out_date && isPastOrToday(tenant.move_out_date))
+);
+
 const MONTH_LABELS = [
   'January',
   'February',
@@ -317,7 +351,7 @@ const MonthlyRentSheet = () => {
   const navigate = useNavigate();
   const { isManager } = useAuth();
   const { theme } = useContext(ThemeContext);
-  const { versions } = useDataSync();
+  const { versions, notifyDataChanged } = useDataSync();
   const [buildings, setBuildings] = useState([]);
   const [units, setUnits] = useState([]);
   const [tenants, setTenants] = useState([]);
@@ -336,6 +370,7 @@ const MonthlyRentSheet = () => {
   const exportTableRef = useRef(null);
   const tenantReceiptRef = useRef(null);
   const [tenantReceiptRow, setTenantReceiptRow] = useState(null);
+  const [deletingTenantId, setDeletingTenantId] = useState(null);
   const canManageOperations = isManager();
   const isDark = theme === 'dark';
   const ui = isDark ? getDarkRentSheetStyles(styles) : styles;
@@ -409,6 +444,34 @@ const MonthlyRentSheet = () => {
     });
   };
 
+  const handleDeleteTenant = async (row) => {
+    if (!canManageOperations) {
+      setError('You have view-only access on this page.');
+      return;
+    }
+
+    if (!row?.tenant?.id || deletingTenantId) return;
+
+    const tenantName = row.tenant.full_name || 'this tenant';
+    const confirmed = window.confirm(
+      `Delete ${tenantName} from the active rent sheet? Their tenant record and payment history will be kept under Former tenants.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingTenantId(row.tenant.id);
+      setError('');
+      await tenantService.delete(row.tenant.id);
+      notifyDataChanged(['tenants', 'units', 'dashboard', 'reports']);
+      await fetchData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete tenant from active rent sheet');
+    } finally {
+      setDeletingTenantId(null);
+    }
+  };
+
   const selectedSheetPeriod = `${selectedSheetYear}-${String(selectedSheetMonth + 1).padStart(2, '0')}`;
   const normalizedSearch = tenantSearch.trim().toLowerCase();
 
@@ -437,7 +500,9 @@ const MonthlyRentSheet = () => {
     ? null
     : buildings.find((building) => idsEqual(building.id, selectedBuildingId)) || null;
 
-  const filteredTenants = tenants.filter((tenant) => {
+  const currentTenants = tenants.filter(isCurrentOccupant);
+
+  const filteredTenants = currentTenants.filter((tenant) => {
     const resolvedBuildingId = resolveTenantBuildingId(tenant);
     const matchesBuilding = selectedBuildingId === 'all'
       ? true
@@ -853,7 +918,7 @@ const MonthlyRentSheet = () => {
             </button>
 
             {buildings.map((building) => {
-              const tenantCount = tenants.filter((tenant) => resolveTenantBuildingId(tenant) === building.id).length;
+              const tenantCount = currentTenants.filter((tenant) => resolveTenantBuildingId(tenant) === building.id).length;
 
               return (
                 <button
@@ -1014,6 +1079,17 @@ const MonthlyRentSheet = () => {
                           onClick={() => navigate(`/tenants/${row.tenant.id}/ledger`)}
                         >
                           Tenant Ledger
+                        </button>
+                        <button
+                          type="button"
+                          style={{
+                            ...ui.deleteTenantButton,
+                            ...(!canManageOperations || deletingTenantId === row.tenant.id ? ui.deleteTenantButtonDisabled : {})
+                          }}
+                          onClick={() => handleDeleteTenant(row)}
+                          disabled={!canManageOperations || deletingTenantId === row.tenant.id}
+                        >
+                          {deletingTenantId === row.tenant.id ? 'Deleting...' : 'Delete'}
                         </button>
                       </div>
                     </td>
@@ -1841,6 +1917,26 @@ const styles = {
     cursor: 'pointer',
     whiteSpace: 'nowrap',
     boxShadow: '0 10px 18px rgba(124, 58, 237, 0.18)'
+  },
+  deleteTenantButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0.55rem 0.8rem',
+    borderRadius: '999px',
+    border: '1px solid #b91c1c',
+    background: 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)',
+    color: '#ffffff',
+    fontSize: '0.78rem',
+    fontWeight: '900',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    boxShadow: '0 10px 18px rgba(185, 28, 28, 0.18)'
+  },
+  deleteTenantButtonDisabled: {
+    opacity: 0.58,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
   },
   receiptOverlay: {
     position: 'fixed',

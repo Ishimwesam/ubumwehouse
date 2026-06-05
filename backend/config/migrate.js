@@ -490,7 +490,10 @@ setTimeout(() => {
        WHEN EXISTS (
          SELECT 1
          FROM tenants t
-         WHERE t.unit_id = units.id AND t.status = 'active'
+         WHERE t.unit_id = units.id
+           AND t.status = 'active'
+           AND (t.move_in_date IS NULL OR DATE(t.move_in_date) <= DATE('now'))
+           AND (t.move_out_date IS NULL OR DATE(t.move_out_date) > DATE('now'))
        ) THEN 'occupied'
        WHEN COALESCE(units.status, 'available') = 'maintenance' THEN 'maintenance'
        ELSE 'available'

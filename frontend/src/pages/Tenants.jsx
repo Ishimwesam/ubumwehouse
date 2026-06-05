@@ -205,15 +205,26 @@ const isPastOrToday = (dateValue) => {
   return date <= localToday;
 };
 
+const isFutureDate = (dateValue) => {
+  const date = parseLocalDate(dateValue);
+  if (!date) return false;
+  const today = new Date();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return date > localToday;
+};
+
 const getTenantLifecycleStatus = (tenant) => {
   if (tenant?.move_out_date && isPastOrToday(tenant.move_out_date)) return 'expired';
   if (tenant?.status === 'inactive') return 'inactive';
   return 'active';
 };
 
+const isCurrentOccupant = (tenant) =>
+  getTenantLifecycleStatus(tenant) === 'active' && !isFutureDate(tenant?.move_in_date);
+
 const getTenantLifecycleLabel = (tenant) => {
   const lifecycle = getTenantLifecycleStatus(tenant);
-  if (lifecycle === 'expired') return 'Expired';
+  if (lifecycle === 'expired') return 'Former';
   if (lifecycle === 'inactive') return 'Inactive';
   return 'Active';
 };
@@ -477,7 +488,7 @@ const Tenants = ({ reminderWindowOnly = false }) => {
 
     try {
       await tenantService.delete(tenantPendingDelete.id);
-      setSuccess('Tenant moved out successfully. History was kept.');
+      setSuccess('Tenant moved out successfully. History was kept under Former tenants.');
       setTenantPendingDelete(null);
       setTenantStatusFilter('expired');
       notifyDataChanged(['tenants', 'units', 'dashboard', 'reports']);
@@ -603,6 +614,7 @@ const Tenants = ({ reminderWindowOnly = false }) => {
       tenant.national_id
     ].some((value) => String(value || '').toLowerCase().includes(normalizedTenantSearch));
   });
+  const activeReminderTenants = tenants.filter(isCurrentOccupant);
   const selectableUnits = units
     .filter((unit) => {
       const matchesBuilding = !buildingUnitFilter?.buildingId || unit.building_id === buildingUnitFilter.buildingId || unit.id === formData.unit_id;
@@ -616,10 +628,10 @@ const Tenants = ({ reminderWindowOnly = false }) => {
       return unitNumberSorter.compare(firstUnit.unit_number || '', secondUnit.unit_number || '');
     });
 
-  const dueTodayTenants = filteredTenants
+  const dueTodayTenants = activeReminderTenants
     .filter((tenant) => tenantDueMap[tenant.id]?.isDueToday && !hasTenantPaidCurrentMonth(tenant))
     .sort((firstTenant, secondTenant) => unitNumberSorter.compare(firstTenant.unit_number || '', secondTenant.unit_number || ''));
-  const upcomingDueTenants = filteredTenants
+  const upcomingDueTenants = activeReminderTenants
     .filter((tenant) => tenantDueMap[tenant.id]?.isReminderWindow && !hasTenantPaidCurrentMonth(tenant))
     .sort((firstTenant, secondTenant) => unitNumberSorter.compare(firstTenant.unit_number || '', secondTenant.unit_number || ''));
 
@@ -710,7 +722,7 @@ const Tenants = ({ reminderWindowOnly = false }) => {
           </div>
           <div className="rent-reminders-stat">
             <span>Tracked tenants</span>
-            <strong>{tenants.length}</strong>
+            <strong>{activeReminderTenants.length}</strong>
           </div>
         </section>
 
@@ -818,7 +830,7 @@ const Tenants = ({ reminderWindowOnly = false }) => {
       <div style={styles.statusFilterBar}>
         {[
           ['active', 'Active'],
-          ['expired', 'Expired'],
+          ['expired', 'Former'],
           ['inactive', 'Inactive'],
           ['all', 'All']
         ].map(([statusKey, label]) => (

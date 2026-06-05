@@ -225,7 +225,11 @@ const validateUniqueTenantIdentity = ({ email, phone, nationalId, tenantId = nul
   db.get(
     `SELECT email, phone, national_id
      FROM tenants
-     WHERE (${clauses.join(' OR ')}) ${tenantFilter}
+     WHERE (${clauses.join(' OR ')})
+       AND status = 'active'
+       AND (move_in_date IS NULL OR DATE(move_in_date) <= DATE('now'))
+       AND (move_out_date IS NULL OR DATE(move_out_date) > DATE('now'))
+       ${tenantFilter}
      LIMIT 1`,
     params,
     (err, existing) => {

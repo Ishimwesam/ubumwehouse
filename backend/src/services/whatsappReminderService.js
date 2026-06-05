@@ -182,7 +182,9 @@ const getTenantDueReminderEntries = async ({ referenceDate = new Date(), daysBef
      WHERE t.status = 'active'
        AND t.phone IS NOT NULL
        AND TRIM(t.phone) != ''
-       AND t.move_in_date IS NOT NULL`
+       AND t.move_in_date IS NOT NULL
+       AND DATE(t.move_in_date) <= DATE('now')
+       AND (t.move_out_date IS NULL OR DATE(t.move_out_date) > DATE('now'))`
   );
 
   const dueEntries = [];

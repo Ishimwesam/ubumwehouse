@@ -7,7 +7,10 @@ const derivedStatusExpression = `
     WHEN EXISTS (
       SELECT 1
       FROM tenants t
-      WHERE t.unit_id = u.id AND t.status = 'active'
+      WHERE t.unit_id = u.id
+        AND t.status = 'active'
+        AND (t.move_in_date IS NULL OR DATE(t.move_in_date) <= DATE('now'))
+        AND (t.move_out_date IS NULL OR DATE(t.move_out_date) > DATE('now'))
     ) THEN 'occupied'
     WHEN COALESCE(u.status, 'available') = 'maintenance' THEN 'maintenance'
     ELSE 'available'
@@ -18,7 +21,10 @@ const getActiveTenantCount = (unitId, callback) => {
   db.get(
     `SELECT COUNT(*) as activeTenantCount
      FROM tenants
-     WHERE unit_id = ? AND status = 'active'`,
+     WHERE unit_id = ?
+       AND status = 'active'
+       AND (move_in_date IS NULL OR DATE(move_in_date) <= DATE('now'))
+       AND (move_out_date IS NULL OR DATE(move_out_date) > DATE('now'))`,
     [unitId],
     (err, row) => {
       if (err) {

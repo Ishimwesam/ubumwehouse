@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { unitService, buildingService } from '../services/api';
+import { getReadableApiError, unitService, buildingService } from '../services/api';
 import { useDataSync } from '../context/DataSyncContext';
 import { FLOOR_OPTIONS, parseBuildingFloors } from '../utils/floorOptions';
 import useFeedbackToast from '../hooks/useFeedbackToast';
@@ -140,7 +140,7 @@ const Units = () => {
       resetForm();
       fetchUnits();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save unit');
+      setError(getReadableApiError(err, 'Failed to save unit'));
     } finally {
       setSaving(false);
     }
