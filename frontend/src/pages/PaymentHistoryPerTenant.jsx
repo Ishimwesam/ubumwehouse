@@ -339,6 +339,8 @@ const PaymentHistoryPerTenant = () => {
             <div style={styles.cardHeader}>Select Tenant</div>
             <div style={styles.searchBox}>
               <input
+                id="payment-history-tenant-search"
+                name="payment_history_tenant_search"
                 type="text"
                 placeholder="Search by name or phone..."
                 value={searchTerm}
@@ -474,7 +476,7 @@ const PaymentHistoryPerTenant = () => {
                 <div style={styles.filterGrid}>
                   <div>
                     <label style={styles.label}>Filter by Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={styles.select}>
+                    <select id="payment-history-status-filter" name="payment_history_status_filter" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={styles.select}>
                       <option value="all">All Payments</option>
                       <option value="confirmed">Confirmed</option>
                       <option value="pending">Pending</option>
@@ -483,7 +485,7 @@ const PaymentHistoryPerTenant = () => {
 
                   <div>
                     <label style={styles.label}>Sort by</label>
-                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={styles.select}>
+                    <select id="payment-history-sort" name="payment_history_sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={styles.select}>
                       <option value="date_desc">Recent First</option>
                       <option value="date_asc">Oldest First</option>
                       <option value="amount_desc">Highest Amount</option>

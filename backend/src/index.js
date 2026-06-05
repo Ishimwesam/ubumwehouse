@@ -69,6 +69,19 @@ const corsOrigins = [
   'http://127.0.0.1:5174',
   ...(process.env.APP_URL ? process.env.APP_URL.split(',').map((origin) => origin.trim()).filter(Boolean) : [])
 ];
+const isAllowedCorsOrigin = (origin) => {
+  if (!origin || corsOrigins.includes(origin)) return true;
+
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return protocol === 'https:' && (
+      hostname === 'ubumwehouse.netlify.app'
+      || hostname.endsWith('--ubumwehouse.netlify.app')
+    );
+  } catch (error) {
+    return false;
+  }
+};
 
 app.disable('x-powered-by');
 app.set('trust proxy', isProduction ? 1 : false);
@@ -85,7 +98,7 @@ app.use(express.json({ limit: '1mb' }));
 // CORS middleware
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || corsOrigins.includes(origin)) {
+    if (isAllowedCorsOrigin(origin)) {
       return callback(null, true);
     }
     return callback(new Error('Origin is not allowed by CORS'));

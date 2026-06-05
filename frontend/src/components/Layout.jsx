@@ -1242,6 +1242,8 @@ const Layout = ({ children }) => {
                 <div style={styles.globalSearchWrap}>
                   <SearchIcon />
                   <input
+                    id="global-search-input"
+                    name="global_search"
                     ref={globalSearchInputRef}
                     value={globalSearch}
                     onChange={(event) => setGlobalSearch(event.target.value)}
@@ -1408,6 +1410,8 @@ const Layout = ({ children }) => {
                       <label style={styles.chatField}>
                         <span style={styles.chatFieldLabel}>To</span>
                         <select
+                          id="chat-target-select"
+                          name="chat_target"
                           value={selectedChatTarget}
                           onChange={(event) => setSelectedChatTarget(event.target.value)}
                           style={styles.chatSelect}
@@ -1423,7 +1427,7 @@ const Layout = ({ children }) => {
                       </label>
                       <label style={styles.chatField}>
                         <span style={styles.chatFieldLabel}>Priority</span>
-                        <select value={chatPriority} onChange={(event) => setChatPriority(event.target.value)} style={styles.chatSelect}>
+                        <select id="chat-priority-select" name="chat_priority" value={chatPriority} onChange={(event) => setChatPriority(event.target.value)} style={styles.chatSelect}>
                           <option value="normal">Normal</option>
                           <option value="important">Important</option>
                           <option value="urgent">Urgent</option>
@@ -1442,6 +1446,8 @@ const Layout = ({ children }) => {
                     </div>
 
                     <input
+                      id="chat-search-input"
+                      name="chat_search"
                       value={chatSearch}
                       onChange={(event) => setChatSearch(event.target.value)}
                       placeholder="Search this chat..."

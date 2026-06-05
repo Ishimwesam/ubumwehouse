@@ -808,6 +808,8 @@ const MonthlyRentSheet = () => {
         </div>
         <div style={ui.headerActions}>
           <input
+            id="rent-sheet-search"
+            name="rent_sheet_search"
             type="text"
             value={tenantSearch}
             onChange={(event) => setTenantSearch(event.target.value)}
@@ -838,6 +840,7 @@ const MonthlyRentSheet = () => {
             <label htmlFor="sheetYear">Year</label>
             <input
               id="sheetYear"
+              name="sheet_year"
               type="number"
               value={selectedSheetYear}
               min="2020"

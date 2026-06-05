@@ -871,6 +871,8 @@ const EnhancedPayments = () => {
             <div style={styles.filterInputWrap}>
               <span style={styles.filterInputIcon}><SearchIcon /></span>
               <input
+                id="payments-search"
+                name="payments_search"
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -884,6 +886,8 @@ const EnhancedPayments = () => {
             <div style={styles.filterInputWrap}>
               <span style={styles.filterInputIcon}><CalendarIcon /></span>
               <input
+                id="payments-period-filter"
+                name="payments_period_filter"
                 type="month"
                 value={filterPeriod}
                 onChange={(e) => setFilterPeriod(e.target.value)}
@@ -895,7 +899,7 @@ const EnhancedPayments = () => {
             <label style={styles.filterLabel}>Method</label>
             <div style={styles.filterInputWrap}>
               <span style={styles.filterInputIcon}><FilterIcon /></span>
-              <select value={filterMethod} onChange={(e) => setFilterMethod(e.target.value)} style={styles.filterInputBare}>
+              <select id="payments-method-filter" name="payments_method_filter" value={filterMethod} onChange={(e) => setFilterMethod(e.target.value)} style={styles.filterInputBare}>
                 <option value="all">All methods</option>
                 <option value="cash">Cash</option>
                 <option value="bank_transfer">Bank Transfer</option>

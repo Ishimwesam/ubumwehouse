@@ -335,6 +335,8 @@ const Units = () => {
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>Building / House:</label>
             <select
+              id="unit-building-filter"
+              name="unit_building_filter"
               style={styles.filterSelect}
               value={selectedBuildingFilter}
               onChange={(e) => setSelectedBuildingFilter(e.target.value)}
@@ -351,6 +353,8 @@ const Units = () => {
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>Status:</label>
             <select
+              id="unit-status-filter"
+              name="unit_status_filter"
               style={styles.filterSelect}
               value={selectedStatusFilter}
               onChange={(e) => setSelectedStatusFilter(e.target.value)}
