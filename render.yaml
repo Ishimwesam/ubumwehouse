@@ -26,7 +26,13 @@ services:
       - key: BACKUP_DIR
         value: /data/secure-backups
       - key: BACKUPS_ENABLED
-        value: false
+        value: true
+      - key: BACKUP_KEEP_COUNT
+        value: 14
+      - key: BACKUP_INTERVAL_HOURS
+        value: 24
+      - key: BACKUP_ENCRYPTION_KEY
+        sync: false
       - key: JWT_SECRET
         sync: false
       - key: SESSION_SECRET
