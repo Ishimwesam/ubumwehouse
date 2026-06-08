@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const ToastContext = createContext();
 const TOAST_DURATION = 4400;
@@ -10,10 +10,84 @@ export const emitAppToast = (message, type = 'success') => {
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const audioContextRef = useRef(null);
+  const lastChimeAtRef = useRef(0);
+
+  const getAudioContext = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return null;
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextCtor();
+    }
+
+    return audioContextRef.current;
+  }, []);
+
+  const playRealtimeChime = useCallback(() => {
+    const now = Date.now();
+    if (now - lastChimeAtRef.current < 1300) return;
+
+    const context = getAudioContext();
+    if (!context) return;
+
+    const scheduleChime = () => {
+      lastChimeAtRef.current = Date.now();
+      const start = context.currentTime + 0.02;
+      const notes = [
+        { frequency: 659.25, offset: 0, duration: 0.1 },
+        { frequency: 880, offset: 0.1, duration: 0.12 },
+        { frequency: 739.99, offset: 0.22, duration: 0.13 }
+      ];
+
+      notes.forEach(({ frequency, offset, duration }) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, start + offset);
+        gain.gain.setValueAtTime(0.0001, start + offset);
+        gain.gain.exponentialRampToValueAtTime(0.08, start + offset + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(start + offset);
+        oscillator.stop(start + offset + duration + 0.02);
+      });
+    };
+
+    if (context.state === 'suspended') {
+      context.resume().then(scheduleChime).catch(() => {});
+      return;
+    }
+
+    scheduleChime();
+  }, [getAudioContext]);
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      const context = getAudioContext();
+      if (context?.state === 'suspended') {
+        context.resume().catch(() => {});
+      }
+    };
+
+    window.addEventListener('pointerdown', unlockAudio, { passive: true });
+    window.addEventListener('keydown', unlockAudio);
+
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+  }, [getAudioContext]);
 
   const showToast = useCallback((message, type = 'success') => {
     const normalizedMessage = String(message || '').trim();
     if (!normalizedMessage) return;
+
+    if (type === 'realtime') {
+      playRealtimeChime();
+    }
 
     const id = `${Date.now()}-${Math.random()}`;
     setToasts((current) => [
@@ -30,7 +104,7 @@ export const ToastProvider = ({ children }) => {
     setTimeout(() => {
       setToasts((current) => current.filter((toast) => toast.id !== id));
     }, TOAST_DURATION);
-  }, []);
+  }, [playRealtimeChime]);
 
   const dismissToast = useCallback((id) => {
     setToasts((current) => current.map((toast) => (

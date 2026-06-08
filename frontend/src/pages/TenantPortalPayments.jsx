@@ -8,7 +8,7 @@ const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', 
 const TenantPortalPayments = () => {
   const navigate = useNavigate();
   const [portalData, setPortalData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const payments = portalData?.payments || [];

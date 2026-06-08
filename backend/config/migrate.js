@@ -277,6 +277,58 @@ const createTables = () => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS tenant_portal_maintenance_requests (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      unit_id TEXT,
+      title TEXT NOT NULL,
+      category TEXT DEFAULT 'General',
+      priority TEXT DEFAULT 'normal',
+      description TEXT NOT NULL,
+      status TEXT DEFAULT 'open',
+      admin_note TEXT,
+      resolved_by TEXT,
+      resolved_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+      FOREIGN KEY (unit_id) REFERENCES units(id),
+      FOREIGN KEY (resolved_by) REFERENCES users(id)
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_tenant_portal_maintenance_tenant_created
+    ON tenant_portal_maintenance_requests(tenant_id, created_at)
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_tenant_portal_maintenance_status
+    ON tenant_portal_maintenance_requests(status, created_at)
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tenant_portal_announcements (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      audience TEXT DEFAULT 'all',
+      is_published INTEGER DEFAULT 1,
+      created_by TEXT,
+      published_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expires_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_tenant_portal_announcements_published
+    ON tenant_portal_announcements(is_published, published_at)
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
       sid TEXT PRIMARY KEY,
       sess TEXT NOT NULL,
@@ -440,6 +492,18 @@ addColumnIfMissing('tenant_followups', 'payment_period', 'TEXT');
 addColumnIfMissing('tenant_followups', 'promise_date', 'DATE');
 addColumnIfMissing('tenant_followups', 'status', "TEXT DEFAULT 'open'");
 addColumnIfMissing('tenant_followups', 'created_by', 'TEXT');
+addColumnIfMissing('tenant_portal_maintenance_requests', 'unit_id', 'TEXT');
+addColumnIfMissing('tenant_portal_maintenance_requests', 'category', "TEXT DEFAULT 'General'");
+addColumnIfMissing('tenant_portal_maintenance_requests', 'priority', "TEXT DEFAULT 'normal'");
+addColumnIfMissing('tenant_portal_maintenance_requests', 'status', "TEXT DEFAULT 'open'");
+addColumnIfMissing('tenant_portal_maintenance_requests', 'admin_note', 'TEXT');
+addColumnIfMissing('tenant_portal_maintenance_requests', 'resolved_by', 'TEXT');
+addColumnIfMissing('tenant_portal_maintenance_requests', 'resolved_at', 'DATETIME');
+addColumnIfMissing('tenant_portal_announcements', 'audience', "TEXT DEFAULT 'all'");
+addColumnIfMissing('tenant_portal_announcements', 'is_published', 'INTEGER DEFAULT 1');
+addColumnIfMissing('tenant_portal_announcements', 'created_by', 'TEXT');
+addColumnIfMissing('tenant_portal_announcements', 'published_at', 'DATETIME');
+addColumnIfMissing('tenant_portal_announcements', 'expires_at', 'DATETIME');
 
 setTimeout(() => {
   db.all('PRAGMA table_info(calendar_events)', [], (schemaErr, columns = []) => {

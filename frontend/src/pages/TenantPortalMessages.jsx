@@ -8,7 +8,7 @@ const TenantPortalMessages = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 

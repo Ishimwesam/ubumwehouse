@@ -25,6 +25,7 @@ const TenantPortal = () => {
   const [mode, setMode] = useState('login');
   const [credentialForm, setCredentialForm] = useState({ username: '', password: '', confirmPassword: '', remember: true });
   const [portalData, setPortalData] = useState(null);
+  const [bootLoading, setBootLoading] = useState(() => Boolean(tenantPortalService.getToken()));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -50,6 +51,9 @@ const TenantPortal = () => {
 
   const tenant = portalData?.tenant;
   const payments = portalData?.payments || [];
+  const maintenanceRequests = portalData?.maintenance_requests || [];
+  const announcements = portalData?.announcements || [];
+  const openMaintenanceRequests = maintenanceRequests.filter((request) => !['resolved', 'closed'].includes(String(request.status || '').toLowerCase()));
   const uploadSectionRef = useRef(null);
   const historySectionRef = useRef(null);
   const chatSectionRef = useRef(null);
@@ -87,7 +91,10 @@ const TenantPortal = () => {
   useEffect(() => {
     let mounted = true;
     const token = tenantPortalService.getToken();
-    if (!token) return undefined;
+    if (!token) {
+      setBootLoading(false);
+      return undefined;
+    }
 
     setLoading(true);
     tenantPortalService.me()
@@ -103,7 +110,10 @@ const TenantPortal = () => {
         tenantPortalService.clearToken();
       })
       .finally(() => {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          setBootLoading(false);
+        }
       });
 
     return () => {
@@ -268,7 +278,19 @@ const TenantPortal = () => {
 
   return (
     <main className="tp-page">
-      {!tenant ? (
+      {bootLoading ? (
+        <section className="tp-auth-shell">
+          <div className="tp-loading-panel" role="status" aria-live="polite">
+            <div className="tp-loading-mark" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <strong>Opening tenant portal</strong>
+            <p>Checking your saved session and loading your account details.</p>
+          </div>
+        </section>
+      ) : !tenant ? (
         <section className="tp-auth-shell">
           <form className="tp-auth-card" onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleAccess}>
             <h2>{mode === 'login' ? 'Tenant Login' : mode === 'register' ? 'Create Tenant Account' : 'One-Time Access'}</h2>
@@ -526,9 +548,13 @@ const TenantPortal = () => {
               <article className="tp-card tp-maintenance-card" ref={maintenanceSectionRef}>
                 <h2>Maintenance Requests</h2>
                 <div className="tp-maintenance-state">
-                  <strong>No open requests</strong>
-                  <p>You have no maintenance requests at the moment.</p>
-                  <button type="button" className="tp-btn-primary" onClick={() => setSuccess('Maintenance request workflow will be available here shortly.')}>Request Maintenance</button>
+                  <strong>{openMaintenanceRequests.length ? `${openMaintenanceRequests.length} open request${openMaintenanceRequests.length === 1 ? '' : 's'}` : 'No open requests'}</strong>
+                  <p>
+                    {openMaintenanceRequests[0]
+                      ? `${openMaintenanceRequests[0].title} is ${String(openMaintenanceRequests[0].status || 'open').replace(/_/g, ' ')}.`
+                      : 'You have no maintenance requests at the moment.'}
+                  </p>
+                  <button type="button" className="tp-btn-primary" onClick={() => navigate('/tenant-portal/maintenance')}>Request Maintenance</button>
                 </div>
               </article>
             </section>
@@ -536,7 +562,19 @@ const TenantPortal = () => {
             <section className="tp-main-grid second-row">
               <article className="tp-card" ref={announcementsSectionRef}>
                 <h2>Announcements</h2>
-                <p className="tp-empty">No new announcements at the moment. Updates from UBUMWE HOUSE LTD will appear here.</p>
+                {announcements.length ? (
+                  <div className="tp-announcement-list compact">
+                    {announcements.slice(0, 3).map((announcement) => (
+                      <article key={announcement.id} className="tp-announcement-item">
+                        <strong>{announcement.title}</strong>
+                        <p>{announcement.body}</p>
+                        <small>{announcement.published_at ? formatDateTime(announcement.published_at) : formatDateTime(announcement.created_at)}</small>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="tp-empty">No new announcements at the moment. Updates from UBUMWE HOUSE LTD will appear here.</p>
+                )}
               </article>
               <article className="tp-card" ref={profileSectionRef}>
                 <h2>Profile</h2>

@@ -77,10 +77,24 @@ const digitsOnly = (value = '') => String(value || '').replace(/\D/g, '');
 const tail4 = (value = '') => digitsOnly(value).slice(-4);
 const normalizeUsername = (value = '') => String(value || '').trim().toLowerCase();
 const normalizeMessage = (value = '') => String(value || '').trim().replace(/\s+/g, ' ');
+const normalizeText = (value = '') => String(value || '').trim().replace(/\s+/g, ' ');
+const normalizeLongText = (value = '') => String(value || '').trim().replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+const maintenanceStatuses = new Set(['open', 'in_progress', 'resolved', 'closed']);
+const maintenancePriorities = new Set(['low', 'normal', 'urgent']);
 const validatePassword = (password) => {
   if (typeof password !== 'string' || password.length < 8) return 'Password must be at least 8 characters.';
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return 'Password must include at least one letter and one number.';
   return '';
+};
+
+const normalizeMaintenanceStatus = (value = 'open') => {
+  const normalized = String(value || 'open').trim().toLowerCase();
+  return maintenanceStatuses.has(normalized) ? normalized : 'open';
+};
+
+const normalizeMaintenancePriority = (value = 'normal') => {
+  const normalized = String(value || 'normal').trim().toLowerCase();
+  return maintenancePriorities.has(normalized) ? normalized : 'normal';
 };
 
 const createTenantToken = (account, tenant) => {
@@ -271,12 +285,46 @@ const loadPortalPayload = (tenant, callback) => {
             return;
           }
 
-          callback(null, {
-            tenant: sanitizeTenant(tenant),
-            payments,
-            contracts,
-            checked_at: new Date().toISOString()
-          });
+          db.all(
+            `SELECT id, tenant_id, unit_id, title, category, priority, description, status,
+                    admin_note, resolved_at, created_at, updated_at
+             FROM tenant_portal_maintenance_requests
+             WHERE tenant_id = ?
+             ORDER BY created_at DESC
+             LIMIT 50`,
+            [tenant.id],
+            (maintenanceErr, maintenance_requests = []) => {
+              if (maintenanceErr) {
+                callback({ status: 500, error: 'Error loading maintenance requests.' });
+                return;
+              }
+
+              db.all(
+                `SELECT id, title, body, audience, published_at, expires_at, created_at
+                 FROM tenant_portal_announcements
+                 WHERE COALESCE(is_published, 1) = 1
+                   AND (expires_at IS NULL OR DATETIME(expires_at) >= DATETIME('now'))
+                 ORDER BY COALESCE(published_at, created_at) DESC
+                 LIMIT 20`,
+                [],
+                (announcementsErr, announcements = []) => {
+                  if (announcementsErr) {
+                    callback({ status: 500, error: 'Error loading announcements.' });
+                    return;
+                  }
+
+                  callback(null, {
+                    tenant: sanitizeTenant(tenant),
+                    payments,
+                    contracts,
+                    maintenance_requests,
+                    announcements,
+                    checked_at: new Date().toISOString()
+                  });
+                }
+              );
+            }
+          );
         }
       );
     }
@@ -383,6 +431,97 @@ const getTenantPortalMe = (req, res) => {
       if (payloadErr) return res.status(payloadErr.status || 500).json({ error: payloadErr.error });
       return res.json(payload);
     });
+  });
+};
+
+const getTenantPortalMaintenanceRequests = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    db.all(
+      `SELECT id, tenant_id, unit_id, title, category, priority, description, status,
+              admin_note, resolved_at, created_at, updated_at
+       FROM tenant_portal_maintenance_requests
+       WHERE tenant_id = ?
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      [tenant.id],
+      (maintenanceErr, rows = []) => {
+        if (maintenanceErr) return res.status(500).json({ error: 'Error loading maintenance requests.' });
+        return res.json({ requests: rows });
+      }
+    );
+  });
+};
+
+const createTenantPortalMaintenanceRequest = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const title = normalizeText(req.body?.title);
+    const category = normalizeText(req.body?.category || 'General').slice(0, 80) || 'General';
+    const priority = normalizeMaintenancePriority(req.body?.priority);
+    const description = normalizeLongText(req.body?.description);
+
+    if (!title) return res.status(400).json({ error: 'Maintenance title is required.' });
+    if (!description) return res.status(400).json({ error: 'Maintenance description is required.' });
+    if (title.length > 140) return res.status(400).json({ error: 'Maintenance title is too long (max 140 characters).' });
+    if (description.length > 1600) return res.status(400).json({ error: 'Maintenance description is too long (max 1600 characters).' });
+
+    const requestId = uuidv4();
+    db.run(
+      `INSERT INTO tenant_portal_maintenance_requests
+       (id, tenant_id, unit_id, title, category, priority, description, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'open')`,
+      [requestId, tenant.id, tenant.unit_id || null, title, category, priority, description],
+      (insertErr) => {
+        if (insertErr) return res.status(500).json({ error: 'Error creating maintenance request.' });
+
+        db.get(
+          `SELECT r.id, r.tenant_id, r.unit_id, r.title, r.category, r.priority, r.description,
+                  r.status, r.admin_note, r.resolved_at, r.created_at, r.updated_at,
+                  t.full_name as tenant_name, u.unit_number, b.name as building_name
+           FROM tenant_portal_maintenance_requests r
+           INNER JOIN tenants t ON t.id = r.tenant_id
+           LEFT JOIN units u ON u.id = r.unit_id
+           LEFT JOIN buildings b ON b.id = u.building_id
+           WHERE r.id = ?`,
+          [requestId],
+          (fetchErr, row) => {
+            if (fetchErr) return res.status(500).json({ error: 'Maintenance request created but failed to load response.' });
+            notifyAdminStream({
+              event_type: 'maintenance_request',
+              id: row.id,
+              tenant_id: row.tenant_id,
+              tenant_name: row.tenant_name,
+              title: row.title,
+              priority: row.priority
+            });
+            return res.status(201).json(row);
+          }
+        );
+      }
+    );
+  });
+};
+
+const getTenantPortalAnnouncements = (req, res) => {
+  return findTenantFromToken(req, (err) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    db.all(
+      `SELECT id, title, body, audience, published_at, expires_at, created_at
+       FROM tenant_portal_announcements
+       WHERE COALESCE(is_published, 1) = 1
+         AND (expires_at IS NULL OR DATETIME(expires_at) >= DATETIME('now'))
+       ORDER BY COALESCE(published_at, created_at) DESC
+       LIMIT 100`,
+      [],
+      (announcementErr, rows = []) => {
+        if (announcementErr) return res.status(500).json({ error: 'Error loading announcements.' });
+        return res.json({ announcements: rows });
+      }
+    );
   });
 };
 
@@ -655,11 +794,177 @@ const resetTenantPortalAccountPassword = (req, res) => {
   );
 };
 
+const listTenantPortalMaintenanceRequestsForAdmin = (req, res) => {
+  db.all(
+    `SELECT r.id, r.tenant_id, r.unit_id, r.title, r.category, r.priority, r.description,
+            r.status, r.admin_note, r.resolved_at, r.created_at, r.updated_at,
+            t.full_name as tenant_name, t.email as tenant_email, t.phone as tenant_phone,
+            u.unit_number, b.name as building_name,
+            COALESCE(resolver.full_name, resolver.username) as resolved_by_name
+     FROM tenant_portal_maintenance_requests r
+     INNER JOIN tenants t ON t.id = r.tenant_id
+     LEFT JOIN units u ON u.id = r.unit_id
+     LEFT JOIN buildings b ON b.id = u.building_id
+     LEFT JOIN users resolver ON resolver.id = r.resolved_by
+     ORDER BY
+       CASE r.status
+         WHEN 'open' THEN 0
+         WHEN 'in_progress' THEN 1
+         WHEN 'resolved' THEN 2
+         ELSE 3
+       END,
+       r.created_at DESC
+     LIMIT 300`,
+    [],
+    (err, rows = []) => {
+      if (err) return res.status(500).json({ error: 'Error loading maintenance requests.' });
+      return res.json({
+        requests: rows,
+        summary: {
+          total: rows.length,
+          open: rows.filter((item) => item.status === 'open').length,
+          in_progress: rows.filter((item) => item.status === 'in_progress').length,
+          resolved: rows.filter((item) => item.status === 'resolved' || item.status === 'closed').length
+        }
+      });
+    }
+  );
+};
+
+const updateTenantPortalMaintenanceRequestForAdmin = (req, res) => {
+  const requestId = String(req.params.requestId || '').trim();
+  const status = normalizeMaintenanceStatus(req.body?.status);
+  const adminNote = normalizeLongText(req.body?.admin_note || '');
+  if (!requestId) return res.status(400).json({ error: 'Maintenance request id is required.' });
+  if (adminNote.length > 1200) return res.status(400).json({ error: 'Admin note is too long (max 1200 characters).' });
+
+  const resolvedAtSql = status === 'resolved' || status === 'closed' ? 'CURRENT_TIMESTAMP' : 'NULL';
+  const resolvedBy = status === 'resolved' || status === 'closed' ? (req.user?.id || null) : null;
+
+  db.run(
+    `UPDATE tenant_portal_maintenance_requests
+     SET status = ?, admin_note = ?, resolved_by = ?, resolved_at = ${resolvedAtSql}, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [status, adminNote, resolvedBy, requestId],
+    function onUpdate(err) {
+      if (err) return res.status(500).json({ error: 'Error updating maintenance request.' });
+      if (!this.changes) return res.status(404).json({ error: 'Maintenance request not found.' });
+
+      db.get(
+        `SELECT id, tenant_id, unit_id, title, category, priority, description, status,
+                admin_note, resolved_at, created_at, updated_at
+         FROM tenant_portal_maintenance_requests
+         WHERE id = ?`,
+        [requestId],
+        (fetchErr, row) => {
+          if (fetchErr) return res.status(500).json({ error: 'Maintenance request updated but failed to load response.' });
+          return res.json(row);
+        }
+      );
+    }
+  );
+};
+
+const listTenantPortalAnnouncementsForAdmin = (req, res) => {
+  db.all(
+    `SELECT a.id, a.title, a.body, a.audience, a.is_published, a.published_at,
+            a.expires_at, a.created_at, a.updated_at,
+            COALESCE(u.full_name, u.username) as created_by_name
+     FROM tenant_portal_announcements a
+     LEFT JOIN users u ON u.id = a.created_by
+     ORDER BY COALESCE(a.published_at, a.created_at) DESC
+     LIMIT 200`,
+    [],
+    (err, rows = []) => {
+      if (err) return res.status(500).json({ error: 'Error loading announcements.' });
+      return res.json({
+        announcements: rows.map((row) => ({ ...row, is_published: Boolean(row.is_published) }))
+      });
+    }
+  );
+};
+
+const createTenantPortalAnnouncementForAdmin = (req, res) => {
+  const title = normalizeText(req.body?.title);
+  const body = normalizeLongText(req.body?.body);
+  const audience = normalizeText(req.body?.audience || 'all').slice(0, 40) || 'all';
+  const isPublished = req.body?.is_published === false ? 0 : 1;
+  const expiresAt = normalizeText(req.body?.expires_at || '');
+
+  if (!title) return res.status(400).json({ error: 'Announcement title is required.' });
+  if (!body) return res.status(400).json({ error: 'Announcement body is required.' });
+  if (title.length > 140) return res.status(400).json({ error: 'Announcement title is too long (max 140 characters).' });
+  if (body.length > 2200) return res.status(400).json({ error: 'Announcement body is too long (max 2200 characters).' });
+
+  const announcementId = uuidv4();
+  db.run(
+    `INSERT INTO tenant_portal_announcements
+     (id, title, body, audience, is_published, created_by, published_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ${isPublished ? 'CURRENT_TIMESTAMP' : 'NULL'}, ?)`,
+    [announcementId, title, body, audience, isPublished, req.user?.id || null, expiresAt || null],
+    (insertErr) => {
+      if (insertErr) return res.status(500).json({ error: 'Error creating announcement.' });
+
+      db.get('SELECT * FROM tenant_portal_announcements WHERE id = ?', [announcementId], (fetchErr, row) => {
+        if (fetchErr) return res.status(500).json({ error: 'Announcement created but failed to load response.' });
+        return res.status(201).json({ ...row, is_published: Boolean(row.is_published) });
+      });
+    }
+  );
+};
+
+const updateTenantPortalAnnouncementForAdmin = (req, res) => {
+  const announcementId = String(req.params.announcementId || '').trim();
+  const title = normalizeText(req.body?.title);
+  const body = normalizeLongText(req.body?.body);
+  const audience = normalizeText(req.body?.audience || 'all').slice(0, 40) || 'all';
+  const isPublished = req.body?.is_published ? 1 : 0;
+  const expiresAt = normalizeText(req.body?.expires_at || '');
+
+  if (!announcementId) return res.status(400).json({ error: 'Announcement id is required.' });
+  if (!title) return res.status(400).json({ error: 'Announcement title is required.' });
+  if (!body) return res.status(400).json({ error: 'Announcement body is required.' });
+  if (title.length > 140) return res.status(400).json({ error: 'Announcement title is too long (max 140 characters).' });
+  if (body.length > 2200) return res.status(400).json({ error: 'Announcement body is too long (max 2200 characters).' });
+
+  db.run(
+    `UPDATE tenant_portal_announcements
+     SET title = ?, body = ?, audience = ?, is_published = ?,
+         published_at = CASE WHEN ? = 1 AND published_at IS NULL THEN CURRENT_TIMESTAMP ELSE published_at END,
+         expires_at = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [title, body, audience, isPublished, isPublished, expiresAt || null, announcementId],
+    function onUpdate(err) {
+      if (err) return res.status(500).json({ error: 'Error updating announcement.' });
+      if (!this.changes) return res.status(404).json({ error: 'Announcement not found.' });
+
+      db.get('SELECT * FROM tenant_portal_announcements WHERE id = ?', [announcementId], (fetchErr, row) => {
+        if (fetchErr) return res.status(500).json({ error: 'Announcement updated but failed to load response.' });
+        return res.json({ ...row, is_published: Boolean(row.is_published) });
+      });
+    }
+  );
+};
+
+const deleteTenantPortalAnnouncementForAdmin = (req, res) => {
+  const announcementId = String(req.params.announcementId || '').trim();
+  if (!announcementId) return res.status(400).json({ error: 'Announcement id is required.' });
+
+  db.run('DELETE FROM tenant_portal_announcements WHERE id = ?', [announcementId], function onDelete(err) {
+    if (err) return res.status(500).json({ error: 'Error deleting announcement.' });
+    if (!this.changes) return res.status(404).json({ error: 'Announcement not found.' });
+    return res.json({ message: 'Announcement deleted successfully.' });
+  });
+};
+
 module.exports = {
   accessTenantPortal,
   registerTenantPortal,
   loginTenantPortal,
   getTenantPortalMe,
+  getTenantPortalMaintenanceRequests,
+  createTenantPortalMaintenanceRequest,
+  getTenantPortalAnnouncements,
   uploadTenantPaymentProof,
   getTenantPortalMessages,
   streamTenantPortalMessages,
@@ -669,5 +974,11 @@ module.exports = {
   sendAdminMessageToTenant,
   listTenantPortalAccounts,
   updateTenantPortalAccountStatus,
-  resetTenantPortalAccountPassword
+  resetTenantPortalAccountPassword,
+  listTenantPortalMaintenanceRequestsForAdmin,
+  updateTenantPortalMaintenanceRequestForAdmin,
+  listTenantPortalAnnouncementsForAdmin,
+  createTenantPortalAnnouncementForAdmin,
+  updateTenantPortalAnnouncementForAdmin,
+  deleteTenantPortalAnnouncementForAdmin
 };

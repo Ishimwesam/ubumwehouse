@@ -25,6 +25,12 @@ const TenantPortalControl = () => {
   const [sendingChat, setSendingChat] = useState(false);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [streamLive, setStreamLive] = useState(false);
+  const [maintenanceRequests, setMaintenanceRequests] = useState([]);
+  const [maintenanceSummary, setMaintenanceSummary] = useState({ total: 0, open: 0, in_progress: 0, resolved: 0 });
+  const [workingMaintenanceId, setWorkingMaintenanceId] = useState('');
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementForm, setAnnouncementForm] = useState({ title: '', body: '', is_published: true });
+  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
 
   const accountsByPriority = useMemo(() => {
     return [...accounts].sort((a, b) => {
@@ -54,6 +60,11 @@ const TenantPortalControl = () => {
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.tenant_id === selectedTenantId) || null,
     [accounts, selectedTenantId]
+  );
+
+  const openMaintenanceRequests = useMemo(
+    () => maintenanceRequests.filter((request) => !['resolved', 'closed'].includes(String(request.status || '').toLowerCase())),
+    [maintenanceRequests]
   );
 
   const loadAccounts = async () => {
@@ -95,8 +106,32 @@ const TenantPortalControl = () => {
     }
   };
 
+  const loadMaintenanceRequests = async () => {
+    try {
+      const response = await tenantPortalAdminService.listMaintenanceRequests();
+      setMaintenanceRequests(response.data?.requests || []);
+      setMaintenanceSummary(response.data?.summary || { total: 0, open: 0, in_progress: 0, resolved: 0 });
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to load maintenance requests.'));
+    }
+  };
+
+  const loadAnnouncements = async () => {
+    try {
+      const response = await tenantPortalAdminService.listAnnouncements();
+      setAnnouncements(response.data?.announcements || []);
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to load announcements.'));
+    }
+  };
+
+  const loadOperations = async () => {
+    await Promise.all([loadMaintenanceRequests(), loadAnnouncements()]);
+  };
+
   useEffect(() => {
     loadAccounts();
+    loadOperations();
   }, []);
 
   useEffect(() => {
@@ -107,6 +142,7 @@ const TenantPortalControl = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       loadAccounts();
+      loadMaintenanceRequests();
       if (selectedTenantId) loadChat(selectedTenantId);
     }, 15000);
     return () => clearInterval(timer);
@@ -123,6 +159,12 @@ const TenantPortalControl = () => {
     const onMessage = (event) => {
       try {
         const payload = JSON.parse(event.data || '{}');
+        if (payload?.event_type === 'maintenance_request') {
+          emitAppToast(`Live update: maintenance request${payload.tenant_name ? ` from ${payload.tenant_name}` : ''}`, 'realtime');
+          loadMaintenanceRequests();
+          return;
+        }
+
         if (!payload?.id || !payload?.tenant_id) return;
 
         if (payload.sender_type === 'tenant') {
@@ -211,6 +253,60 @@ const TenantPortalControl = () => {
     }
   };
 
+  const handleMaintenanceStatus = async (request, status) => {
+    setWorkingMaintenanceId(request.id);
+    setError('');
+    setSuccess('');
+    try {
+      await tenantPortalAdminService.updateMaintenanceRequest(request.id, {
+        status,
+        admin_note: request.admin_note || ''
+      });
+      setSuccess(`Maintenance request marked ${status.replace(/_/g, ' ')}.`);
+      await loadMaintenanceRequests();
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to update maintenance request.'));
+    } finally {
+      setWorkingMaintenanceId('');
+    }
+  };
+
+  const handleAnnouncementSubmit = async (event) => {
+    event.preventDefault();
+    if (!announcementForm.title.trim() || !announcementForm.body.trim()) return;
+
+    setSavingAnnouncement(true);
+    setError('');
+    setSuccess('');
+    try {
+      await tenantPortalAdminService.createAnnouncement(announcementForm);
+      setAnnouncementForm({ title: '', body: '', is_published: true });
+      setSuccess('Announcement published to tenant portal.');
+      await loadAnnouncements();
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to publish announcement.'));
+    } finally {
+      setSavingAnnouncement(false);
+    }
+  };
+
+  const handleToggleAnnouncement = async (announcement) => {
+    setError('');
+    setSuccess('');
+    try {
+      await tenantPortalAdminService.updateAnnouncement(announcement.id, {
+        title: announcement.title,
+        body: announcement.body,
+        audience: announcement.audience || 'all',
+        expires_at: announcement.expires_at || '',
+        is_published: !announcement.is_published
+      });
+      await loadAnnouncements();
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to update announcement.'));
+    }
+  };
+
   return (
     <div className="tenant-portal-control-page">
       <div className="tenant-portal-control-header">
@@ -235,6 +331,14 @@ const TenantPortalControl = () => {
         <article>
           <span>Inactive</span>
           <strong>{summary.inactive}</strong>
+        </article>
+        <article>
+          <span>Open Maintenance</span>
+          <strong>{openMaintenanceRequests.length}</strong>
+        </article>
+        <article>
+          <span>Announcements</span>
+          <strong>{announcements.length}</strong>
         </article>
       </section>
 
@@ -373,6 +477,98 @@ const TenantPortalControl = () => {
               {sendingChat ? 'Sending...' : 'Send Reply'}
             </button>
           </form>
+        </article>
+      </section>
+
+      <section className="tenant-portal-control-layout operations">
+        <article className="tenant-portal-control-panel">
+          <div className="tenant-portal-control-panel-header">
+            <h2>Maintenance Queue</h2>
+            <span className="last-login">{maintenanceSummary.open} open / {maintenanceSummary.in_progress} in progress</span>
+          </div>
+
+          <div className="portal-maintenance-list">
+            {maintenanceRequests.length ? maintenanceRequests.slice(0, 12).map((request) => (
+              <article key={request.id} className="portal-maintenance-item">
+                <div>
+                  <strong>{request.title}</strong>
+                  <p>{request.description}</p>
+                  <small>
+                    {request.tenant_name || 'Tenant'} / {request.building_name || 'Building'} {request.unit_number || ''}
+                    {' '} / {formatDateTime(request.created_at)}
+                  </small>
+                </div>
+                <div className="portal-maintenance-actions">
+                  <span className={`status ${String(request.status || 'open').toLowerCase()}`}>{String(request.status || 'open').replace(/_/g, ' ')}</span>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={workingMaintenanceId === request.id}
+                    onClick={() => handleMaintenanceStatus(request, 'in_progress')}
+                  >
+                    In Progress
+                  </button>
+                  <button
+                    type="button"
+                    disabled={workingMaintenanceId === request.id}
+                    onClick={() => handleMaintenanceStatus(request, 'resolved')}
+                  >
+                    Resolve
+                  </button>
+                </div>
+              </article>
+            )) : <div className="empty">No maintenance requests yet.</div>}
+          </div>
+        </article>
+
+        <article className="tenant-portal-control-panel">
+          <div className="tenant-portal-control-panel-header">
+            <h2>Announcements</h2>
+          </div>
+
+          <form className="portal-announcement-form" onSubmit={handleAnnouncementSubmit}>
+            <input
+              value={announcementForm.title}
+              maxLength={140}
+              onChange={(event) => setAnnouncementForm((prev) => ({ ...prev, title: event.target.value }))}
+              placeholder="Announcement title"
+              required
+            />
+            <textarea
+              value={announcementForm.body}
+              maxLength={2200}
+              onChange={(event) => setAnnouncementForm((prev) => ({ ...prev, body: event.target.value }))}
+              placeholder="Write the tenant notice..."
+              rows={4}
+              required
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={announcementForm.is_published}
+                onChange={(event) => setAnnouncementForm((prev) => ({ ...prev, is_published: event.target.checked }))}
+              />
+              Publish now
+            </label>
+            <button type="submit" disabled={savingAnnouncement}>
+              {savingAnnouncement ? 'Publishing...' : 'Publish Announcement'}
+            </button>
+          </form>
+
+          <div className="portal-announcement-admin-list">
+            {announcements.length ? announcements.slice(0, 8).map((announcement) => (
+              <article key={announcement.id}>
+                <div>
+                  <strong>{announcement.title}</strong>
+                  <p>{announcement.body}</p>
+                  <small>{announcement.published_at ? formatDateTime(announcement.published_at) : 'Draft'}</small>
+                </div>
+                <button type="button" className="secondary" onClick={() => handleToggleAnnouncement(announcement)}>
+                  {announcement.is_published ? 'Unpublish' : 'Publish'}
+                </button>
+              </article>
+            )) : <div className="empty">No announcements yet.</div>}
+          </div>
         </article>
       </section>
     </div>

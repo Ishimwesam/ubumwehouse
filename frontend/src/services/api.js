@@ -384,6 +384,15 @@ export const tenantPortalService = {
   sendMessage: (message) => apiClient.post('/tenant-portal/messages', { message }, {
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
+  getMaintenanceRequests: () => apiClient.get('/tenant-portal/maintenance', {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
+  createMaintenanceRequest: (data) => apiClient.post('/tenant-portal/maintenance', data, {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
+  getAnnouncements: () => apiClient.get('/tenant-portal/announcements', {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
   uploadPaymentProof: (data) => {
     const formData = new FormData();
     Object.entries(data || {}).forEach(([key, value]) => {
@@ -411,7 +420,13 @@ export const tenantPortalAdminService = {
   updateAccountStatus: (accountId, isActive) => apiClient.put(`/tenant-portal/accounts/${accountId}/status`, { is_active: isActive }),
   resetAccountPassword: (accountId, password) => apiClient.post(`/tenant-portal/accounts/${accountId}/reset-password`, { password }),
   getTenantMessages: (tenantId) => apiClient.get(`/tenant-portal/accounts/${tenantId}/messages`),
-  sendTenantMessage: (tenantId, message) => apiClient.post(`/tenant-portal/accounts/${tenantId}/messages`, { message })
+  sendTenantMessage: (tenantId, message) => apiClient.post(`/tenant-portal/accounts/${tenantId}/messages`, { message }),
+  listMaintenanceRequests: () => apiClient.get('/tenant-portal/accounts/maintenance/requests'),
+  updateMaintenanceRequest: (requestId, data) => apiClient.put(`/tenant-portal/accounts/maintenance/requests/${requestId}`, data),
+  listAnnouncements: () => apiClient.get('/tenant-portal/accounts/announcements'),
+  createAnnouncement: (data) => apiClient.post('/tenant-portal/accounts/announcements', data),
+  updateAnnouncement: (announcementId, data) => apiClient.put(`/tenant-portal/accounts/announcements/${announcementId}`, data),
+  deleteAnnouncement: (announcementId) => apiClient.delete(`/tenant-portal/accounts/announcements/${announcementId}`)
 };
 
 // Dashboard Service

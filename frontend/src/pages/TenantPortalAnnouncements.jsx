@@ -1,9 +1,47 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getReadableApiError, tenantPortalService } from '../services/api';
 import '../styles/tenant-portal.css';
+
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleString();
+};
 
 const TenantPortalAnnouncements = () => {
   const navigate = useNavigate();
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    const token = tenantPortalService.getToken();
+    if (!token) {
+      navigate('/tenant-portal');
+      return undefined;
+    }
+
+    setLoading(true);
+    tenantPortalService.getAnnouncements()
+      .then((response) => {
+        if (!mounted) return;
+        setAnnouncements(response.data?.announcements || []);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setError(getReadableApiError(err, 'Failed to load announcements.'));
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [navigate]);
 
   return (
     <main className="tp-page tp-subpage">
@@ -18,9 +56,28 @@ const TenantPortalAnnouncements = () => {
           </button>
         </header>
 
+        {error ? <div className="tp-alert error">{error}</div> : null}
+
         <section className="tp-card" style={{ marginTop: 14 }}>
           <h2>Latest Updates</h2>
-          <p className="tp-empty">No announcements yet. New notices from UBUMWE HOUSE LTD will appear on this page.</p>
+          {loading ? <p className="tp-empty">Loading announcements...</p> : null}
+          {!loading && announcements.length === 0 ? (
+            <p className="tp-empty">No announcements yet. New notices from UBUMWE HOUSE LTD will appear on this page.</p>
+          ) : null}
+          {!loading && announcements.length ? (
+            <div className="tp-announcement-list">
+              {announcements.map((announcement) => (
+                <article key={announcement.id} className="tp-announcement-item">
+                  <div className="tp-request-top">
+                    <strong>{announcement.title}</strong>
+                    <span>{formatDateTime(announcement.published_at || announcement.created_at)}</span>
+                  </div>
+                  <p>{announcement.body}</p>
+                  {announcement.expires_at ? <small>Expires {formatDateTime(announcement.expires_at)}</small> : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
         </section>
       </section>
     </main>

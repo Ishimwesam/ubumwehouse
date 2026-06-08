@@ -9,7 +9,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const TenantPortalUpload = () => {
   const navigate = useNavigate();
   const [tenant, setTenant] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
