@@ -46,8 +46,10 @@ const calendarEventRoutes = require('./routes/calendarEventRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const tenantPortalRoutes = require('./routes/tenantPortalRoutes');
+const realtimeRoutes = require('./routes/realtimeRoutes');
 const { startWhatsAppReminderScheduler } = require('./services/whatsappReminderService');
 const { startBackupScheduler } = require('./services/backupService');
+const { broadcastRentalAppRefresh } = require('./services/realtimeService');
 const { enforceDeviceLock } = require('./services/deviceLockService');
 const SQLiteSessionStore = require('./services/sqliteSessionStore');
 const securityHeaders = require('./middleware/securityHeaders');
@@ -94,6 +96,25 @@ app.use('/api', createRateLimiter({
   keyGenerator: (req) => `${getClientIp(req)}:${req.method}:${req.path}`
 }));
 app.use(auditLogger);
+
+app.use((req, res, next) => {
+  const isApiWrite = req.path.startsWith('/api') && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+  if (!isApiWrite) return next();
+
+  res.on('finish', () => {
+    const isSuccess = res.statusCode >= 200 && res.statusCode < 400;
+    const isIgnoredPath = req.path.startsWith('/api/auth');
+    if (!isSuccess || isIgnoredPath) return;
+
+    broadcastRentalAppRefresh({
+      method: req.method,
+      path: req.path,
+      status: res.statusCode
+    });
+  });
+
+  return next();
+});
 
 app.use(express.json({ limit: '1mb' }));
 // CORS middleware
@@ -184,6 +205,7 @@ app.use('/api/calendar-events', calendarEventRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/tenant-portal', tenantPortalRoutes);
+app.use('/api/realtime', realtimeRoutes);
 
 if (isProduction) {
   app.use(express.static(frontendDistPath));

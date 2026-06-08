@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getReadableApiError, tenantPortalAdminService } from '../services/api';
+import { emitAppToast } from '../context/ToastContext';
 import '../styles/tenant-portal-control.css';
 
 const formatDateTime = (value) => {
@@ -108,6 +109,48 @@ const TenantPortalControl = () => {
       if (selectedTenantId) loadChat(selectedTenantId);
     }, 15000);
     return () => clearInterval(timer);
+  }, [selectedTenantId]);
+
+  useEffect(() => {
+    const streamUrl = tenantPortalAdminService.getStreamUrl();
+    if (!streamUrl) return undefined;
+
+    const source = new EventSource(streamUrl);
+    const onMessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data || '{}');
+        if (!payload?.id || !payload?.tenant_id) return;
+
+        if (payload.sender_type === 'tenant') {
+          emitAppToast(`New tenant message${payload.tenant_name ? ` from ${payload.tenant_name}` : ''}`, 'info');
+        }
+
+        setAccounts((prev) => prev.map((account) => {
+          if (account.tenant_id !== payload.tenant_id) return account;
+          const unreadDelta = payload.sender_type === 'tenant' ? 1 : 0;
+          return {
+            ...account,
+            unread_tenant_messages: Number(account.unread_tenant_messages || 0) + unreadDelta
+          };
+        }));
+
+        if (payload.tenant_id === selectedTenantId) {
+          setChatMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
+          if (payload.sender_type === 'tenant') {
+            loadChat(selectedTenantId);
+            loadAccounts();
+          }
+        }
+      } catch (_) {}
+    };
+
+    source.addEventListener('message', onMessage);
+    source.onerror = () => {};
+
+    return () => {
+      source.removeEventListener('message', onMessage);
+      source.close();
+    };
   }, [selectedTenantId]);
 
   const handleToggleStatus = async (account) => {

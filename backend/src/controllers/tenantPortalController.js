@@ -22,6 +22,32 @@ const tenantPortalJwtOptions = {
   algorithm: 'HS256'
 };
 
+const tenantPortalSseClients = new Map();
+const adminPortalSseClients = new Set();
+
+const getTenantPortalToken = (req) => {
+  const headerToken = req.headers.authorization?.split(' ')[1];
+  if (headerToken) return headerToken;
+  const queryToken = String(req.query?.token || '').trim();
+  return queryToken || '';
+};
+
+const writeSseEvent = (res, event, payload) => {
+  res.write(`event: ${event}\n`);
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
+};
+
+const notifyTenantStream = (tenantId, payload) => {
+  const clients = tenantPortalSseClients.get(String(tenantId));
+  if (!clients || !clients.size) return;
+  clients.forEach((res) => writeSseEvent(res, 'message', payload));
+};
+
+const notifyAdminStream = (payload) => {
+  if (!adminPortalSseClients.size) return;
+  adminPortalSseClients.forEach((res) => writeSseEvent(res, 'message', payload));
+};
+
 const tenantPortalFields = `
   t.id, t.full_name, t.email, t.phone, t.national_id, t.status,
   t.move_in_date, t.move_out_date,
@@ -145,7 +171,7 @@ const findTenantForPortal = ({ identifier, accessCode }, callback) => {
 };
 
 const findTenantFromToken = (req, callback) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = getTenantPortalToken(req);
   if (!token) {
     callback({ status: 401, error: 'Tenant portal login is required.' });
     return;
@@ -190,6 +216,23 @@ const findTenantFromToken = (req, callback) => {
     );
   } catch (_) {
     callback({ status: 401, error: 'Invalid or expired tenant portal token.' });
+  }
+};
+
+const findAdminFromToken = (req, callback) => {
+  const token = getTenantPortalToken(req);
+  if (!token) return callback({ status: 401, error: 'Admin token is required.' });
+  if (!process.env.JWT_SECRET) return callback({ status: 500, error: 'Authentication is not configured.' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const role = decoded?.role;
+    if (!role || !['admin', 'manager'].includes(role)) {
+      return callback({ status: 403, error: 'Insufficient permissions.' });
+    }
+    return callback(null, decoded);
+  } catch (_) {
+    return callback({ status: 401, error: 'Invalid token.' });
   }
 };
 
@@ -391,6 +434,57 @@ const getTenantPortalMessages = (req, res) => {
   });
 };
 
+const streamTenantPortalMessages = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const tenantId = String(tenant.id);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const set = tenantPortalSseClients.get(tenantId) || new Set();
+    set.add(res);
+    tenantPortalSseClients.set(tenantId, set);
+
+    writeSseEvent(res, 'connected', { tenant_id: tenantId, connected_at: new Date().toISOString() });
+    const heartbeat = setInterval(() => writeSseEvent(res, 'ping', { ts: Date.now() }), 25000);
+
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      const clients = tenantPortalSseClients.get(tenantId);
+      if (!clients) return;
+      clients.delete(res);
+      if (!clients.size) tenantPortalSseClients.delete(tenantId);
+    });
+
+    return undefined;
+  });
+};
+
+const streamAdminTenantMessages = (req, res) => {
+  return findAdminFromToken(req, (err) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    adminPortalSseClients.add(res);
+    writeSseEvent(res, 'connected', { connected_at: new Date().toISOString() });
+    const heartbeat = setInterval(() => writeSseEvent(res, 'ping', { ts: Date.now() }), 25000);
+
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      adminPortalSseClients.delete(res);
+    });
+
+    return undefined;
+  });
+};
+
 const sendTenantPortalMessage = (req, res) => {
   return findTenantFromToken(req, (err, tenant) => {
     if (err) return res.status(err.status || 500).json({ error: err.error });
@@ -414,6 +508,8 @@ const sendTenantPortalMessage = (req, res) => {
           [messageId],
           (fetchErr, row) => {
             if (fetchErr) return res.status(500).json({ error: 'Support message sent but failed to load response.' });
+            notifyTenantStream(tenant.id, row);
+            notifyAdminStream({ ...row, tenant_name: tenant.full_name });
             return res.status(201).json(row);
           }
         );
@@ -479,6 +575,8 @@ const sendAdminMessageToTenant = (req, res) => {
           [messageId],
           (fetchErr, row) => {
             if (fetchErr) return res.status(500).json({ error: 'Message sent but failed to load response.' });
+            notifyTenantStream(tenantId, row);
+            notifyAdminStream(row);
             return res.status(201).json(row);
           }
         );
@@ -564,7 +662,9 @@ module.exports = {
   getTenantPortalMe,
   uploadTenantPaymentProof,
   getTenantPortalMessages,
+  streamTenantPortalMessages,
   sendTenantPortalMessage,
+  streamAdminTenantMessages,
   getTenantMessagesForAdmin,
   sendAdminMessageToTenant,
   listTenantPortalAccounts,

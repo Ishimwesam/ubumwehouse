@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
+import { emitAppToast } from '../context/ToastContext';
 import '../styles/tenant-portal.css';
 
 const TenantPortalMessages = () => {
@@ -32,6 +33,31 @@ const TenantPortalMessages = () => {
     }
     loadMessages();
   }, [navigate]);
+
+  useEffect(() => {
+    const streamUrl = tenantPortalService.getStreamUrl();
+    if (!streamUrl) return undefined;
+
+    const source = new EventSource(streamUrl);
+    const onMessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data || '{}');
+        if (!payload?.id) return;
+        setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
+        if (payload.sender_type === 'admin') {
+          emitAppToast('New message from admin', 'info');
+        }
+      } catch (_) {}
+    };
+
+    source.addEventListener('message', onMessage);
+    source.onerror = () => {};
+
+    return () => {
+      source.removeEventListener('message', onMessage);
+      source.close();
+    };
+  }, []);
 
   const handleSend = async (event) => {
     event.preventDefault();

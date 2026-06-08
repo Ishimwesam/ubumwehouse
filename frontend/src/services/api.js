@@ -188,6 +188,14 @@ export const systemService = {
   getMessagingStatus: () => apiClient.get('/system/messaging/status')
 };
 
+export const realtimeService = {
+  getNotificationStreamUrl: () => {
+    const token = getStoredAuthToken();
+    if (!token) return null;
+    return `${API_BASE_URL}/realtime/stream?token=${encodeURIComponent(token)}`;
+  }
+};
+
 // Buildings Service
 export const buildingService = {
   getAll: () => apiClient.get('/buildings'),
@@ -348,6 +356,11 @@ export const paymentService = {
 
 export const tenantPortalService = {
   getToken: () => sessionStorage.getItem('tenantPortalToken') || localStorage.getItem('tenantPortalToken'),
+  getStreamUrl: () => {
+    const token = tenantPortalService.getToken();
+    if (!token) return null;
+    return `${API_BASE_URL}/tenant-portal/stream?token=${encodeURIComponent(token)}`;
+  },
   setToken: (token, remember = false) => {
     sessionStorage.removeItem('tenantPortalToken');
     localStorage.removeItem('tenantPortalToken');
@@ -389,6 +402,11 @@ export const tenantPortalService = {
 };
 
 export const tenantPortalAdminService = {
+  getStreamUrl: () => {
+    const token = getStoredAuthToken();
+    if (!token) return null;
+    return `${API_BASE_URL}/tenant-portal/accounts/stream?token=${encodeURIComponent(token)}`;
+  },
   listAccounts: () => apiClient.get('/tenant-portal/accounts'),
   updateAccountStatus: (accountId, isActive) => apiClient.put(`/tenant-portal/accounts/${accountId}/status`, { is_active: isActive }),
   resetAccountPassword: (accountId, password) => apiClient.post(`/tenant-portal/accounts/${accountId}/reset-password`, { password }),

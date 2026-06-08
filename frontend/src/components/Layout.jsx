@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { chatService, contractService, paymentService, resolveUploadUrl, tenantService, unitService } from '../services/api';
+import {
+  chatService,
+  contractService,
+  paymentService,
+  realtimeService,
+  resolveUploadUrl,
+  tenantPortalAdminService,
+  tenantService,
+  unitService
+} from '../services/api';
 import Sidebar, { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH } from './Sidebar';
 import SessionWarning from './SessionWarning';
 import ApiRecoveryNotice from './ApiRecoveryNotice';
@@ -442,6 +451,7 @@ const Layout = ({ children }) => {
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, selectionText: '' });
   const [notifications, setNotifications] = useState([]);
+  const [notificationRefreshTick, setNotificationRefreshTick] = useState(0);
   const [readNotifications, setReadNotifications] = useState(() => {
     try {
       const raw = localStorage.getItem(notificationStoreKey);
@@ -498,12 +508,13 @@ const Layout = ({ children }) => {
 
     const loadNotifications = async () => {
       try {
-        const [paymentsRes, tenantsRes, contractsRes, unitsRes, remindersRes] = await Promise.all([
+        const [paymentsRes, tenantsRes, contractsRes, unitsRes, remindersRes, tenantPortalAccountsRes] = await Promise.all([
           paymentService.getAll(),
           tenantService.getAll(),
           contractService.getAll(),
           unitService.getAll(),
-          tenantService.getReminderEvents()
+          tenantService.getReminderEvents(),
+          tenantPortalAdminService.listAccounts().catch(() => ({ data: [] }))
         ]);
 
         const payments = paymentsRes.data || [];
@@ -511,6 +522,7 @@ const Layout = ({ children }) => {
         const contracts = contractsRes.data || [];
         const units = unitsRes.data || [];
         const reminderEvents = remindersRes.data || [];
+        const tenantPortalAccounts = tenantPortalAccountsRes.data || [];
         setGlobalSearchData({ tenants, payments, contracts, units });
 
         const nextNotifications = [];
@@ -642,6 +654,22 @@ const Layout = ({ children }) => {
             });
           });
 
+        const unreadTenantPortalMessages = tenantPortalAccounts.reduce(
+          (sum, account) => sum + Number(account.unread_tenant_messages || 0),
+          0
+        );
+
+        if (unreadTenantPortalMessages > 0) {
+          nextNotifications.push({
+            id: 'tenant-portal-unread',
+            type: 'tenant',
+            title: 'Tenant portal messages',
+            message: `${unreadTenantPortalMessages} unread tenant message${unreadTenantPortalMessages === 1 ? '' : 's'} in the portal inbox.`,
+            createdAt: new Date().toISOString(),
+            actionPath: '/tenant-portal-control'
+          });
+        }
+
         const deduped = nextNotifications
           .filter((item, index, allItems) => allItems.findIndex((candidate) => candidate.id === item.id) === index)
           .sort((first, second) => {
@@ -675,7 +703,27 @@ const Layout = ({ children }) => {
     loadNotifications();
     const intervalId = setInterval(loadNotifications, 60000);
     return () => clearInterval(intervalId);
-  }, [user, readNotifications]);
+  }, [user, readNotifications, notificationRefreshTick]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const streamUrl = realtimeService.getNotificationStreamUrl();
+    if (!streamUrl) return undefined;
+
+    const source = new EventSource(streamUrl);
+    const handleRefresh = () => {
+      setNotificationRefreshTick((current) => current + 1);
+    };
+
+    source.addEventListener('refresh', handleRefresh);
+    source.onerror = () => {};
+
+    return () => {
+      source.removeEventListener('refresh', handleRefresh);
+      source.close();
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     localStorage.setItem(notificationStoreKey, JSON.stringify(readNotifications));
