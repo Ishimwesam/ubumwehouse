@@ -39,6 +39,11 @@ const VerifyLoginOtp = lazy(() => import('./pages/VerifyLoginOtp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const TenantPortalPayments = lazy(() => import('./pages/TenantPortalPayments'));
+const TenantPortalUpload = lazy(() => import('./pages/TenantPortalUpload'));
+const TenantPortalMaintenance = lazy(() => import('./pages/TenantPortalMaintenance'));
+const TenantPortalMessages = lazy(() => import('./pages/TenantPortalMessages'));
+const TenantPortalAnnouncements = lazy(() => import('./pages/TenantPortalAnnouncements'));
+const TenantPortalProfile = lazy(() => import('./pages/TenantPortalProfile'));
 const TenantPortalControl = lazy(() => import('./pages/TenantPortalControl'));
 
 const PageFallback = () => <PageLoader text="Loading..." minHeight="60vh" />;
@@ -117,6 +122,11 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/dashboard" /> : <ResetPassword />} />
       <Route path="/tenant-portal" element={<TenantPortal />} />
       <Route path="/tenant-portal/payments" element={<TenantPortalPayments />} />
+      <Route path="/tenant-portal/upload" element={<TenantPortalUpload />} />
+      <Route path="/tenant-portal/maintenance" element={<TenantPortalMaintenance />} />
+      <Route path="/tenant-portal/messages" element={<TenantPortalMessages />} />
+      <Route path="/tenant-portal/announcements" element={<TenantPortalAnnouncements />} />
+      <Route path="/tenant-portal/profile" element={<TenantPortalProfile />} />
       <Route
         path="/*"
         element={

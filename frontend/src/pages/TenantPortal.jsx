@@ -334,11 +334,11 @@ const TenantPortal = () => {
             <nav className="tp-nav">
               <button type="button" className="active" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><IconGrid /> Dashboard</button>
               <button type="button" onClick={() => navigate('/tenant-portal/payments')}>Payments</button>
-              <button type="button" onClick={() => { setShowUploadForm(true); scrollTo(uploadSectionRef); }}>Upload Receipt</button>
-              <button type="button" onClick={() => scrollTo(maintenanceSectionRef)}>Maintenance</button>
-              <button type="button" onClick={() => { setShowChat(true); scrollTo(chatSectionRef); }}>Messages</button>
-              <button type="button" onClick={() => scrollTo(announcementsSectionRef)}>Announcements</button>
-              <button type="button" onClick={() => scrollTo(profileSectionRef)}>Profile</button>
+              <button type="button" onClick={() => navigate('/tenant-portal/upload')}>Upload Receipt</button>
+              <button type="button" onClick={() => navigate('/tenant-portal/maintenance')}>Maintenance</button>
+              <button type="button" onClick={() => navigate('/tenant-portal/messages')}>Messages</button>
+              <button type="button" onClick={() => navigate('/tenant-portal/announcements')}>Announcements</button>
+              <button type="button" onClick={() => navigate('/tenant-portal/profile')}>Profile</button>
               <button type="button" onClick={() => navigate('/forgot-password')}>Change Password</button>
             </nav>
 
@@ -454,9 +454,9 @@ const TenantPortal = () => {
 
               <article className="tp-card tp-quick-actions">
                 <h2>Quick Actions</h2>
-                <button type="button" onClick={() => scrollTo(maintenanceSectionRef)}>Request Maintenance</button>
-                <button type="button" onClick={() => { setShowChat(true); scrollTo(chatSectionRef); }}>Send Message to Admin</button>
-                <button type="button" onClick={() => scrollTo(announcementsSectionRef)}>View Announcements</button>
+                <button type="button" onClick={() => navigate('/tenant-portal/maintenance')}>Request Maintenance</button>
+                <button type="button" onClick={() => navigate('/tenant-portal/messages')}>Send Message to Admin</button>
+                <button type="button" onClick={() => navigate('/tenant-portal/announcements')}>View Announcements</button>
               </article>
             </section>
 

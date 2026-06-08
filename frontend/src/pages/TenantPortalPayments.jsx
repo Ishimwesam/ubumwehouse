@@ -31,7 +31,6 @@ const TenantPortalPayments = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        tenantPortalService.clearToken();
         setError(getReadableApiError(err, 'Failed to load payment history.'));
       })
       .finally(() => {
