@@ -1,3 +1,6 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 const db = require('../../config/database');
 const paymentController = require('./paymentController');
 const { rentForPeriodExpression } = require('../services/rentHistoryService');
@@ -33,6 +36,29 @@ const tenantPortalFields = `
 const normalizeIdentity = (value = '') => String(value || '').trim().toLowerCase();
 const digitsOnly = (value = '') => String(value || '').replace(/\D/g, '');
 const tail4 = (value = '') => digitsOnly(value).slice(-4);
+const normalizeUsername = (value = '') => String(value || '').trim().toLowerCase();
+const validatePassword = (password) => {
+  if (typeof password !== 'string' || password.length < 8) return 'Password must be at least 8 characters.';
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return 'Password must include at least one letter and one number.';
+  return '';
+};
+
+const createTenantToken = (account, tenant) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('Tenant portal authentication is not configured.');
+  }
+
+  return jwt.sign(
+    {
+      type: 'tenant_portal',
+      account_id: account.id,
+      tenant_id: tenant.id,
+      username: account.username
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.TENANT_PORTAL_JWT_EXPIRE || '30d' }
+  );
+};
 
 const sanitizeTenant = (tenant) => {
   const monthlyRent = parseFloat(tenant.monthly_rent || 0);
@@ -98,6 +124,51 @@ const findTenantForPortal = ({ identifier, accessCode }, callback) => {
   );
 };
 
+const findTenantFromToken = (req, callback) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    callback({ status: 401, error: 'Tenant portal login is required.' });
+    return;
+  }
+
+  if (!process.env.JWT_SECRET) {
+    callback({ status: 500, error: 'Tenant portal authentication is not configured.' });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type !== 'tenant_portal' || !decoded.tenant_id) {
+      callback({ status: 401, error: 'Invalid tenant portal token.' });
+      return;
+    }
+
+    db.get(
+      `SELECT ${tenantPortalFields}
+       FROM tenants t
+       LEFT JOIN units u ON t.unit_id = u.id
+       LEFT JOIN buildings b ON u.building_id = b.id
+       INNER JOIN tenant_portal_accounts a ON a.tenant_id = t.id
+       WHERE t.id = ? AND a.id = ? AND a.is_active = 1
+       LIMIT 1`,
+      [decoded.tenant_id, decoded.account_id],
+      (err, tenant) => {
+        if (err) {
+          callback({ status: 500, error: 'Error loading tenant portal account.' });
+          return;
+        }
+        if (!tenant) {
+          callback({ status: 401, error: 'Tenant portal account is not active.' });
+          return;
+        }
+        callback(null, tenant);
+      }
+    );
+  } catch (_) {
+    callback({ status: 401, error: 'Invalid or expired tenant portal token.' });
+  }
+};
+
 const loadPortalPayload = (tenant, callback) => {
   db.all(
     `SELECT p.id, p.amount, p.payment_date,
@@ -156,8 +227,119 @@ const accessTenantPortal = (req, res) => {
   });
 };
 
+const registerTenantPortal = (req, res) => {
+  const { identifier, accessCode, username, password } = req.body || {};
+  const normalizedUsername = normalizeUsername(username || identifier);
+  const passwordError = validatePassword(password);
+
+  if (!normalizedUsername) return res.status(400).json({ error: 'Username is required.' });
+  if (passwordError) return res.status(400).json({ error: passwordError });
+
+  findTenantForPortal({ identifier, accessCode }, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    db.get(
+      'SELECT id FROM tenant_portal_accounts WHERE tenant_id = ? OR LOWER(username) = LOWER(?) LIMIT 1',
+      [tenant.id, normalizedUsername],
+      (accountErr, existingAccount) => {
+        if (accountErr) return res.status(500).json({ error: 'Error checking tenant portal account.' });
+        if (existingAccount) return res.status(409).json({ error: 'A tenant portal account already exists for this tenant or username.' });
+
+        const account = {
+          id: uuidv4(),
+          username: normalizedUsername
+        };
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        db.run(
+          `INSERT INTO tenant_portal_accounts (id, tenant_id, username, password)
+           VALUES (?, ?, ?, ?)`,
+          [account.id, tenant.id, normalizedUsername, hashedPassword],
+          (insertErr) => {
+            if (insertErr) return res.status(500).json({ error: 'Error creating tenant portal account.' });
+
+            const token = createTenantToken(account, tenant);
+            return loadPortalPayload(tenant, (payloadErr, payload) => {
+              if (payloadErr) return res.status(payloadErr.status || 500).json({ error: payloadErr.error });
+              return res.status(201).json({ message: 'Tenant portal account created.', token, account: { username: normalizedUsername }, ...payload });
+            });
+          }
+        );
+      }
+    );
+  });
+};
+
+const loginTenantPortal = (req, res) => {
+  const { username, password } = req.body || {};
+  const normalizedUsername = normalizeUsername(username);
+
+  if (!normalizedUsername || !password) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+
+  db.get(
+    `SELECT a.id as account_id, a.username, a.password, ${tenantPortalFields}
+     FROM tenant_portal_accounts a
+     INNER JOIN tenants t ON t.id = a.tenant_id
+     LEFT JOIN units u ON t.unit_id = u.id
+     LEFT JOIN buildings b ON u.building_id = b.id
+     WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1
+     LIMIT 1`,
+    [normalizedUsername],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: 'Error checking tenant portal login.' });
+      if (!row || !bcrypt.compareSync(password, row.password)) {
+        return res.status(401).json({ error: 'Invalid tenant portal credentials.' });
+      }
+
+      const account = { id: row.account_id, username: row.username };
+      const tenant = {
+        id: row.id,
+        full_name: row.full_name,
+        email: row.email,
+        phone: row.phone,
+        national_id: row.national_id,
+        status: row.status,
+        move_in_date: row.move_in_date,
+        move_out_date: row.move_out_date,
+        unit_id: row.unit_id,
+        unit_number: row.unit_number,
+        floor: row.floor,
+        building_name: row.building_name,
+        monthly_rent: row.monthly_rent,
+        current_period_paid: row.current_period_paid,
+        pending_amount: row.pending_amount
+      };
+      const token = createTenantToken(account, tenant);
+
+      db.run('UPDATE tenant_portal_accounts SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [account.id], () => {});
+
+      return loadPortalPayload(tenant, (payloadErr, payload) => {
+        if (payloadErr) return res.status(payloadErr.status || 500).json({ error: payloadErr.error });
+        return res.json({ message: 'Tenant portal login successful.', token, account: { username: account.username }, ...payload });
+      });
+    }
+  );
+};
+
+const getTenantPortalMe = (req, res) => {
+  findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    return loadPortalPayload(tenant, (payloadErr, payload) => {
+      if (payloadErr) return res.status(payloadErr.status || 500).json({ error: payloadErr.error });
+      return res.json(payload);
+    });
+  });
+};
+
 const uploadTenantPaymentProof = (req, res) => {
-  findTenantForPortal(req.body || {}, (err, tenant) => {
+  const resolveTenant = req.headers.authorization
+    ? findTenantFromToken
+    : (request, callback) => findTenantForPortal(request.body || {}, callback);
+
+  resolveTenant(req, (err, tenant) => {
     if (err) return res.status(err.status || 500).json({ error: err.error });
 
     req.body.tenant_id = tenant.id;
@@ -171,5 +353,8 @@ const uploadTenantPaymentProof = (req, res) => {
 
 module.exports = {
   accessTenantPortal,
+  registerTenantPortal,
+  loginTenantPortal,
+  getTenantPortalMe,
   uploadTenantPaymentProof
 };

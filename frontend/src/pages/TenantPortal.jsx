@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getReadableApiError, tenantPortalService } from '../services/api';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -7,6 +7,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const TenantPortal = () => {
   const [accessForm, setAccessForm] = useState({ identifier: '', accessCode: '' });
+  const [mode, setMode] = useState('login');
+  const [credentialForm, setCredentialForm] = useState({ username: '', password: '', confirmPassword: '', remember: true });
   const [portalData, setPortalData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +27,28 @@ const TenantPortal = () => {
     const contracts = portalData?.contracts || [];
     return contracts.find((contract) => (contract.lifecycle_status || contract.status || 'active') === 'active') || contracts[0] || null;
   }, [portalData]);
+
+  useEffect(() => {
+    let mounted = true;
+    const token = tenantPortalService.getToken();
+    if (!token) return undefined;
+
+    setLoading(true);
+    tenantPortalService.me()
+      .then((response) => {
+        if (mounted) setPortalData(response.data);
+      })
+      .catch(() => {
+        tenantPortalService.clearToken();
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleAccess = async (event) => {
     event.preventDefault();
@@ -46,8 +70,56 @@ const TenantPortal = () => {
     }
   };
 
+  const handleRegister = async (event) => {
+    event.preventDefault();
+    if (credentialForm.password !== credentialForm.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await tenantPortalService.register({
+        ...accessForm,
+        username: credentialForm.username,
+        password: credentialForm.password
+      });
+      tenantPortalService.setToken(response.data.token, credentialForm.remember);
+      setPortalData(response.data);
+      setSuccess('Your tenant portal account has been created and saved.');
+    } catch (err) {
+      setError(getReadableApiError(err, 'Tenant account registration failed.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await tenantPortalService.login({
+        username: credentialForm.username,
+        password: credentialForm.password
+      });
+      tenantPortalService.setToken(response.data.token, credentialForm.remember);
+      setPortalData(response.data);
+      setSuccess('Signed in to tenant portal.');
+    } catch (err) {
+      setError(getReadableApiError(err, 'Tenant portal login failed.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const refreshPortal = async () => {
-    const response = await tenantPortalService.access(accessForm);
+    const response = tenantPortalService.getToken()
+      ? await tenantPortalService.me()
+      : await tenantPortalService.access(accessForm);
     setPortalData(response.data);
   };
 
@@ -89,31 +161,57 @@ const TenantPortal = () => {
 
       <section style={styles.shell}>
         {!tenant ? (
-          <form style={styles.accessCard} onSubmit={handleAccess}>
-            <h2 style={styles.sectionTitle}>Access your account</h2>
-            <p style={styles.muted}>Use your registered email, phone, or national ID. Access code is the last 4 digits of your phone or national ID.</p>
+          <form style={styles.accessCard} onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleAccess}>
+            <h2 style={styles.sectionTitle}>{mode === 'login' ? 'Tenant login' : mode === 'register' ? 'Create tenant account' : 'One-time access'}</h2>
+            <div style={styles.modeTabs}>
+              <button type="button" style={{ ...styles.modeTab, ...(mode === 'login' ? styles.modeTabActive : {}) }} onClick={() => setMode('login')}>Login</button>
+              <button type="button" style={{ ...styles.modeTab, ...(mode === 'register' ? styles.modeTabActive : {}) }} onClick={() => setMode('register')}>Create account</button>
+              <button type="button" style={{ ...styles.modeTab, ...(mode === 'access' ? styles.modeTabActive : {}) }} onClick={() => setMode('access')}>One-time</button>
+            </div>
+            <p style={styles.muted}>
+              {mode === 'register'
+                ? 'Verify your tenant record once, then save your own username and password.'
+                : mode === 'login'
+                  ? 'Use the tenant portal credentials you created.'
+                  : 'Use your registered email, phone, or national ID. Access code is the last 4 digits of your phone or national ID.'}
+            </p>
             {error ? <div style={styles.error}>{error}</div> : null}
-            <label style={styles.label}>
-              Email, phone, or national ID
-              <input
-                value={accessForm.identifier}
-                onChange={(event) => setAccessForm((prev) => ({ ...prev, identifier: event.target.value }))}
-                style={styles.input}
-                required
-              />
-            </label>
-            <label style={styles.label}>
-              Access code
-              <input
-                value={accessForm.accessCode}
-                onChange={(event) => setAccessForm((prev) => ({ ...prev, accessCode: event.target.value }))}
-                style={styles.input}
-                inputMode="numeric"
-                required
-              />
-            </label>
+            {mode !== 'login' ? (
+              <>
+                <label style={styles.label}>
+                  Email, phone, or national ID
+                  <input value={accessForm.identifier} onChange={(event) => setAccessForm((prev) => ({ ...prev, identifier: event.target.value }))} style={styles.input} required />
+                </label>
+                <label style={styles.label}>
+                  Access code
+                  <input value={accessForm.accessCode} onChange={(event) => setAccessForm((prev) => ({ ...prev, accessCode: event.target.value }))} style={styles.input} inputMode="numeric" required />
+                </label>
+              </>
+            ) : null}
+            {mode !== 'access' ? (
+              <>
+                <label style={styles.label}>
+                  Username
+                  <input value={credentialForm.username} onChange={(event) => setCredentialForm((prev) => ({ ...prev, username: event.target.value }))} style={styles.input} required />
+                </label>
+                <label style={styles.label}>
+                  Password
+                  <input type="password" value={credentialForm.password} onChange={(event) => setCredentialForm((prev) => ({ ...prev, password: event.target.value }))} style={styles.input} required />
+                </label>
+                {mode === 'register' ? (
+                  <label style={styles.label}>
+                    Confirm password
+                    <input type="password" value={credentialForm.confirmPassword} onChange={(event) => setCredentialForm((prev) => ({ ...prev, confirmPassword: event.target.value }))} style={styles.input} required />
+                  </label>
+                ) : null}
+                <label style={styles.checkboxLabel}>
+                  <input type="checkbox" checked={credentialForm.remember} onChange={(event) => setCredentialForm((prev) => ({ ...prev, remember: event.target.checked }))} />
+                  Keep me signed in
+                </label>
+              </>
+            ) : null}
             <button type="submit" style={styles.primaryButton} disabled={loading}>
-              {loading ? 'Checking...' : 'Open Portal'}
+              {loading ? 'Checking...' : mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Open Portal'}
             </button>
           </form>
         ) : (
@@ -124,7 +222,7 @@ const TenantPortal = () => {
                 <h2 style={styles.tenantName}>{tenant.full_name}</h2>
                 <p style={styles.muted}>{tenant.building_name || 'Building'} · Unit {tenant.unit_number || '-'}</p>
               </div>
-              <button type="button" style={styles.secondaryButton} onClick={() => setPortalData(null)}>Switch tenant</button>
+              <button type="button" style={styles.secondaryButton} onClick={() => { tenantPortalService.clearToken(); setPortalData(null); }}>Sign out</button>
             </section>
 
             {error ? <div style={styles.errorWide}>{error}</div> : null}
@@ -243,7 +341,11 @@ const styles = {
   muted: { margin: '0 0 14px', color: '#64748b', lineHeight: 1.5 },
   formGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 },
   label: { display: 'grid', gap: 6, color: '#334155', fontSize: 13, fontWeight: 800 },
+  checkboxLabel: { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#334155', fontSize: 13, fontWeight: 800 },
   input: { width: '100%', minHeight: 42, border: '1px solid #cbd5e1', borderRadius: 9, padding: '0 12px', background: '#fff', color: '#0f172a' },
+  modeTabs: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginBottom: 14 },
+  modeTab: { minHeight: 38, border: '1px solid #cbd5e1', borderRadius: 9, background: '#fff', color: '#334155', fontWeight: 800, cursor: 'pointer', padding: '0 8px' },
+  modeTabActive: { background: '#eff6ff', borderColor: '#93c5fd', color: '#1d4ed8' },
   primaryButton: { minHeight: 42, border: 'none', borderRadius: 9, background: '#2563eb', color: '#fff', padding: '0 16px', fontWeight: 900, cursor: 'pointer' },
   secondaryButton: { minHeight: 40, border: '1px solid #cbd5e1', borderRadius: 9, background: '#fff', color: '#1e293b', padding: '0 14px', fontWeight: 800, cursor: 'pointer' },
   error: { marginBottom: 12, padding: 12, borderRadius: 10, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' },

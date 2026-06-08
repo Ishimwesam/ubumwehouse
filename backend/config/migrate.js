@@ -243,6 +243,20 @@ const createTables = () => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS tenant_portal_accounts (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT UNIQUE NOT NULL,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      is_active INTEGER DEFAULT 1,
+      last_login_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
       sid TEXT PRIMARY KEY,
       sess TEXT NOT NULL,

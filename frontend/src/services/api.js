@@ -118,7 +118,7 @@ export const markSuccessfulSync = () => {
 apiClient.interceptors.request.use(
   (config) => {
     const token = getToken();
-    if (token) {
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -347,7 +347,24 @@ export const paymentService = {
 };
 
 export const tenantPortalService = {
+  getToken: () => sessionStorage.getItem('tenantPortalToken') || localStorage.getItem('tenantPortalToken'),
+  setToken: (token, remember = false) => {
+    sessionStorage.removeItem('tenantPortalToken');
+    localStorage.removeItem('tenantPortalToken');
+    if (token) {
+      (remember ? localStorage : sessionStorage).setItem('tenantPortalToken', token);
+    }
+  },
+  clearToken: () => {
+    sessionStorage.removeItem('tenantPortalToken');
+    localStorage.removeItem('tenantPortalToken');
+  },
   access: (data) => apiClient.post('/tenant-portal/access', data),
+  register: (data) => apiClient.post('/tenant-portal/register', data),
+  login: (data) => apiClient.post('/tenant-portal/login', data),
+  me: () => apiClient.get('/tenant-portal/me', {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
   uploadPaymentProof: (data) => {
     const formData = new FormData();
     Object.entries(data || {}).forEach(([key, value]) => {
@@ -355,8 +372,12 @@ export const tenantPortalService = {
         formData.append(key, value);
       }
     });
+    const token = tenantPortalService.getToken();
     return apiClient.post('/tenant-portal/payment-proof', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
     });
   }
 };
