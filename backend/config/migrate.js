@@ -344,6 +344,20 @@ const createTables = () => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS tenant_push_subscriptions (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      user_agent TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(tenant_id, endpoint),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS tenant_followups (
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,

@@ -4,7 +4,7 @@ import { getReadableApiError, resolveUploadUrl, tenantPortalService } from '../s
 import { emitAppToast } from '../context/ToastContext';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
 import useTenantUnread from '../hooks/useTenantUnread';
-import { clearUnread, incrementUnread, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
+import { clearUnread, incrementUnread, registerTenantPushSubscription, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -224,6 +224,7 @@ const TenantPortal = () => {
     setSuccess('');
     try {
       requestNotificationPermission();
+      registerTenantPushSubscription(tenantPortalService);
       const response = await tenantPortalService.login({
         username: credentialForm.username,
         password: credentialForm.password

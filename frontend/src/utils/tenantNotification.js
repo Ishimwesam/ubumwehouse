@@ -43,7 +43,7 @@ export const showBrowserNotification = (title, body, options = {}) => {
   try {
     const notification = new Notification(title, {
       body,
-      icon: '/samm.ico',
+      icon: '/tenant-portal-icon.svg',
       badge: '/samm.ico',
       tag: 'tp-admin-message',
       renotify: true,
@@ -53,5 +53,47 @@ export const showBrowserNotification = (title, body, options = {}) => {
       window.focus();
       notification.close();
     };
+  } catch (_) {}
+};
+
+// ─── Web Push (PWA — works when app is fully closed) ─────────────────────────
+
+const urlBase64ToUint8Array = (base64String) => {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+};
+
+export const registerTenantPushSubscription = async (tenantPortalServiceRef) => {
+  if (typeof window === 'undefined') return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const permission = await requestNotificationPermission();
+    if (permission !== 'granted') return;
+
+    const swReg = await navigator.serviceWorker.ready;
+    if (!swReg.pushManager) return;
+
+    const vapidRes = await tenantPortalServiceRef.getVapidPublicKey();
+    const vapidPublicKey = vapidRes?.data?.publicKey;
+    if (!vapidPublicKey) return;
+
+    let subscription = await swReg.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+    }
+
+    await tenantPortalServiceRef.subscribePush({
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))),
+        auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth'))))
+      }
+    });
   } catch (_) {}
 };

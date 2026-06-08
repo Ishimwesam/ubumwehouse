@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
 import { emitAppToast } from '../context/ToastContext';
-import { clearUnread, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
+import { clearUnread, registerTenantPushSubscription, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
 
 const TenantPortalMessages = () => {
@@ -34,6 +34,7 @@ const TenantPortalMessages = () => {
     }
     clearUnread();
     requestNotificationPermission();
+    registerTenantPushSubscription(tenantPortalService);
     loadMessages();
   }, [navigate]);
 

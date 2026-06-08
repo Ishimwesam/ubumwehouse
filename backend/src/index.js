@@ -47,6 +47,7 @@ const auditRoutes = require('./routes/auditRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const tenantPortalRoutes = require('./routes/tenantPortalRoutes');
 const realtimeRoutes = require('./routes/realtimeRoutes');
+const pushRoutes = require('./routes/pushRoutes');
 const { startWhatsAppReminderScheduler } = require('./services/whatsappReminderService');
 const { startBackupScheduler } = require('./services/backupService');
 const { broadcastRentalAppRefresh } = require('./services/realtimeService');
@@ -206,6 +207,7 @@ app.use('/api/audit-logs', auditRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/tenant-portal', tenantPortalRoutes);
 app.use('/api/realtime', realtimeRoutes);
+app.use('/api/push', pushRoutes);
 
 if (isProduction) {
   app.use(express.static(frontendDistPath));

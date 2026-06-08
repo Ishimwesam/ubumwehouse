@@ -407,6 +407,19 @@ export const tenantPortalService = {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
+  },
+  getVapidPublicKey: () => axios.get(`${API_BASE_URL}/push/vapid-public-key`),
+  subscribePush: (subscription) => {
+    const token = tenantPortalService.getToken();
+    return axios.post(`${API_BASE_URL}/push/subscribe`, subscription, {
+      headers: { Authorization: `Bearer ${token || ''}` }
+    });
+  },
+  unsubscribePush: (endpoint) => {
+    const token = tenantPortalService.getToken();
+    return axios.post(`${API_BASE_URL}/push/unsubscribe`, { endpoint }, {
+      headers: { Authorization: `Bearer ${token || ''}` }
+    });
   }
 };
 

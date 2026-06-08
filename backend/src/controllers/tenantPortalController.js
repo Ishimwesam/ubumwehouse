@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../../config/database');
 const paymentController = require('./paymentController');
 const { rentForPeriodExpression } = require('../services/rentHistoryService');
+const { sendPushToTenant } = require('./pushController');
 
 const currentPeriodExpression = "strftime('%Y-%m', 'now')";
 const currentTenantRentExpression = rentForPeriodExpression('t', 'u', currentPeriodExpression);
@@ -716,6 +717,12 @@ const sendAdminMessageToTenant = (req, res) => {
             if (fetchErr) return res.status(500).json({ error: 'Message sent but failed to load response.' });
             notifyTenantStream(tenantId, row);
             notifyAdminStream(row);
+            sendPushToTenant(
+              tenantId,
+              'UBUMWE HOUSE LTD',
+              row.message || 'You have a new message from support.',
+              '/tenant-portal/messages'
+            );
             return res.status(201).json(row);
           }
         );
