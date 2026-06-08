@@ -338,6 +338,35 @@
   transform: translateX(2px);
 }
 
+/* Messages nav button keeps flex + relative for badge positioning */
+.tp-nav .tp-nav-msg-btn {
+  position: relative;
+  justify-content: space-between;
+}
+
+/* Unread message badge in sidebar */
+.tp-nav-badge {
+  display: inline-flex;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.45);
+  line-height: 1;
+  animation: tp-badge-pop 0.3s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes tp-badge-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
 .tp-logout {
   margin-top: auto;
   border: 1px solid transparent;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
 import { emitAppToast } from '../context/ToastContext';
+import { clearUnread, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
 
 const TenantPortalMessages = () => {
@@ -31,6 +32,8 @@ const TenantPortalMessages = () => {
       navigate('/tenant-portal');
       return;
     }
+    clearUnread();
+    requestNotificationPermission();
     loadMessages();
   }, [navigate]);
 
@@ -45,7 +48,11 @@ const TenantPortalMessages = () => {
         if (!payload?.id) return;
         setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
         if (payload.sender_type === 'admin') {
-          emitAppToast('Live update: new message from admin', 'realtime');
+          emitAppToast('New reply from UBUMWE HOUSE LTD support', 'realtime');
+          showBrowserNotification(
+            'UBUMWE HOUSE LTD',
+            payload.message || 'You have a new message from support.'
+          );
         }
       } catch (_) {}
     };

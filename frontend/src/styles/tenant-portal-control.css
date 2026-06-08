@@ -127,6 +127,21 @@
   line-height: 1;
 }
 
+.tenant-portal-control-summary-grid article.has-unread {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.tenant-portal-control-summary-grid article.has-unread span {
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+.tenant-portal-control-summary-grid article.has-unread strong {
+  color: #1e40af;
+}
+
 .tenant-portal-control-alert {
   border-radius: 8px;
   padding: 11px 13px;

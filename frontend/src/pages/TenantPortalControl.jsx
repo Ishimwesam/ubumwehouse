@@ -332,6 +332,10 @@ const TenantPortalControl = () => {
           <span>Inactive</span>
           <strong>{summary.inactive}</strong>
         </article>
+        <article className={accounts.reduce((s, a) => s + Number(a.unread_tenant_messages || 0), 0) > 0 ? 'has-unread' : ''}>
+          <span>Unread Messages</span>
+          <strong>{accounts.reduce((s, a) => s + Number(a.unread_tenant_messages || 0), 0)}</strong>
+        </article>
         <article>
           <span>Open Maintenance</span>
           <strong>{openMaintenanceRequests.length}</strong>

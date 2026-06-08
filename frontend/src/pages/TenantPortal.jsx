@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveUploadUrl, tenantPortalService } from '../services/api';
 import { emitAppToast } from '../context/ToastContext';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
+import useTenantUnread from '../hooks/useTenantUnread';
+import { clearUnread, incrementUnread, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -36,6 +38,7 @@ const TenantPortal = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const unreadMessages = useTenantUnread();
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     payment_date: today(),
@@ -140,7 +143,12 @@ const TenantPortal = () => {
         if (!payload?.id) return;
         setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
         if (payload.sender_type === 'admin') {
-          emitAppToast('Live update: new message from admin', 'realtime');
+          incrementUnread();
+          emitAppToast('New reply from UBUMWE HOUSE LTD support', 'realtime');
+          showBrowserNotification(
+            'UBUMWE HOUSE LTD',
+            payload.message || 'You have a new message from support.'
+          );
         }
       } catch (_) {}
     };
@@ -215,6 +223,7 @@ const TenantPortal = () => {
     setError('');
     setSuccess('');
     try {
+      requestNotificationPermission();
       const response = await tenantPortalService.login({
         username: credentialForm.username,
         password: credentialForm.password
@@ -386,7 +395,10 @@ const TenantPortal = () => {
               <button type="button" onClick={() => navigate('/tenant-portal/payments')}>Payments</button>
               <button type="button" onClick={() => navigate('/tenant-portal/upload')}>Upload Receipt</button>
               <button type="button" onClick={() => navigate('/tenant-portal/maintenance')}>Maintenance</button>
-              <button type="button" onClick={() => navigate('/tenant-portal/messages')}>Messages</button>
+              <button type="button" className="tp-nav-msg-btn" onClick={() => { clearUnread(); navigate('/tenant-portal/messages'); }}>
+                Messages
+                {unreadMessages > 0 ? <span className="tp-nav-badge">{unreadMessages > 99 ? '99+' : unreadMessages}</span> : null}
+              </button>
               <button type="button" onClick={() => navigate('/tenant-portal/announcements')}>Announcements</button>
               <button type="button" onClick={() => navigate('/tenant-portal/profile')}>Profile</button>
               <button type="button" onClick={() => navigate('/forgot-password')}>Change Password</button>
