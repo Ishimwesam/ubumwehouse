@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataSyncProvider } from './context/DataSyncContext';
@@ -7,34 +7,40 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import PageLoader from './components/PageLoader';
 import AppErrorBoundary from './components/AppErrorBoundary';
+
+// Critical / public routes — eager
 import CopilotLogin from './pages/CopilotLogin';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Tenants from './pages/Tenants';
-import TenantLedger from './pages/TenantLedger';
-import Buildings from './pages/Buildings';
-import BuildingDetails from './pages/BuildingDetails';
-import Units from './pages/Units';
-import Contracts from './pages/Contracts';
-import Expenses from './pages/Expenses';
-import PaymentsEnhanced from './pages/PaymentsEnhanced';
-import AdvancedReports from './pages/AdvancedReports';
-import PaymentHistoryPerTenant from './pages/PaymentHistoryPerTenant';
-import ManualPaymentConfirmation from './pages/ManualPaymentConfirmation';
-import DailyIncomeSummary from './pages/DailyIncomeSummary';
-import MonthlyRentSheet from './pages/MonthlyRentSheet';
-import CalendarEvents from './pages/CalendarEvents';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import SystemHealth from './pages/SystemHealth';
-import OperationsCenter from './pages/OperationsCenter';
-import ExportCenter from './pages/ExportCenter';
-import VerifyEmail from './pages/VerifyEmail';
-import VerifyLoginOtp from './pages/VerifyLoginOtp';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 import TenantPortal from './pages/TenantPortal';
-import TenantPortalControl from './pages/TenantPortalControl';
+
+// Lazy-loaded pages — each becomes its own async chunk
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Tenants = lazy(() => import('./pages/Tenants'));
+const TenantLedger = lazy(() => import('./pages/TenantLedger'));
+const Buildings = lazy(() => import('./pages/Buildings'));
+const BuildingDetails = lazy(() => import('./pages/BuildingDetails'));
+const Units = lazy(() => import('./pages/Units'));
+const Contracts = lazy(() => import('./pages/Contracts'));
+const Expenses = lazy(() => import('./pages/Expenses'));
+const PaymentsEnhanced = lazy(() => import('./pages/PaymentsEnhanced'));
+const AdvancedReports = lazy(() => import('./pages/AdvancedReports'));
+const PaymentHistoryPerTenant = lazy(() => import('./pages/PaymentHistoryPerTenant'));
+const ManualPaymentConfirmation = lazy(() => import('./pages/ManualPaymentConfirmation'));
+const DailyIncomeSummary = lazy(() => import('./pages/DailyIncomeSummary'));
+const MonthlyRentSheet = lazy(() => import('./pages/MonthlyRentSheet'));
+const CalendarEvents = lazy(() => import('./pages/CalendarEvents'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const SystemHealth = lazy(() => import('./pages/SystemHealth'));
+const OperationsCenter = lazy(() => import('./pages/OperationsCenter'));
+const ExportCenter = lazy(() => import('./pages/ExportCenter'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const VerifyLoginOtp = lazy(() => import('./pages/VerifyLoginOtp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const TenantPortalControl = lazy(() => import('./pages/TenantPortalControl'));
+
+const PageFallback = () => <PageLoader text="Loading..." minHeight="60vh" />;
 import { applyAppFont, getStoredAppFont } from './utils/appFont';
 
 import './styles/globals.css';
@@ -60,6 +66,7 @@ const ProtectedPageRoutes = () => {
   return (
     <div className="page-transition-shell">
       <AppErrorBoundary resetKey={location.pathname}>
+        <Suspense fallback={<PageFallback />}>
         <Routes location={location}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/tenants" element={<Tenants />} />
@@ -85,6 +92,7 @@ const ProtectedPageRoutes = () => {
           <Route path="/tenant-portal-control" element={withRoles(<TenantPortalControl />, ['manager', 'admin'])} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
+        </Suspense>
       </AppErrorBoundary>
     </div>
   );
@@ -98,6 +106,7 @@ const AppRoutes = () => {
   }
 
   return (
+    <Suspense fallback={<PageFallback />}>
     <Routes>
       <Route path="/login" element={<CopilotLogin />} />
       <Route path="/register" element={<Register />} />
@@ -118,6 +127,7 @@ const AppRoutes = () => {
       />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+    </Suspense>
   );
 };
 
