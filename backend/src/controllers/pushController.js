@@ -3,8 +3,12 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../../config/database');
 const jwt = require('jsonwebtoken');
 
+const FALLBACK_VAPID_PUBLIC_KEY = 'BAe8XGZc5F4uZKVXdPtZhrRizEL-xABL1ZJRHAcvtdZd35VpMoyI_Q0RToC2LUomF8kL3nCkD_I8q92nK9DamS4';
+const FALLBACK_VAPID_PRIVATE_KEY = 'pAYNDI7xaQOAFEy0hXmADtSxSB0_86xcynfVqjXdZIs';
+const FALLBACK_VAPID_EMAIL = 'mailto:ubumwehouseltd@gmail.com';
+
 const getVapidPublicKey = (_req, res) => {
-  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const publicKey = process.env.VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
   if (!publicKey) return res.status(503).json({ error: 'Push notifications are not configured.' });
   return res.json({ publicKey });
 };
@@ -68,9 +72,9 @@ const unsubscribeTenantPush = (req, res) => {
 };
 
 const sendPushToTenant = (tenantId, title, body, url = '/tenant-portal/messages') => {
-  const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
-  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-  const vapidEmail = process.env.VAPID_EMAIL || 'mailto:ubumwehouseltd@gmail.com';
+  const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || FALLBACK_VAPID_PRIVATE_KEY;
+  const vapidEmail = process.env.VAPID_EMAIL || FALLBACK_VAPID_EMAIL;
 
   if (!vapidPublicKey || !vapidPrivateKey) return;
 
