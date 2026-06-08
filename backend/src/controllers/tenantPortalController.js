@@ -26,8 +26,7 @@ const tenantPortalFields = `
   (
     SELECT COALESCE(SUM(p.amount), 0)
     FROM payments p
-        [tenant.id],
-        (contractsErr, contracts = []) => {
+    WHERE p.tenant_id = t.id
       AND p.unit_id = t.unit_id
       AND ${paymentPeriodForAlias('p')} = strftime('%Y-%m', 'now')
       AND COALESCE(p.payment_status, 'confirmed') = 'confirmed'
