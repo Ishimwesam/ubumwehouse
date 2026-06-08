@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ubumwe-tenant-portal-v3';
+const CACHE_NAME = 'ubumwe-tenant-portal-v4';
 const APP_SHELL = [
   '/',
   '/tenant-portal',
@@ -8,7 +8,9 @@ const APP_SHELL = [
   '/tenant-portal/messages',
   '/tenant-portal/announcements',
   '/tenant-portal/profile',
-  '/samm.ico',
+  '/samm-192.png',
+  '/samm-512.png',
+  '/apple-touch-icon.png',
   '/samm.svg',
   '/tenant-portal.webmanifest'
 ];
@@ -75,8 +77,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/samm.ico',
-      badge: '/samm.ico',
+      icon: '/samm-192.png',
+      badge: '/samm-192.png',
       tag: 'tp-admin-message',
       renotify: true,
       data: { url: data.url }

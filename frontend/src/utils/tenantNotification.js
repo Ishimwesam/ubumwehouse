@@ -43,8 +43,8 @@ export const showBrowserNotification = (title, body, options = {}) => {
   try {
     const notification = new Notification(title, {
       body,
-      icon: '/samm.ico',
-      badge: '/samm.ico',
+      icon: '/samm-192.png',
+      badge: '/samm-192.png',
       tag: 'tp-admin-message',
       renotify: true,
       ...options
