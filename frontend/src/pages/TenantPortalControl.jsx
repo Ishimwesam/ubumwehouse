@@ -22,12 +22,24 @@ const TenantPortalControl = () => {
   const [chatDraft, setChatDraft] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [sendingChat, setSendingChat] = useState(false);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+
+  const accountsByPriority = useMemo(() => {
+    return [...accounts].sort((a, b) => {
+      const unreadDiff = Number(b.unread_tenant_messages || 0) - Number(a.unread_tenant_messages || 0);
+      if (unreadDiff !== 0) return unreadDiff;
+      return String(a.tenant_name || '').localeCompare(String(b.tenant_name || ''));
+    });
+  }, [accounts]);
 
   const filteredAccounts = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return accounts;
+    const source = showUnreadOnly
+      ? accountsByPriority.filter((account) => Number(account.unread_tenant_messages || 0) > 0)
+      : accountsByPriority;
+    if (!term) return source;
 
-    return accounts.filter((account) => [
+    return source.filter((account) => [
       account.tenant_name,
       account.username,
       account.tenant_email,
@@ -35,7 +47,7 @@ const TenantPortalControl = () => {
       account.unit_number,
       account.building_name
     ].some((value) => String(value || '').toLowerCase().includes(term)));
-  }, [accounts, search]);
+  }, [accountsByPriority, search, showUnreadOnly]);
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.tenant_id === selectedTenantId) || null,
@@ -50,7 +62,15 @@ const TenantPortalControl = () => {
       const nextAccounts = response.data?.accounts || [];
       setAccounts(nextAccounts);
       setSummary(response.data?.summary || { total: 0, active: 0, inactive: 0 });
-      if (!selectedTenantId && nextAccounts.length) {
+      const unreadFirst = nextAccounts.find((account) => Number(account.unread_tenant_messages || 0) > 0);
+      const selectedStillExists = nextAccounts.some((account) => account.tenant_id === selectedTenantId);
+      if (!selectedStillExists && unreadFirst) {
+        setSelectedTenantId(unreadFirst.tenant_id);
+      } else if (!selectedStillExists && nextAccounts.length) {
+        setSelectedTenantId(nextAccounts[0].tenant_id);
+      } else if (!selectedTenantId && unreadFirst) {
+        setSelectedTenantId(unreadFirst.tenant_id);
+      } else if (!selectedTenantId && nextAccounts.length) {
         setSelectedTenantId(nextAccounts[0].tenant_id);
       }
     } catch (err) {
@@ -80,6 +100,14 @@ const TenantPortalControl = () => {
   useEffect(() => {
     if (!selectedTenantId) return;
     loadChat(selectedTenantId);
+  }, [selectedTenantId]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      loadAccounts();
+      if (selectedTenantId) loadChat(selectedTenantId);
+    }, 15000);
+    return () => clearInterval(timer);
   }, [selectedTenantId]);
 
   const handleToggleStatus = async (account) => {
@@ -165,12 +193,23 @@ const TenantPortalControl = () => {
       <section className="tenant-portal-control-layout">
         <article className="tenant-portal-control-panel">
           <div className="tenant-portal-control-panel-header">
-            <h2>Tenant Accounts</h2>
+            <h2>Tenant Inbox</h2>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search tenant, username, contact, unit, or building"
             />
+          </div>
+
+          <div className="tenant-portal-control-filter-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={showUnreadOnly}
+                onChange={(event) => setShowUnreadOnly(event.target.checked)}
+              />
+              Show unread only
+            </label>
           </div>
 
           <div className="tenant-portal-control-table-wrap">
@@ -207,6 +246,13 @@ const TenantPortalControl = () => {
                     <td>{Number(account.unread_tenant_messages || 0)}</td>
                     <td>
                       <div className="actions">
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => setSelectedTenantId(account.tenant_id)}
+                        >
+                          Open Inbox
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(account)}

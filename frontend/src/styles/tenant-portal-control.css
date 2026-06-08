@@ -124,6 +124,27 @@
   width: min(100%, 430px);
 }
 
+.tenant-portal-control-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tenant-portal-control-filter-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tenant-portal-control-filter-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1d4ed8;
+}
+
 .tenant-portal-control-table-wrap {
   overflow-x: auto;
 }
