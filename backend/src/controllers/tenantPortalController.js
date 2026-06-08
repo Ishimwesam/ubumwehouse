@@ -8,6 +8,14 @@ const { rentForPeriodExpression } = require('../services/rentHistoryService');
 const currentPeriodExpression = "strftime('%Y-%m', 'now')";
 const currentTenantRentExpression = rentForPeriodExpression('t', 'u', currentPeriodExpression);
 const paymentPeriodForAlias = (alias = 'p') => `COALESCE(${alias}.payment_period, strftime('%Y-%m', ${alias}.payment_date))`;
+const lifecycleStatusSql = `
+  CASE
+    WHEN COALESCE(c.status, '') = 'terminated' THEN 'terminated'
+    WHEN COALESCE(c.status, '') = 'active' AND DATE(c.contract_end) < DATE('now') THEN 'ended'
+    WHEN COALESCE(c.status, '') = 'active' THEN 'active'
+    ELSE 'others'
+  END
+`;
 
 const tenantPortalFields = `
   t.id, t.full_name, t.email, t.phone, t.national_id, t.status,
@@ -18,7 +26,8 @@ const tenantPortalFields = `
   (
     SELECT COALESCE(SUM(p.amount), 0)
     FROM payments p
-    WHERE p.tenant_id = t.id
+        [tenant.id],
+        (contractsErr, contracts = []) => {
       AND p.unit_id = t.unit_id
       AND ${paymentPeriodForAlias('p')} = strftime('%Y-%m', 'now')
       AND COALESCE(p.payment_status, 'confirmed') = 'confirmed'
@@ -190,7 +199,7 @@ const loadPortalPayload = (tenant, callback) => {
 
       db.all(
         `SELECT c.id, c.contract_start, c.contract_end, c.status,
-                c.lifecycle_status, c.terminated_at, c.termination_reason,
+                ${lifecycleStatusSql} as lifecycle_status, c.terminated_at, c.termination_reason,
                 u.unit_number, b.name as building_name
          FROM contracts c
          LEFT JOIN units u ON u.id = c.unit_id
