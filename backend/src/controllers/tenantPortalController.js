@@ -16,6 +16,11 @@ const lifecycleStatusSql = `
     ELSE 'others'
   END
 `;
+const tenantPortalJwtOptions = {
+  issuer: 'ubumwe-tenant-portal',
+  audience: 'tenant-portal-client',
+  algorithm: 'HS256'
+};
 
 const tenantPortalFields = `
   t.id, t.full_name, t.email, t.phone, t.national_id, t.status,
@@ -45,6 +50,7 @@ const normalizeIdentity = (value = '') => String(value || '').trim().toLowerCase
 const digitsOnly = (value = '') => String(value || '').replace(/\D/g, '');
 const tail4 = (value = '') => digitsOnly(value).slice(-4);
 const normalizeUsername = (value = '') => String(value || '').trim().toLowerCase();
+const normalizeMessage = (value = '') => String(value || '').trim().replace(/\s+/g, ' ');
 const validatePassword = (password) => {
   if (typeof password !== 'string' || password.length < 8) return 'Password must be at least 8 characters.';
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return 'Password must include at least one letter and one number.';
@@ -64,7 +70,13 @@ const createTenantToken = (account, tenant) => {
       username: account.username
     },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.TENANT_PORTAL_JWT_EXPIRE || '30d' }
+    {
+      expiresIn: process.env.TENANT_PORTAL_JWT_EXPIRE || '30d',
+      issuer: tenantPortalJwtOptions.issuer,
+      audience: tenantPortalJwtOptions.audience,
+      algorithm: tenantPortalJwtOptions.algorithm,
+      subject: account.id
+    }
   );
 };
 
@@ -145,8 +157,12 @@ const findTenantFromToken = (req, callback) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.type !== 'tenant_portal' || !decoded.tenant_id) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: [tenantPortalJwtOptions.algorithm],
+      issuer: tenantPortalJwtOptions.issuer,
+      audience: tenantPortalJwtOptions.audience
+    });
+    if (decoded.type !== 'tenant_portal' || !decoded.tenant_id || !decoded.account_id) {
       callback({ status: 401, error: 'Invalid tenant portal token.' });
       return;
     }
@@ -157,7 +173,7 @@ const findTenantFromToken = (req, callback) => {
        LEFT JOIN units u ON t.unit_id = u.id
        LEFT JOIN buildings b ON u.building_id = b.id
        INNER JOIN tenant_portal_accounts a ON a.tenant_id = t.id
-       WHERE t.id = ? AND a.id = ? AND a.is_active = 1
+      WHERE t.id = ? AND t.status = 'active' AND a.id = ? AND a.is_active = 1
        LIMIT 1`,
       [decoded.tenant_id, decoded.account_id],
       (err, tenant) => {
@@ -285,12 +301,15 @@ const loginTenantPortal = (req, res) => {
   if (!normalizedUsername || !password) {
     return res.status(400).json({ error: 'Username and password are required.' });
   }
+  if (normalizedUsername.length > 120 || password.length > 160) {
+    return res.status(400).json({ error: 'Invalid username or password format.' });
+  }
 
   db.get(
     `SELECT a.id as account_id, a.username, a.password, t.id as tenant_id
      FROM tenant_portal_accounts a
      INNER JOIN tenants t ON t.id = a.tenant_id
-     WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1
+    WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1 AND t.status = 'active'
      LIMIT 1`,
     [normalizedUsername],
     (err, row) => {
@@ -325,12 +344,13 @@ const getTenantPortalMe = (req, res) => {
 };
 
 const uploadTenantPaymentProof = (req, res) => {
-  const resolveTenant = req.headers.authorization
-    ? findTenantFromToken
-    : (request, callback) => findTenantForPortal(request.body || {}, callback);
-
-  resolveTenant(req, (err, tenant) => {
+  return findTenantFromToken(req, (err, tenant) => {
     if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const amount = Number(req.body?.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
+    }
 
     req.body.tenant_id = tenant.id;
     req.body.unit_id = tenant.unit_id;
@@ -341,11 +361,142 @@ const uploadTenantPaymentProof = (req, res) => {
   });
 };
 
+const getTenantPortalMessages = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    db.all(
+      `SELECT m.id, m.tenant_id, m.sender_type, m.sender_user_id, m.message, m.created_at,
+              COALESCE(u.full_name, u.username, 'Admin') as sender_name
+       FROM tenant_portal_messages m
+       LEFT JOIN users u ON u.id = m.sender_user_id
+       WHERE m.tenant_id = ?
+       ORDER BY m.created_at ASC
+       LIMIT 200`,
+      [tenant.id],
+      (messagesErr, rows = []) => {
+        if (messagesErr) return res.status(500).json({ error: 'Error loading support messages.' });
+
+        db.run(
+          `UPDATE tenant_portal_messages
+           SET read_by_tenant = 1
+           WHERE tenant_id = ? AND sender_type = 'admin'`,
+          [tenant.id],
+          () => {}
+        );
+
+        return res.json({ messages: rows });
+      }
+    );
+  });
+};
+
+const sendTenantPortalMessage = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const message = normalizeMessage(req.body?.message);
+    if (!message) return res.status(400).json({ error: 'Message is required.' });
+    if (message.length > 1000) return res.status(400).json({ error: 'Message is too long (max 1000 characters).' });
+
+    const messageId = uuidv4();
+    db.run(
+      `INSERT INTO tenant_portal_messages (id, tenant_id, sender_type, message, read_by_tenant, read_by_admin)
+       VALUES (?, ?, 'tenant', ?, 1, 0)`,
+      [messageId, tenant.id, message],
+      (insertErr) => {
+        if (insertErr) return res.status(500).json({ error: 'Error sending support message.' });
+
+        db.get(
+          `SELECT id, tenant_id, sender_type, sender_user_id, message, created_at, 'You' as sender_name
+           FROM tenant_portal_messages
+           WHERE id = ?`,
+          [messageId],
+          (fetchErr, row) => {
+            if (fetchErr) return res.status(500).json({ error: 'Support message sent but failed to load response.' });
+            return res.status(201).json(row);
+          }
+        );
+      }
+    );
+  });
+};
+
+const getTenantMessagesForAdmin = (req, res) => {
+  const tenantId = String(req.params.tenantId || '').trim();
+  if (!tenantId) return res.status(400).json({ error: 'Tenant id is required.' });
+
+  db.all(
+    `SELECT m.id, m.tenant_id, m.sender_type, m.sender_user_id, m.message, m.created_at,
+            COALESCE(u.full_name, u.username, 'Admin') as sender_name
+     FROM tenant_portal_messages m
+     LEFT JOIN users u ON u.id = m.sender_user_id
+     WHERE m.tenant_id = ?
+     ORDER BY m.created_at ASC
+     LIMIT 200`,
+    [tenantId],
+    (err, rows = []) => {
+      if (err) return res.status(500).json({ error: 'Error loading tenant support messages.' });
+
+      db.run(
+        `UPDATE tenant_portal_messages
+         SET read_by_admin = 1
+         WHERE tenant_id = ? AND sender_type = 'tenant'`,
+        [tenantId],
+        () => {}
+      );
+
+      return res.json({ messages: rows });
+    }
+  );
+};
+
+const sendAdminMessageToTenant = (req, res) => {
+  const tenantId = String(req.params.tenantId || '').trim();
+  const message = normalizeMessage(req.body?.message);
+  if (!tenantId) return res.status(400).json({ error: 'Tenant id is required.' });
+  if (!message) return res.status(400).json({ error: 'Message is required.' });
+  if (message.length > 1000) return res.status(400).json({ error: 'Message is too long (max 1000 characters).' });
+
+  db.get('SELECT id FROM tenants WHERE id = ?', [tenantId], (tenantErr, tenantRow) => {
+    if (tenantErr) return res.status(500).json({ error: 'Error validating tenant.' });
+    if (!tenantRow) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const messageId = uuidv4();
+    db.run(
+      `INSERT INTO tenant_portal_messages (id, tenant_id, sender_type, sender_user_id, message, read_by_tenant, read_by_admin)
+       VALUES (?, ?, 'admin', ?, ?, 0, 1)`,
+      [messageId, tenantId, req.user?.id || null, message],
+      (insertErr) => {
+        if (insertErr) return res.status(500).json({ error: 'Error sending admin support message.' });
+
+        db.get(
+          `SELECT m.id, m.tenant_id, m.sender_type, m.sender_user_id, m.message, m.created_at,
+                  COALESCE(u.full_name, u.username, 'Admin') as sender_name
+           FROM tenant_portal_messages m
+           LEFT JOIN users u ON u.id = m.sender_user_id
+           WHERE m.id = ?`,
+          [messageId],
+          (fetchErr, row) => {
+            if (fetchErr) return res.status(500).json({ error: 'Message sent but failed to load response.' });
+            return res.status(201).json(row);
+          }
+        );
+      }
+    );
+  });
+};
+
 const listTenantPortalAccounts = (req, res) => {
   db.all(
     `SELECT a.id, a.tenant_id, a.username, a.is_active, a.last_login_at, a.created_at,
             t.full_name as tenant_name, t.email as tenant_email, t.phone as tenant_phone,
-            u.unit_number, b.name as building_name
+            u.unit_number, b.name as building_name,
+            (
+              SELECT COUNT(*)
+              FROM tenant_portal_messages m
+              WHERE m.tenant_id = a.tenant_id AND m.sender_type = 'tenant' AND COALESCE(m.read_by_admin, 0) = 0
+            ) as unread_tenant_messages
      FROM tenant_portal_accounts a
      INNER JOIN tenants t ON t.id = a.tenant_id
      LEFT JOIN units u ON u.id = t.unit_id
@@ -412,6 +563,10 @@ module.exports = {
   loginTenantPortal,
   getTenantPortalMe,
   uploadTenantPaymentProof,
+  getTenantPortalMessages,
+  sendTenantPortalMessage,
+  getTenantMessagesForAdmin,
+  sendAdminMessageToTenant,
   listTenantPortalAccounts,
   updateTenantPortalAccountStatus,
   resetTenantPortalAccountPassword

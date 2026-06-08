@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getReadableApiError, tenantPortalAdminService } from '../services/api';
+import '../styles/tenant-portal-control.css';
 
 const formatDateTime = (value) => {
   if (!value) return 'Never';
@@ -16,6 +17,11 @@ const TenantPortalControl = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatDraft, setChatDraft] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [sendingChat, setSendingChat] = useState(false);
 
   const filteredAccounts = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -31,13 +37,22 @@ const TenantPortalControl = () => {
     ].some((value) => String(value || '').toLowerCase().includes(term)));
   }, [accounts, search]);
 
+  const selectedAccount = useMemo(
+    () => accounts.find((account) => account.tenant_id === selectedTenantId) || null,
+    [accounts, selectedTenantId]
+  );
+
   const loadAccounts = async () => {
     setLoading(true);
     setError('');
     try {
       const response = await tenantPortalAdminService.listAccounts();
-      setAccounts(response.data?.accounts || []);
+      const nextAccounts = response.data?.accounts || [];
+      setAccounts(nextAccounts);
       setSummary(response.data?.summary || { total: 0, active: 0, inactive: 0 });
+      if (!selectedTenantId && nextAccounts.length) {
+        setSelectedTenantId(nextAccounts[0].tenant_id);
+      }
     } catch (err) {
       setError(getReadableApiError(err, 'Failed to load tenant portal accounts.'));
     } finally {
@@ -45,9 +60,27 @@ const TenantPortalControl = () => {
     }
   };
 
+  const loadChat = async (tenantId) => {
+    if (!tenantId) return;
+    setChatLoading(true);
+    try {
+      const response = await tenantPortalAdminService.getTenantMessages(tenantId);
+      setChatMessages(response.data?.messages || []);
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to load tenant chat messages.'));
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadAccounts();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTenantId) return;
+    loadChat(selectedTenantId);
+  }, [selectedTenantId]);
 
   const handleToggleStatus = async (account) => {
     setWorkingId(account.id);
@@ -81,274 +114,165 @@ const TenantPortalControl = () => {
     }
   };
 
+  const handleSendChat = async (event) => {
+    event.preventDefault();
+    if (!selectedTenantId || !chatDraft.trim()) return;
+
+    setSendingChat(true);
+    setError('');
+    try {
+      const response = await tenantPortalAdminService.sendTenantMessage(selectedTenantId, chatDraft.trim());
+      setChatMessages((prev) => [...prev, response.data]);
+      setChatDraft('');
+      await loadAccounts();
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to send support reply.'));
+    } finally {
+      setSendingChat(false);
+    }
+  };
+
   return (
-    <div style={styles.page}>
-      <div style={styles.headerRow}>
+    <div className="tenant-portal-control-page">
+      <div className="tenant-portal-control-header">
         <div>
-          <h1 style={styles.title}>Tenant Portal Control</h1>
-          <p style={styles.subtitle}>Manage tenant portal account access, activation state, and password resets.</p>
+          <h1>Tenant Portal Control</h1>
+          <p>Manage tenant access, reset credentials, and handle support chat from one place.</p>
         </div>
-        <button type="button" style={styles.refreshButton} onClick={loadAccounts} disabled={loading}>
+        <button type="button" onClick={loadAccounts} disabled={loading}>
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
-      <section style={styles.summaryGrid}>
-        <article style={styles.summaryCard}>
-          <span style={styles.summaryLabel}>Total Accounts</span>
-          <strong style={styles.summaryValue}>{summary.total}</strong>
+      <section className="tenant-portal-control-summary-grid">
+        <article>
+          <span>Total Accounts</span>
+          <strong>{summary.total}</strong>
         </article>
-        <article style={styles.summaryCard}>
-          <span style={styles.summaryLabel}>Active</span>
-          <strong style={styles.summaryValue}>{summary.active}</strong>
+        <article>
+          <span>Active</span>
+          <strong>{summary.active}</strong>
         </article>
-        <article style={styles.summaryCard}>
-          <span style={styles.summaryLabel}>Inactive</span>
-          <strong style={styles.summaryValue}>{summary.inactive}</strong>
+        <article>
+          <span>Inactive</span>
+          <strong>{summary.inactive}</strong>
         </article>
       </section>
 
-      <section style={styles.panel}>
-        <div style={styles.panelHeader}>
-          <h2 style={styles.panelTitle}>Tenant Portal Accounts</h2>
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search tenant, username, contact, unit, or building"
-            style={styles.searchInput}
-          />
-        </div>
+      {error ? <div className="tenant-portal-control-alert error">{error}</div> : null}
+      {success ? <div className="tenant-portal-control-alert success">{success}</div> : null}
 
-        {error ? <div style={styles.error}>{error}</div> : null}
-        {success ? <div style={styles.success}>{success}</div> : null}
+      <section className="tenant-portal-control-layout">
+        <article className="tenant-portal-control-panel">
+          <div className="tenant-portal-control-panel-header">
+            <h2>Tenant Accounts</h2>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search tenant, username, contact, unit, or building"
+            />
+          </div>
 
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Tenant</th>
-                <th style={styles.th}>Username</th>
-                <th style={styles.th}>Unit</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Last Login</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAccounts.map((account) => (
-                <tr key={account.id}>
-                  <td style={styles.td}>
-                    <div style={styles.primary}>{account.tenant_name || 'Unknown tenant'}</div>
-                    <div style={styles.secondary}>{account.tenant_email || account.tenant_phone || 'No contact'}</div>
-                  </td>
-                  <td style={styles.td}>{account.username}</td>
-                  <td style={styles.td}>{account.unit_number ? `${account.building_name || 'Unknown building'} / ${account.unit_number}` : 'Unassigned'}</td>
-                  <td style={styles.td}>
-                    <span style={{ ...styles.statusBadge, ...(account.is_active ? styles.statusActive : styles.statusInactive) }}>
-                      {account.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{formatDateTime(account.last_login_at)}</td>
-                  <td style={styles.td}>
-                    <div style={styles.actions}>
-                      <button
-                        type="button"
-                        style={styles.actionButton}
-                        onClick={() => handleToggleStatus(account)}
-                        disabled={workingId === account.id}
-                      >
-                        {account.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        type="button"
-                        style={styles.actionButtonSecondary}
-                        onClick={() => handleResetPassword(account)}
-                        disabled={workingId === account.id}
-                      >
-                        Reset Password
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!loading && filteredAccounts.length === 0 ? (
+          <div className="tenant-portal-control-table-wrap">
+            <table>
+              <thead>
                 <tr>
-                  <td style={styles.emptyState} colSpan={6}>No tenant portal accounts found.</td>
+                  <th>Tenant</th>
+                  <th>Username</th>
+                  <th>Status</th>
+                  <th>Unread</th>
+                  <th>Actions</th>
                 </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredAccounts.map((account) => (
+                  <tr key={account.id} className={selectedTenantId === account.tenant_id ? 'selected' : ''}>
+                    <td>
+                      <button
+                        type="button"
+                        className="tenant-link"
+                        onClick={() => setSelectedTenantId(account.tenant_id)}
+                      >
+                        {account.tenant_name || 'Unknown tenant'}
+                      </button>
+                      <div className="meta">{account.tenant_email || account.tenant_phone || 'No contact'}</div>
+                      <div className="meta">{account.unit_number ? `${account.building_name || 'Building'} / ${account.unit_number}` : 'Unassigned'}</div>
+                    </td>
+                    <td>{account.username}</td>
+                    <td>
+                      <span className={`status ${account.is_active ? 'active' : 'inactive'}`}>
+                        {account.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>{Number(account.unread_tenant_messages || 0)}</td>
+                    <td>
+                      <div className="actions">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(account)}
+                          disabled={workingId === account.id}
+                        >
+                          {account.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => handleResetPassword(account)}
+                          disabled={workingId === account.id}
+                        >
+                          Reset Password
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {!loading && filteredAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="empty">No tenant portal accounts found.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="tenant-portal-control-panel chat">
+          <div className="tenant-portal-control-panel-header">
+            <h2>
+              Support Chat
+              {selectedAccount ? ` / ${selectedAccount.tenant_name}` : ''}
+            </h2>
+            <span className="last-login">Last login: {selectedAccount ? formatDateTime(selectedAccount.last_login_at) : 'Never'}</span>
+          </div>
+
+          <div className="chat-log">
+            {chatLoading ? <div className="empty">Loading chat...</div> : null}
+            {!chatLoading && chatMessages.length === 0 ? <div className="empty">No messages yet.</div> : null}
+            {!chatLoading && chatMessages.map((message) => (
+              <div key={message.id} className={`bubble ${message.sender_type === 'admin' ? 'admin' : 'tenant'}`}>
+                <span className="author">{message.sender_type === 'admin' ? (message.sender_name || 'Admin') : 'Tenant'}</span>
+                <p>{message.message}</p>
+                <small>{formatDateTime(message.created_at)}</small>
+              </div>
+            ))}
+          </div>
+
+          <form className="chat-compose" onSubmit={handleSendChat}>
+            <textarea
+              value={chatDraft}
+              onChange={(event) => setChatDraft(event.target.value)}
+              rows={3}
+              placeholder="Reply to the tenant..."
+              disabled={!selectedTenantId}
+            />
+            <button type="submit" disabled={!selectedTenantId || sendingChat}>
+              {sendingChat ? 'Sending...' : 'Send Reply'}
+            </button>
+          </form>
+        </article>
       </section>
     </div>
   );
-};
-
-const styles = {
-  page: {
-    display: 'grid',
-    gap: 20
-  },
-  headerRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-    flexWrap: 'wrap'
-  },
-  title: {
-    margin: 0,
-    fontSize: 30,
-    color: '#0f172a'
-  },
-  subtitle: {
-    margin: '8px 0 0',
-    color: '#475569'
-  },
-  refreshButton: {
-    border: '1px solid #bfdbfe',
-    background: '#ffffff',
-    color: '#1d4ed8',
-    borderRadius: 10,
-    padding: '10px 14px',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  summaryGrid: {
-    display: 'grid',
-    gap: 12,
-    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))'
-  },
-  summaryCard: {
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: 14,
-    padding: 14,
-    display: 'grid',
-    gap: 8
-  },
-  summaryLabel: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: '#64748b'
-  },
-  summaryValue: {
-    fontSize: 24,
-    color: '#0f172a'
-  },
-  panel: {
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: 14,
-    padding: 16,
-    display: 'grid',
-    gap: 12
-  },
-  panelHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-    flexWrap: 'wrap'
-  },
-  panelTitle: {
-    margin: 0,
-    color: '#0f172a'
-  },
-  searchInput: {
-    border: '1px solid #cbd5e1',
-    borderRadius: 10,
-    padding: '10px 12px',
-    minWidth: 260,
-    width: 'min(100%, 420px)'
-  },
-  error: {
-    background: '#fef2f2',
-    border: '1px solid #fecaca',
-    color: '#b91c1c',
-    borderRadius: 10,
-    padding: '10px 12px'
-  },
-  success: {
-    background: '#ecfdf5',
-    border: '1px solid #a7f3d0',
-    color: '#047857',
-    borderRadius: 10,
-    padding: '10px 12px'
-  },
-  tableWrap: {
-    overflowX: 'auto'
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse'
-  },
-  th: {
-    textAlign: 'left',
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: 700,
-    padding: '10px 8px',
-    borderBottom: '1px solid #e2e8f0'
-  },
-  td: {
-    padding: '12px 8px',
-    borderBottom: '1px solid #f1f5f9',
-    color: '#0f172a',
-    verticalAlign: 'top'
-  },
-  primary: {
-    fontWeight: 700
-  },
-  secondary: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 2
-  },
-  statusBadge: {
-    display: 'inline-block',
-    padding: '4px 10px',
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 700
-  },
-  statusActive: {
-    background: '#dcfce7',
-    color: '#166534'
-  },
-  statusInactive: {
-    background: '#fee2e2',
-    color: '#b91c1c'
-  },
-  actions: {
-    display: 'flex',
-    gap: 8,
-    flexWrap: 'wrap'
-  },
-  actionButton: {
-    border: '1px solid #bfdbfe',
-    background: '#eff6ff',
-    color: '#1d4ed8',
-    borderRadius: 8,
-    padding: '8px 10px',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  actionButtonSecondary: {
-    border: '1px solid #d1d5db',
-    background: '#ffffff',
-    color: '#0f172a',
-    borderRadius: 8,
-    padding: '8px 10px',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  emptyState: {
-    padding: 16,
-    textAlign: 'center',
-    color: '#64748b'
-  }
 };
 
 export default TenantPortalControl;

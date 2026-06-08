@@ -257,6 +257,26 @@ const createTables = () => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS tenant_portal_messages (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      sender_type TEXT NOT NULL,
+      sender_user_id TEXT,
+      message TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      read_by_tenant INTEGER DEFAULT 0,
+      read_by_admin INTEGER DEFAULT 0,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+      FOREIGN KEY (sender_user_id) REFERENCES users(id)
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_tenant_portal_messages_tenant_created
+    ON tenant_portal_messages(tenant_id, created_at)
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
       sid TEXT PRIMARY KEY,
       sess TEXT NOT NULL,

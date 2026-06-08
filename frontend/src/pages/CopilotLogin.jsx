@@ -335,8 +335,8 @@ const CopilotLogin = () => {
                   Contact Administrator
                 </button>
               </div>
-              <div style={styles.tenantPortalLinkWrap}>
-                <Link to="/tenant-portal" style={styles.tenantPortalLink}>
+              <div className="copilot-tenant-portal-link-wrap">
+                <Link to="/tenant-portal" className="copilot-tenant-portal-link">
                   Tenant self-service portal
                 </Link>
               </div>
@@ -392,19 +392,6 @@ const CopilotLogin = () => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  tenantPortalLinkWrap: {
-    marginTop: '12px',
-    textAlign: 'center'
-  },
-  tenantPortalLink: {
-    color: '#1d4ed8',
-    fontSize: '13px',
-    fontWeight: 800,
-    textDecoration: 'none'
-  }
 };
 
 export default CopilotLogin;

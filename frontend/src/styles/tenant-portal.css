@@ -1,0 +1,432 @@
+.tenant-portal-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 500px at 5% -10%, rgba(14, 116, 144, 0.13), transparent 60%),
+    radial-gradient(980px 420px at 100% 0%, rgba(30, 64, 175, 0.12), transparent 55%),
+    linear-gradient(180deg, #f2f7ff 0%, #edf4ff 44%, #f8fbff 100%);
+  padding: 22px;
+  color: #0f172a;
+}
+
+.tenant-portal-hero,
+.tenant-portal-shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.tenant-portal-hero {
+  margin-bottom: 16px;
+}
+
+.tenant-portal-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0b4fa8;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.tenant-portal-brand-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #e7f0ff;
+}
+
+.tenant-portal-brand-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: #0b4fa8;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tenant-portal-hero h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(1.86rem, 4.9vw, 2.9rem);
+  line-height: 1.08;
+  color: #15254d;
+  letter-spacing: -0.03em;
+}
+
+.tenant-portal-hero p {
+  margin: 0;
+  max-width: 760px;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.tenant-portal-auth-card,
+.tenant-portal-summary,
+.tenant-portal-card,
+.tenant-portal-stats article {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(203, 217, 237, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 12px 34px rgba(18, 38, 88, 0.08);
+}
+
+.tenant-portal-auth-card {
+  width: min(520px, 100%);
+  padding: 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.tenant-portal-auth-card h2,
+.tenant-portal-card h3 {
+  margin: 0;
+  color: #1a2f63;
+}
+
+.tenant-portal-card h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tenant-portal-card h3 svg {
+  width: 17px;
+  height: 17px;
+  stroke: #1e40af;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tenant-portal-hint {
+  margin: 0;
+  color: #60708d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tenant-portal-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tenant-portal-mode-tabs button {
+  border: 1px solid #cad8ef;
+  background: #f9fbff;
+  min-height: 40px;
+  border-radius: 10px;
+  color: #334155;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tenant-portal-mode-tabs button.active {
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+  border-color: #8ab2ff;
+  color: #1d4ed8;
+}
+
+.tenant-portal-auth-card label,
+.tenant-portal-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tenant-portal-auth-card input,
+.tenant-portal-auth-card select,
+.tenant-portal-auth-card textarea,
+.tenant-portal-form-grid input,
+.tenant-portal-form-grid select,
+.tenant-portal-form-grid textarea,
+.tenant-portal-chat-compose textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  min-height: 42px;
+  border-radius: 10px;
+  padding: 0 12px;
+  font: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tenant-portal-auth-card textarea,
+.tenant-portal-form-grid textarea,
+.tenant-portal-chat-compose textarea {
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.tenant-portal-auth-card input:focus,
+.tenant-portal-auth-card select:focus,
+.tenant-portal-auth-card textarea:focus,
+.tenant-portal-form-grid input:focus,
+.tenant-portal-form-grid select:focus,
+.tenant-portal-form-grid textarea:focus,
+.tenant-portal-chat-compose textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.tenant-portal-checkbox {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.tenant-portal-checkbox input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+  accent-color: #2563eb;
+}
+
+.tenant-portal-primary,
+.tenant-portal-secondary {
+  min-height: 42px;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tenant-portal-primary {
+  border: none;
+  color: #fff;
+  background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 100%);
+}
+
+.tenant-portal-secondary {
+  border: 1px solid #c5d5f1;
+  color: #1e293b;
+  background: #fff;
+}
+
+.tenant-portal-primary:disabled,
+.tenant-portal-secondary:disabled {
+  opacity: 0.66;
+  cursor: not-allowed;
+}
+
+.tenant-portal-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.tenant-portal-summary {
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tenant-portal-kicker {
+  font-size: 12px;
+  font-weight: 900;
+  color: #1d4ed8;
+  text-transform: uppercase;
+}
+
+.tenant-portal-summary h2 {
+  margin: 6px 0 4px;
+  color: #172554;
+}
+
+.tenant-portal-summary p {
+  margin: 0;
+  color: #5b6881;
+}
+
+.tenant-portal-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.tenant-portal-stats article {
+  padding: 14px;
+  display: grid;
+  gap: 7px;
+}
+
+.tenant-portal-stats span {
+  font-size: 12px;
+  color: #5b6881;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tenant-portal-stats strong {
+  font-size: 24px;
+  line-height: 1.05;
+  color: #0f172a;
+}
+
+.tenant-portal-card {
+  padding: 16px;
+}
+
+.tenant-portal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.tenant-portal-form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.tenant-portal-contract-box {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+}
+
+.tenant-portal-contract-box strong {
+  text-transform: capitalize;
+  color: #14532d;
+}
+
+.tenant-portal-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d9e2f1;
+  border-radius: 10px;
+}
+
+.tenant-portal-table-wrap table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.tenant-portal-table-wrap th,
+.tenant-portal-table-wrap td {
+  padding: 10px 9px;
+  border-bottom: 1px solid #edf2fb;
+  text-align: left;
+  font-size: 14px;
+}
+
+.tenant-portal-table-wrap th {
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tenant-portal-chat-card {
+  display: grid;
+  gap: 10px;
+}
+
+.tenant-portal-chat-note {
+  margin: 0;
+  color: #60708d;
+}
+
+.tenant-portal-chat-log {
+  border: 1px solid #dce6f6;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f6faff 100%);
+  padding: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.tenant-portal-chat-bubble {
+  max-width: 78%;
+  padding: 9px 12px;
+  border-radius: 11px;
+  display: grid;
+  gap: 5px;
+}
+
+.tenant-portal-chat-bubble .author {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tenant-portal-chat-bubble p {
+  margin: 0;
+  line-height: 1.42;
+}
+
+.tenant-portal-chat-bubble.tenant {
+  margin-left: auto;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.tenant-portal-chat-bubble.admin {
+  margin-right: auto;
+  background: #ecfeff;
+  color: #155e75;
+}
+
+.tenant-portal-chat-compose {
+  display: grid;
+  gap: 8px;
+}
+
+.tenant-portal-alert {
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-weight: 700;
+}
+
+.tenant-portal-alert.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.tenant-portal-alert.success {
+  background: #ecfdf5;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.tenant-portal-empty {
+  margin: 0;
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .tenant-portal-page {
+    padding: 14px;
+  }
+
+  .tenant-portal-auth-card {
+    width: 100%;
+  }
+
+  .tenant-portal-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tenant-portal-chat-bubble {
+    max-width: 100%;
+  }
+
+  .tenant-portal-table-wrap table {
+    min-width: 540px;
+  }
+}

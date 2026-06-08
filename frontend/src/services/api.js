@@ -365,6 +365,12 @@ export const tenantPortalService = {
   me: () => apiClient.get('/tenant-portal/me', {
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
+  getMessages: () => apiClient.get('/tenant-portal/messages', {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
+  sendMessage: (message) => apiClient.post('/tenant-portal/messages', { message }, {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
   uploadPaymentProof: (data) => {
     const formData = new FormData();
     Object.entries(data || {}).forEach(([key, value]) => {
@@ -385,7 +391,9 @@ export const tenantPortalService = {
 export const tenantPortalAdminService = {
   listAccounts: () => apiClient.get('/tenant-portal/accounts'),
   updateAccountStatus: (accountId, isActive) => apiClient.put(`/tenant-portal/accounts/${accountId}/status`, { is_active: isActive }),
-  resetAccountPassword: (accountId, password) => apiClient.post(`/tenant-portal/accounts/${accountId}/reset-password`, { password })
+  resetAccountPassword: (accountId, password) => apiClient.post(`/tenant-portal/accounts/${accountId}/reset-password`, { password }),
+  getTenantMessages: (tenantId) => apiClient.get(`/tenant-portal/accounts/${tenantId}/messages`),
+  sendTenantMessage: (tenantId, message) => apiClient.post(`/tenant-portal/accounts/${tenantId}/messages`, { message })
 };
 
 // Dashboard Service

@@ -11,8 +11,12 @@ router.post('/register', tenantPortalController.registerTenantPortal);
 router.post('/login', tenantPortalController.loginTenantPortal);
 router.get('/me', tenantPortalController.getTenantPortalMe);
 router.post('/payment-proof', upload.single('receipt'), tenantPortalController.uploadTenantPaymentProof);
+router.get('/messages', tenantPortalController.getTenantPortalMessages);
+router.post('/messages', tenantPortalController.sendTenantPortalMessage);
 router.get('/accounts', authMiddleware, requireAnyRole(['manager', 'admin']), tenantPortalController.listTenantPortalAccounts);
 router.put('/accounts/:accountId/status', authMiddleware, requireAnyRole(['manager', 'admin']), tenantPortalController.updateTenantPortalAccountStatus);
 router.post('/accounts/:accountId/reset-password', authMiddleware, requireAnyRole(['manager', 'admin']), tenantPortalController.resetTenantPortalAccountPassword);
+router.get('/accounts/:tenantId/messages', authMiddleware, requireAnyRole(['manager', 'admin']), tenantPortalController.getTenantMessagesForAdmin);
+router.post('/accounts/:tenantId/messages', authMiddleware, requireAnyRole(['manager', 'admin']), tenantPortalController.sendAdminMessageToTenant);
 
 module.exports = router;

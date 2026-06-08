@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../services/api';
 import useFeedbackToast from '../hooks/useFeedbackToast';
+import '../../styles/reset-password.css';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -10,9 +11,7 @@ const ResetPassword = () => {
 
   const token = searchParams.get('token') || '';
   const initialIdentifier = location.state?.identifier || '';
-  const initialMethod = location.state?.method || (token ? 'email' : 'sms');
 
-  const [method, setMethod] = useState(initialMethod);
   const [identifier, setIdentifier] = useState(initialIdentifier);
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -20,10 +19,16 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(location.state?.success || '');
+
   useFeedbackToast(error, 'error');
   useFeedbackToast(success, 'success');
 
-  const isEmailTokenFlow = useMemo(() => !!token && method !== 'sms', [token, method]);
+  const isEmailTokenFlow = useMemo(() => Boolean(token), [token]);
+
+  useEffect(() => {
+    document.body.classList.add('reset-password-bg');
+    return () => document.body.classList.remove('reset-password-bg');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,19 +66,19 @@ const ResetPassword = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Reset Password</h1>
-        <p style={styles.subtitle}>Set a new password for your account</p>
+    <div className="reset-password-shell">
+      <div className="reset-password-card">
+        <h1 className="reset-password-title">Reset Password</h1>
+        <p className="reset-password-subtitle">Set a new password for your account</p>
 
-        {error && <div style={styles.error}>{error}</div>}
-        {success && <div style={styles.success}>{success}</div>}
+        {error ? <div className="reset-password-alert error">{error}</div> : null}
+        {success ? <div className="reset-password-alert success">{success}</div> : null}
 
-        <form onSubmit={handleSubmit}>
-          {!isEmailTokenFlow && (
+        <form className="reset-password-form" onSubmit={handleSubmit}>
+          {!isEmailTokenFlow ? (
             <>
-              <div style={styles.formGroup}>
-                <label>Email or Phone</label>
+              <label>
+                Email or Phone
                 <input
                   type="text"
                   value={identifier}
@@ -81,10 +86,10 @@ const ResetPassword = () => {
                   placeholder="Enter email or phone"
                   required
                 />
-              </div>
+              </label>
 
-              <div style={styles.formGroup}>
-                <label>OTP Code (6 digits)</label>
+              <label>
+                OTP Code (6 digits)
                 <input
                   type="text"
                   value={otp}
@@ -93,12 +98,12 @@ const ResetPassword = () => {
                   maxLength={6}
                   required
                 />
-              </div>
+              </label>
             </>
-          )}
+          ) : null}
 
-          <div style={styles.formGroup}>
-            <label>New Password</label>
+          <label>
+            New Password
             <input
               type="password"
               value={newPassword}
@@ -106,10 +111,10 @@ const ResetPassword = () => {
               placeholder="Enter new password"
               required
             />
-          </div>
+          </label>
 
-          <div style={styles.formGroup}>
-            <label>Confirm New Password</label>
+          <label>
+            Confirm New Password
             <input
               type="password"
               value={confirmPassword}
@@ -117,70 +122,19 @@ const ResetPassword = () => {
               placeholder="Confirm new password"
               required
             />
-          </div>
+          </label>
 
-          <button type="submit" style={styles.submitBtn} disabled={loading}>
+          <button type="submit" className="reset-password-btn" disabled={loading}>
             {loading ? 'Updating...' : 'Update Password'}
           </button>
         </form>
 
-        <p style={styles.linkText}>
-          Back to <Link to="/dashboard" style={styles.link}>Dashboard</Link>
+        <p className="reset-password-links">
+          Back to <Link to="/dashboard">Dashboard</Link>
         </p>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: '1rem'
-  },
-  card: {
-    width: '100%',
-    maxWidth: '460px',
-    backgroundColor: '#fff',
-    borderRadius: '10px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-    padding: '2rem'
-  },
-  title: { margin: 0, marginBottom: '0.5rem', color: '#1f2937' },
-  subtitle: { marginTop: 0, marginBottom: '1.2rem', color: '#6b7280' },
-  formGroup: { marginBottom: '1rem' },
-  submitBtn: {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer'
-  },
-  error: {
-    backgroundColor: '#fee2e2',
-    color: '#7f1d1d',
-    border: '1px solid #fecaca',
-    borderRadius: '0.375rem',
-    padding: '0.7rem',
-    marginBottom: '1rem'
-  },
-  success: {
-    backgroundColor: '#d1fae5',
-    color: '#065f46',
-    border: '1px solid #a7f3d0',
-    borderRadius: '0.375rem',
-    padding: '0.7rem',
-    marginBottom: '1rem'
-  },
-  linkText: { marginTop: '1rem', marginBottom: 0, color: '#6b7280' },
-  link: { color: '#2563eb', textDecoration: 'none', fontWeight: 600 }
 };
 
 export default ResetPassword;
