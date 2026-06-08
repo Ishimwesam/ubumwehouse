@@ -48,4 +48,4 @@ services:
       - key: VAPID_EMAIL
         value: mailto:ubumwehouseltd@gmail.com
       - key: VAPID_PRIVATE_KEY
-        sync: false
+        value: pAYNDI7xaQOAFEy0hXmADtSxSB0_86xcynfVqjXdZIs
