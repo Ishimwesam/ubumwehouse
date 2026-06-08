@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getReadableApiError, tenantPortalService } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { getReadableApiError, resolveUploadUrl, tenantPortalService } from '../services/api';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -18,6 +19,7 @@ const IconCheck = () => <span aria-hidden="true">◉</span>;
 const IconFile = () => <span aria-hidden="true">◧</span>;
 
 const TenantPortal = () => {
+  const navigate = useNavigate();
   const [accessForm, setAccessForm] = useState({ identifier: '', accessCode: '' });
   const [mode, setMode] = useState('login');
   const [credentialForm, setCredentialForm] = useState({ username: '', password: '', confirmPassword: '', remember: true });
@@ -50,19 +52,28 @@ const TenantPortal = () => {
   const uploadSectionRef = useRef(null);
   const historySectionRef = useRef(null);
   const chatSectionRef = useRef(null);
+  const maintenanceSectionRef = useRef(null);
+  const announcementsSectionRef = useRef(null);
+  const profileSectionRef = useRef(null);
 
   const statusLabel = (activeContract?.lifecycle_status || activeContract?.status || 'active').replace(/_/g, ' ');
   const latestPayment = payments[0] || null;
   const accountNumber = tenant?.account_number || '402*******784';
-  const accountName = (tenant?.full_name || tenant?.tenant_name || 'Tenant').toUpperCase();
-  const bankName = tenant?.bank_name || 'BK (Bank of Kigali)';
+  const accountName = 'UBUMWE HOUSE LTD';
+  const receiptHints = `${latestPayment?.notes || ''} ${latestPayment?.payment_method || ''}`.toLowerCase();
+  const bankName = receiptHints.includes('bank') || receiptHints.includes('bk') || latestPayment?.payment_method === 'bank_transfer'
+    ? 'BK - Bank Deposit (UBUMWE HOUSE LTD)'
+    : (latestPayment?.payment_method === 'mobile_money'
+      ? 'Mobile Money Deposit (UBUMWE HOUSE LTD)'
+      : (tenant?.bank_name || 'UBUMWE HOUSE LTD Collection Account'));
+  const tenantDisplayName = (tenant?.full_name || tenant?.tenant_name || 'Tenant').toUpperCase();
 
   const scrollTo = (sectionRef) => {
     if (!sectionRef?.current) return;
     sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const getReceiptPath = (payment) => payment?.receipt_path || '';
+  const getReceiptPath = (payment) => resolveUploadUrl(payment?.receipt_path || '') || '';
 
   const loadMessages = async () => {
     if (!tenantPortalService.getToken()) return;
@@ -316,19 +327,19 @@ const TenantPortal = () => {
         <div className="tp-dashboard">
           <aside className="tp-sidebar">
             <div className="tp-brand-block">
-              <div className="tp-brand-title">IHURIRO HOUSE LTD</div>
+              <div className="tp-brand-title">UBUMWE HOUSE LTD</div>
               <div className="tp-brand-subtitle">Tenant Portal</div>
             </div>
 
             <nav className="tp-nav">
-              <button type="button" className="active"><IconGrid /> Dashboard</button>
-              <button type="button">Payments</button>
+              <button type="button" className="active" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><IconGrid /> Dashboard</button>
+              <button type="button" onClick={() => navigate('/tenant-portal/payments')}>Payments</button>
               <button type="button" onClick={() => { setShowUploadForm(true); scrollTo(uploadSectionRef); }}>Upload Receipt</button>
-              <button type="button">Maintenance</button>
+              <button type="button" onClick={() => scrollTo(maintenanceSectionRef)}>Maintenance</button>
               <button type="button" onClick={() => { setShowChat(true); scrollTo(chatSectionRef); }}>Messages</button>
-              <button type="button">Announcements</button>
-              <button type="button">Profile</button>
-              <button type="button">Change Password</button>
+              <button type="button" onClick={() => scrollTo(announcementsSectionRef)}>Announcements</button>
+              <button type="button" onClick={() => scrollTo(profileSectionRef)}>Profile</button>
+              <button type="button" onClick={() => navigate('/forgot-password')}>Change Password</button>
             </nav>
 
             <button
@@ -347,7 +358,7 @@ const TenantPortal = () => {
           <section className="tp-main">
             <header className="tp-header">
               <div>
-                <h1>Welcome, {accountName}</h1>
+                <h1>Welcome, {tenantDisplayName}</h1>
                 <p>
                   Room / Office: {tenant.unit_number || 'N/A'}
                   <span> | </span>
@@ -395,7 +406,7 @@ const TenantPortal = () => {
                 </div>
                 <div className="tp-payment-actions">
                   <button className="tp-btn-primary" type="button" onClick={() => setShowUploadForm((prev) => !prev)}>Upload Payment Receipt</button>
-                  <button className="tp-btn-secondary" type="button" onClick={() => scrollTo(historySectionRef)}>View Payment History</button>
+                  <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal/payments')}>View Payment History</button>
                   {latestPayment && getReceiptPath(latestPayment) ? (
                     <a className="tp-btn-secondary" href={getReceiptPath(latestPayment)} target="_blank" rel="noreferrer">Download Receipt</a>
                   ) : (
@@ -443,9 +454,9 @@ const TenantPortal = () => {
 
               <article className="tp-card tp-quick-actions">
                 <h2>Quick Actions</h2>
-                <button type="button">Request Maintenance</button>
+                <button type="button" onClick={() => scrollTo(maintenanceSectionRef)}>Request Maintenance</button>
                 <button type="button" onClick={() => { setShowChat(true); scrollTo(chatSectionRef); }}>Send Message to Admin</button>
-                <button type="button">View Announcements</button>
+                <button type="button" onClick={() => scrollTo(announcementsSectionRef)}>View Announcements</button>
               </article>
             </section>
 
@@ -486,12 +497,28 @@ const TenantPortal = () => {
                 </div>
               </article>
 
-              <article className="tp-card tp-maintenance-card">
+              <article className="tp-card tp-maintenance-card" ref={maintenanceSectionRef}>
                 <h2>Maintenance Requests</h2>
                 <div className="tp-maintenance-state">
                   <strong>No open requests</strong>
                   <p>You have no maintenance requests at the moment.</p>
-                  <button type="button" className="tp-btn-primary">Request Maintenance</button>
+                  <button type="button" className="tp-btn-primary" onClick={() => setSuccess('Maintenance request workflow will be available here shortly.')}>Request Maintenance</button>
+                </div>
+              </article>
+            </section>
+
+            <section className="tp-main-grid second-row">
+              <article className="tp-card" ref={announcementsSectionRef}>
+                <h2>Announcements</h2>
+                <p className="tp-empty">No new announcements at the moment. Updates from UBUMWE HOUSE LTD will appear here.</p>
+              </article>
+              <article className="tp-card" ref={profileSectionRef}>
+                <h2>Profile</h2>
+                <div className="tp-payment-list">
+                  <div><span>Tenant Name</span><strong>{tenantDisplayName}</strong></div>
+                  <div><span>Company</span><strong>{accountName}</strong></div>
+                  <div><span>Email</span><strong>{tenant?.email || '-'}</strong></div>
+                  <div><span>Phone</span><strong>{tenant?.phone || '-'}</strong></div>
                 </div>
               </article>
             </section>

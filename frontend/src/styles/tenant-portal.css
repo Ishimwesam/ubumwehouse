@@ -163,11 +163,11 @@
 
 .tp-nav {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .tp-nav button {
-  min-height: 40px;
+  min-height: 42px;
   border: none;
   border-radius: 8px;
   color: #e4ecff;
@@ -179,6 +179,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 .tp-nav button.active {
@@ -188,6 +189,7 @@
 
 .tp-nav button:hover {
   background: rgba(255, 255, 255, 0.09);
+  transform: translateX(2px);
 }
 
 .tp-logout {
@@ -199,11 +201,26 @@
   text-align: left;
   padding: 10px 12px;
   cursor: pointer;
+  border-radius: 8px;
+}
+
+.tp-logout:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .tp-main {
   padding: 18px 26px;
   background: #f8fafc;
+}
+
+.tp-subpage {
+  display: block;
+}
+
+.tp-subpage-main {
+  min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .tp-header {
@@ -359,6 +376,16 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
+}
+
+.tp-table-wrap a {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tp-table-wrap a:hover {
+  text-decoration: underline;
 }
 
 .tp-upload-form {

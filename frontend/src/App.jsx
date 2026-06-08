@@ -38,6 +38,7 @@ const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const VerifyLoginOtp = lazy(() => import('./pages/VerifyLoginOtp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const TenantPortalPayments = lazy(() => import('./pages/TenantPortalPayments'));
 const TenantPortalControl = lazy(() => import('./pages/TenantPortalControl'));
 
 const PageFallback = () => <PageLoader text="Loading..." minHeight="60vh" />;
@@ -115,6 +116,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" /> : <ForgotPassword />} />
       <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/dashboard" /> : <ResetPassword />} />
       <Route path="/tenant-portal" element={<TenantPortal />} />
+      <Route path="/tenant-portal/payments" element={<TenantPortalPayments />} />
       <Route
         path="/*"
         element={
