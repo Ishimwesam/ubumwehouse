@@ -55,6 +55,27 @@ export const resolveUploadUrl = (path = '') => {
   return appendUploadToken(uploadUrl);
 };
 
+export const resolveTenantUploadUrl = (path = '') => {
+  if (!path) return null;
+
+  const tenantToken = sessionStorage.getItem('tenantPortalToken') || localStorage.getItem('tenantPortalToken');
+  const appendTenantToken = (uploadUrl) => {
+    if (!tenantToken || uploadUrl.includes('token=')) return uploadUrl;
+    const separator = uploadUrl.includes('?') ? '&' : '?';
+    return `${uploadUrl}${separator}token=${encodeURIComponent(tenantToken)}`;
+  };
+
+  if (/^https?:\/\//i.test(path)) {
+    return path.includes('/uploads/') ? appendTenantToken(path) : path;
+  }
+
+  const normalizedPath = path.startsWith('/uploads/')
+    ? path
+    : `/uploads/${path.replace(/^\/+/, '')}`;
+
+  return appendTenantToken(resolveBackendUrl(normalizedPath));
+};
+
 export const workspaceService = {
   health: () => axios.get(resolveBackendUrl('/health'), { timeout: 6000 })
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getReadableApiError, resolveUploadUrl, tenantPortalService } from '../services/api';
+import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -75,7 +75,7 @@ const TenantPortalPayments = () => {
                 </thead>
                 <tbody>
                   {payments.length ? payments.map((payment) => {
-                    const receiptUrl = resolveUploadUrl(payment.receipt_path);
+                    const receiptUrl = resolveTenantUploadUrl(payment.receipt_path);
                     return (
                       <tr key={payment.id}>
                         <td>{payment.payment_date || '-'}</td>

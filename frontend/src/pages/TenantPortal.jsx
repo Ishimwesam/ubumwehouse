@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getReadableApiError, resolveUploadUrl, tenantPortalService } from '../services/api';
+import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import { emitAppToast } from '../context/ToastContext';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
 import useTenantUnread from '../hooks/useTenantUnread';
@@ -67,14 +67,8 @@ const TenantPortal = () => {
 
   const statusLabel = (activeContract?.lifecycle_status || activeContract?.status || 'active').replace(/_/g, ' ');
   const latestPayment = payments[0] || null;
-  const accountNumber = tenant?.account_number || '402*******784';
   const accountName = 'UBUMWE HOUSE LTD';
-  const receiptHints = `${latestPayment?.notes || ''} ${latestPayment?.payment_method || ''}`.toLowerCase();
-  const bankName = receiptHints.includes('bank') || receiptHints.includes('bk') || latestPayment?.payment_method === 'bank_transfer'
-    ? 'BK - Bank Deposit (UBUMWE HOUSE LTD)'
-    : (latestPayment?.payment_method === 'mobile_money'
-      ? 'Mobile Money Deposit (UBUMWE HOUSE LTD)'
-      : (tenant?.bank_name || 'UBUMWE HOUSE LTD Collection Account'));
+  const bankName = tenant?.bank_name || 'UBUMWE HOUSE LTD - Official Collection Account';
   const tenantDisplayName = (tenant?.full_name || tenant?.tenant_name || 'Tenant').toUpperCase();
 
   const scrollTo = (sectionRef) => {
@@ -82,7 +76,7 @@ const TenantPortal = () => {
     sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const getReceiptPath = (payment) => resolveUploadUrl(payment?.receipt_path || '') || '';
+  const getReceiptPath = (payment) => resolveTenantUploadUrl(payment?.receipt_path || '') || '';
 
   const loadMessages = async () => {
     if (!tenantPortalService.getToken()) return;
@@ -466,8 +460,8 @@ const TenantPortal = () => {
                 <h2>Payment Information</h2>
                 <div className="tp-payment-list">
                   <div><span>Account Name</span><strong>{accountName}</strong></div>
-                  <div><span>Account Number</span><strong>{accountNumber}</strong></div>
                   <div><span>Bank Name</span><strong>{bankName}</strong></div>
+                  <div><span>Payment Reference</span><strong>{`${tenant?.full_name || 'Tenant'} / Unit ${tenant?.unit_number || 'N/A'}`}</strong></div>
                   <div><span>Last Payment Date</span><strong>{latestPayment ? formatDateTime(latestPayment.created_at || latestPayment.payment_date) : '-'}</strong></div>
                 </div>
                 <div className="tp-payment-actions">
