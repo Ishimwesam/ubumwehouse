@@ -1,31 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getReadableApiError, tenantPortalService } from '../services/api';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 const today = () => new Date().toISOString().slice(0, 10);
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleString();
+};
 
-const BuildingIcon = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M4 21h16" />
-    <path d="M6 21V7h8v14" />
-    <path d="M14 21V3h4v18" />
-    <path d="M8 10h.01M8 13h.01M11 10h.01M11 13h.01M16 7h.01M16 11h.01M16 15h.01" />
-  </svg>
-);
-
-const ChatIcon = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.78-.88L3 21l1.97-5.27A8.5 8.5 0 1 1 21 11.5Z" />
-  </svg>
-);
-
-const ShieldIcon = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
-  </svg>
-);
+const IconGrid = () => <span aria-hidden="true">▦</span>;
+const IconWallet = () => <span aria-hidden="true">◫</span>;
+const IconCheck = () => <span aria-hidden="true">◉</span>;
+const IconFile = () => <span aria-hidden="true">◧</span>;
 
 const TenantPortal = () => {
   const [accessForm, setAccessForm] = useState({ identifier: '', accessCode: '' });
@@ -39,6 +29,8 @@ const TenantPortal = () => {
   const [messages, setMessages] = useState([]);
   const [messageDraft, setMessageDraft] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     payment_date: today(),
@@ -55,6 +47,22 @@ const TenantPortal = () => {
 
   const tenant = portalData?.tenant;
   const payments = portalData?.payments || [];
+  const uploadSectionRef = useRef(null);
+  const historySectionRef = useRef(null);
+  const chatSectionRef = useRef(null);
+
+  const statusLabel = (activeContract?.lifecycle_status || activeContract?.status || 'active').replace(/_/g, ' ');
+  const latestPayment = payments[0] || null;
+  const accountNumber = tenant?.account_number || '402*******784';
+  const accountName = (tenant?.full_name || tenant?.tenant_name || 'Tenant').toUpperCase();
+  const bankName = tenant?.bank_name || 'BK (Bank of Kigali)';
+
+  const scrollTo = (sectionRef) => {
+    if (!sectionRef?.current) return;
+    sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const getReceiptPath = (payment) => payment?.receipt_path || '';
 
   const loadMessages = async () => {
     if (!tenantPortalService.getToken()) return;
@@ -222,35 +230,19 @@ const TenantPortal = () => {
   };
 
   return (
-    <main className="tenant-portal-page">
-      <section className="tenant-portal-hero">
-        <div className="tenant-portal-brand">
-          <span className="tenant-portal-brand-icon"><BuildingIcon /></span>
-          UBUMWE SYSTEM COMPANY
-        </div>
-        <h1>Tenant Self-Service Portal</h1>
-        <p>Manage your payments, check contract status, and chat directly with the admin support team.</p>
-      </section>
-
-      <section className="tenant-portal-shell">
-        {!tenant ? (
-          <form className="tenant-portal-auth-card" onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleAccess}>
+    <main className="tp-page">
+      {!tenant ? (
+        <section className="tp-auth-shell">
+          <form className="tp-auth-card" onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleAccess}>
             <h2>{mode === 'login' ? 'Tenant Login' : mode === 'register' ? 'Create Tenant Account' : 'One-Time Access'}</h2>
-            <div className="tenant-portal-mode-tabs">
+            <div className="tp-mode-tabs">
               <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>Login</button>
               <button type="button" className={mode === 'register' ? 'active' : ''} onClick={() => setMode('register')}>Create</button>
               <button type="button" className={mode === 'access' ? 'active' : ''} onClick={() => setMode('access')}>One-time</button>
             </div>
-            <p className="tenant-portal-hint">
-              {mode === 'register'
-                ? 'Verify your tenant record first, then set your own login credentials.'
-                : mode === 'login'
-                  ? 'Use your saved tenant portal username and password.'
-                  : 'Use your registered email, phone, or national ID with the last 4 digits access code.'}
-            </p>
 
-            {error ? <div className="tenant-portal-alert error">{error}</div> : null}
-            {success ? <div className="tenant-portal-alert success">{success}</div> : null}
+            {error ? <div className="tp-alert error">{error}</div> : null}
+            {success ? <div className="tp-alert success">{success}</div> : null}
 
             {mode !== 'login' ? (
               <>
@@ -304,7 +296,7 @@ const TenantPortal = () => {
                     />
                   </label>
                 ) : null}
-                <label className="tenant-portal-checkbox">
+                <label className="tp-checkbox">
                   <input
                     type="checkbox"
                     checked={credentialForm.remember}
@@ -315,148 +307,222 @@ const TenantPortal = () => {
               </>
             ) : null}
 
-            <button className="tenant-portal-primary" type="submit" disabled={loading}>
+            <button className="tp-btn-primary" type="submit" disabled={loading}>
               {loading ? 'Checking...' : mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Open Portal'}
             </button>
           </form>
-        ) : (
-          <div className="tenant-portal-grid">
-            <section className="tenant-portal-summary">
+        </section>
+      ) : (
+        <div className="tp-dashboard">
+          <aside className="tp-sidebar">
+            <div className="tp-brand-block">
+              <div className="tp-brand-title">IHURIRO HOUSE LTD</div>
+              <div className="tp-brand-subtitle">Tenant Portal</div>
+            </div>
+
+            <nav className="tp-nav">
+              <button type="button" className="active"><IconGrid /> Dashboard</button>
+              <button type="button">Payments</button>
+              <button type="button" onClick={() => { setShowUploadForm(true); scrollTo(uploadSectionRef); }}>Upload Receipt</button>
+              <button type="button">Maintenance</button>
+              <button type="button" onClick={() => { setShowChat(true); scrollTo(chatSectionRef); }}>Messages</button>
+              <button type="button">Announcements</button>
+              <button type="button">Profile</button>
+              <button type="button">Change Password</button>
+            </nav>
+
+            <button
+              className="tp-logout"
+              type="button"
+              onClick={() => {
+                tenantPortalService.clearToken();
+                setPortalData(null);
+                setMessages([]);
+              }}
+            >
+              Logout
+            </button>
+          </aside>
+
+          <section className="tp-main">
+            <header className="tp-header">
               <div>
-                <div className="tenant-portal-kicker">Tenant</div>
-                <h2>{tenant.full_name}</h2>
-                <p>{tenant.building_name || 'Building'} / Unit {tenant.unit_number || '-'}</p>
+                <h1>Welcome, {accountName}</h1>
+                <p>
+                  Room / Office: {tenant.unit_number || 'N/A'}
+                  <span> | </span>
+                  Status: <strong>{statusLabel}</strong>
+                </p>
               </div>
-              <button
-                className="tenant-portal-secondary"
-                type="button"
-                onClick={() => {
-                  tenantPortalService.clearToken();
-                  setPortalData(null);
-                  setMessages([]);
-                }}
-              >
-                Sign out
-              </button>
-            </section>
+              <div className="tp-user">{accountName}</div>
+            </header>
 
-            {error ? <div className="tenant-portal-alert error">{error}</div> : null}
-            {success ? <div className="tenant-portal-alert success">{success}</div> : null}
+            {error ? <div className="tp-alert error">{error}</div> : null}
+            {success ? <div className="tp-alert success">{success}</div> : null}
 
-            <section className="tenant-portal-stats">
-              <article><span>Monthly Rent</span><strong>{formatCurrency(tenant.monthly_rent)}</strong></article>
-              <article><span>Paid This Month</span><strong>{formatCurrency(tenant.current_period_paid)}</strong></article>
-              <article><span>Pending</span><strong>{formatCurrency(tenant.pending_amount)}</strong></article>
-              <article><span>Balance</span><strong>{formatCurrency(tenant.balance)}</strong></article>
-            </section>
-
-            <section className="tenant-portal-card">
-              <h3><ShieldIcon /> Upload payment proof</h3>
-              <form className="tenant-portal-form-grid" onSubmit={handleUpload}>
-                <label>
-                  Amount
-                  <input type="number" min="1" value={paymentForm.amount} onChange={(event) => setPaymentForm((prev) => ({ ...prev, amount: event.target.value }))} required />
-                </label>
-                <label>
-                  Payment date
-                  <input type="date" value={paymentForm.payment_date} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_date: event.target.value }))} required />
-                </label>
-                <label>
-                  Payment period
-                  <input type="month" value={paymentForm.payment_period} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_period: event.target.value }))} required />
-                </label>
-                <label>
-                  Method
-                  <select value={paymentForm.payment_method} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_method: event.target.value }))}>
-                    <option value="bank_transfer">Bank transfer</option>
-                    <option value="mobile_money">Mobile money</option>
-                    <option value="cash">Cash</option>
-                    <option value="check">Check</option>
-                  </select>
-                </label>
-                <label className="full">
-                  Receipt image or PDF
-                  <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setPaymentForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required />
-                </label>
-                <label className="full">
-                  Notes
-                  <textarea value={paymentForm.notes} onChange={(event) => setPaymentForm((prev) => ({ ...prev, notes: event.target.value }))} rows={4} />
-                </label>
-                <button className="tenant-portal-primary" type="submit" disabled={uploading}>
-                  {uploading ? 'Uploading...' : 'Submit Proof'}
-                </button>
-              </form>
-            </section>
-
-            <section className="tenant-portal-card">
-              <h3>Contract status</h3>
-              {activeContract ? (
-                <div className="tenant-portal-contract-box">
-                  <strong>{activeContract.lifecycle_status || activeContract.status || 'active'}</strong>
-                  <span>{activeContract.contract_start || '-'} to {activeContract.contract_end || '-'}</span>
-                  <span>{activeContract.building_name || tenant.building_name || '-'} / Unit {activeContract.unit_number || tenant.unit_number || '-'}</span>
+            <section className="tp-stats-row">
+              <article className="tp-stat-card">
+                <div className="tp-stat-icon rent"><IconWallet /></div>
+                <div>
+                  <span>Monthly Rent</span>
+                  <strong>{formatCurrency(tenant.monthly_rent)}</strong>
                 </div>
-              ) : (
-                <p className="tenant-portal-empty">No contract record is currently visible.</p>
-              )}
+              </article>
+              <article className="tp-stat-card">
+                <div className="tp-stat-icon paid"><IconCheck /></div>
+                <div>
+                  <span>Paid Amount</span>
+                  <strong className="paid">{formatCurrency(tenant.current_period_paid)}</strong>
+                </div>
+              </article>
+              <article className="tp-stat-card">
+                <div className="tp-stat-icon outstanding"><IconFile /></div>
+                <div>
+                  <span>Outstanding Balance</span>
+                  <strong className="outstanding">{formatCurrency(tenant.balance)}</strong>
+                </div>
+              </article>
             </section>
 
-            <section className="tenant-portal-card">
-              <h3>Payment history</h3>
-              <div className="tenant-portal-table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Period</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Method</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.length ? payments.map((payment) => (
-                      <tr key={payment.id}>
-                        <td>{payment.payment_date}</td>
-                        <td>{payment.payment_period}</td>
-                        <td>{formatCurrency(payment.amount)}</td>
-                        <td>{payment.payment_status}</td>
-                        <td>{payment.payment_method || '-'}</td>
+            <section className="tp-main-grid">
+              <article className="tp-card tp-payment-info" ref={uploadSectionRef}>
+                <h2>Payment Information</h2>
+                <div className="tp-payment-list">
+                  <div><span>Account Name</span><strong>{accountName}</strong></div>
+                  <div><span>Account Number</span><strong>{accountNumber}</strong></div>
+                  <div><span>Bank Name</span><strong>{bankName}</strong></div>
+                  <div><span>Last Payment Date</span><strong>{latestPayment ? formatDateTime(latestPayment.created_at || latestPayment.payment_date) : '-'}</strong></div>
+                </div>
+                <div className="tp-payment-actions">
+                  <button className="tp-btn-primary" type="button" onClick={() => setShowUploadForm((prev) => !prev)}>Upload Payment Receipt</button>
+                  <button className="tp-btn-secondary" type="button" onClick={() => scrollTo(historySectionRef)}>View Payment History</button>
+                  {latestPayment && getReceiptPath(latestPayment) ? (
+                    <a className="tp-btn-secondary" href={getReceiptPath(latestPayment)} target="_blank" rel="noreferrer">Download Receipt</a>
+                  ) : (
+                    <button className="tp-btn-secondary" type="button" disabled>Download Receipt</button>
+                  )}
+                </div>
+
+                {showUploadForm ? (
+                  <form className="tp-upload-form" onSubmit={handleUpload}>
+                    <label>
+                      Amount
+                      <input type="number" min="1" value={paymentForm.amount} onChange={(event) => setPaymentForm((prev) => ({ ...prev, amount: event.target.value }))} required />
+                    </label>
+                    <label>
+                      Payment date
+                      <input type="date" value={paymentForm.payment_date} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_date: event.target.value }))} required />
+                    </label>
+                    <label>
+                      Payment period
+                      <input type="month" value={paymentForm.payment_period} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_period: event.target.value }))} required />
+                    </label>
+                    <label>
+                      Method
+                      <select value={paymentForm.payment_method} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_method: event.target.value }))}>
+                        <option value="bank_transfer">Bank transfer</option>
+                        <option value="mobile_money">Mobile money</option>
+                        <option value="cash">Cash</option>
+                        <option value="check">Check</option>
+                      </select>
+                    </label>
+                    <label className="full">
+                      Receipt image or PDF
+                      <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setPaymentForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required />
+                    </label>
+                    <label className="full">
+                      Notes
+                      <textarea value={paymentForm.notes} onChange={(event) => setPaymentForm((prev) => ({ ...prev, notes: event.target.value }))} rows={3} />
+                    </label>
+                    <button className="tp-btn-primary" type="submit" disabled={uploading}>
+                      {uploading ? 'Uploading...' : 'Submit Proof'}
+                    </button>
+                  </form>
+                ) : null}
+              </article>
+
+              <article className="tp-card tp-quick-actions">
+                <h2>Quick Actions</h2>
+                <button type="button">Request Maintenance</button>
+                <button type="button" onClick={() => { setShowChat(true); scrollTo(chatSectionRef); }}>Send Message to Admin</button>
+                <button type="button">View Announcements</button>
+              </article>
+            </section>
+
+            <section className="tp-main-grid second-row">
+              <article className="tp-card" ref={historySectionRef}>
+                <h2>Recent Payment History</h2>
+                <div className="tp-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Receipt</th>
                       </tr>
-                    )) : (
-                      <tr><td colSpan="5">No payment history yet.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {payments.length ? payments.slice(0, 8).map((payment) => (
+                        <tr key={payment.id}>
+                          <td>{payment.payment_date || '-'}</td>
+                          <td>RENT - {payment.payment_period || '-'}</td>
+                          <td>{formatCurrency(payment.amount)}</td>
+                          <td><span className={`tp-status-pill ${String(payment.payment_status || '').toLowerCase()}`}>{payment.payment_status || 'confirmed'}</span></td>
+                          <td>
+                            {getReceiptPath(payment) ? (
+                              <a href={getReceiptPath(payment)} target="_blank" rel="noreferrer">Download</a>
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan="5">No payment history yet.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+
+              <article className="tp-card tp-maintenance-card">
+                <h2>Maintenance Requests</h2>
+                <div className="tp-maintenance-state">
+                  <strong>No open requests</strong>
+                  <p>You have no maintenance requests at the moment.</p>
+                  <button type="button" className="tp-btn-primary">Request Maintenance</button>
+                </div>
+              </article>
             </section>
 
-            <section className="tenant-portal-card tenant-portal-chat-card">
-              <h3><ChatIcon /> Support chat</h3>
-              <p className="tenant-portal-chat-note">Chat with admin support for payment follow-up and account help.</p>
-              <div className="tenant-portal-chat-log">
-                {messages.length ? messages.map((message) => (
-                  <div key={message.id} className={`tenant-portal-chat-bubble ${message.sender_type === 'tenant' ? 'tenant' : 'admin'}`}>
-                    <span className="author">{message.sender_type === 'tenant' ? 'You' : (message.sender_name || 'Admin')}</span>
-                    <p>{message.message}</p>
-                  </div>
-                )) : <div className="tenant-portal-empty">No messages yet. Start a conversation.</div>}
-              </div>
-              <form className="tenant-portal-chat-compose" onSubmit={handleSendMessage}>
-                <textarea
-                  value={messageDraft}
-                  onChange={(event) => setMessageDraft(event.target.value)}
-                  placeholder="Type your message to admin support..."
-                  rows={3}
-                />
-                <button className="tenant-portal-primary" type="submit" disabled={sendingMessage}>
-                  {sendingMessage ? 'Sending...' : 'Send Message'}
-                </button>
-              </form>
-            </section>
-          </div>
-        )}
-      </section>
+            {showChat ? (
+              <section className="tp-card tp-chat-card" ref={chatSectionRef}>
+                <h2>Messages</h2>
+                <div className="tp-chat-log">
+                  {messages.length ? messages.map((message) => (
+                    <div key={message.id} className={`tp-chat-bubble ${message.sender_type === 'tenant' ? 'tenant' : 'admin'}`}>
+                      <span>{message.sender_type === 'tenant' ? 'You' : (message.sender_name || 'Admin')}</span>
+                      <p>{message.message}</p>
+                    </div>
+                  )) : <div className="tp-empty">No messages yet. Start a conversation.</div>}
+                </div>
+                <form className="tp-chat-compose" onSubmit={handleSendMessage}>
+                  <textarea
+                    value={messageDraft}
+                    onChange={(event) => setMessageDraft(event.target.value)}
+                    placeholder="Type your message to admin support..."
+                    rows={3}
+                  />
+                  <button className="tp-btn-primary" type="submit" disabled={sendingMessage}>
+                    {sendingMessage ? 'Sending...' : 'Send Message'}
+                  </button>
+                </form>
+              </section>
+            ) : null}
+          </section>
+        </div>
+      )}
     </main>
   );
 };
