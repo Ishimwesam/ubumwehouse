@@ -1,6 +1,6 @@
 .tenant-portal-control-page {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .tenant-portal-control-header {
@@ -19,6 +19,7 @@
 .tenant-portal-control-header p {
   margin: 6px 0 0;
   color: #64748b;
+  max-width: 640px;
 }
 
 .tenant-portal-control-header button,
@@ -90,7 +91,7 @@
 
 .tenant-portal-control-layout {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   grid-template-columns: 1.2fr 1fr;
 }
 
@@ -98,17 +99,38 @@
   background: #fff;
   border: 1px solid #dbe6f5;
   border-radius: 14px;
-  padding: 14px;
+  padding: 16px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
 }
 
 .tenant-portal-control-panel-header {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.tenant-portal-control-panel .stream-pill {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.tenant-portal-control-panel .stream-pill.live {
+  background: #eafbf4;
+  border: 1px solid #a7f3d0;
+  color: #0f766e;
+}
+
+.tenant-portal-control-panel .stream-pill.offline {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
 }
 
 .tenant-portal-control-panel-header h2 {
@@ -122,6 +144,12 @@
   border-radius: 10px;
   padding: 10px 12px;
   width: min(100%, 430px);
+}
+
+.tenant-portal-control-panel-header input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .tenant-portal-control-filter-row {
@@ -170,6 +198,10 @@
 }
 
 .tenant-portal-control-table-wrap tr.selected {
+  background: #eef5ff;
+}
+
+.tenant-portal-control-table-wrap tbody tr:hover {
   background: #f8fbff;
 }
 
@@ -193,6 +225,26 @@
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 800;
+}
+
+.tenant-portal-control-table-wrap .unread-pill {
+  display: inline-flex;
+  min-width: 28px;
+  height: 24px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 900;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.tenant-portal-control-table-wrap .unread-pill.has-unread {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(29, 78, 216, 0.28);
 }
 
 .tenant-portal-control-table-wrap .status.active {
@@ -226,7 +278,7 @@
 .tenant-portal-control-panel .chat-log {
   border: 1px solid #dbe6f5;
   border-radius: 10px;
-  background: #f8fbff;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f8ff 100%);
   padding: 10px;
   max-height: 420px;
   overflow-y: auto;
@@ -236,8 +288,8 @@
 
 .tenant-portal-control-panel .bubble {
   max-width: 88%;
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
   display: grid;
   gap: 4px;
 }
@@ -281,6 +333,13 @@
   border-radius: 10px;
   padding: 10px 12px;
   resize: vertical;
+  min-height: 88px;
+}
+
+.tenant-portal-control-panel .chat-compose textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 @media (max-width: 980px) {

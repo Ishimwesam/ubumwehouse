@@ -75,6 +75,12 @@ export const ToastProvider = ({ children }) => {
       iconBg: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
       glow: '0 22px 38px rgba(29, 78, 216, 0.18)',
       progress: 'linear-gradient(90deg, #60a5fa 0%, #1d4ed8 100%)'
+    },
+    realtime: {
+      borderColor: 'rgba(20, 184, 166, 0.34)',
+      iconBg: 'linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)',
+      glow: '0 22px 38px rgba(15, 118, 110, 0.2)',
+      progress: 'linear-gradient(90deg, #5eead4 0%, #0f766e 100%)'
     }
   }), []);
 
@@ -113,11 +119,11 @@ export const ToastProvider = ({ children }) => {
                   background: toneStyles[toast.type]?.iconBg || toneStyles.success.iconBg
                 }}
               >
-                {toast.type === 'error' ? '!' : toast.type === 'warning' ? '!' : toast.type === 'info' ? 'i' : '✓'}
+                {toast.type === 'error' ? '!' : toast.type === 'warning' ? '!' : toast.type === 'info' ? 'i' : toast.type === 'realtime' ? '•' : '✓'}
               </div>
               <div style={styles.messageWrap}>
                 <div style={styles.toastTitle}>
-                  {toast.type === 'error' ? 'Action Failed' : toast.type === 'warning' ? 'Attention Needed' : toast.type === 'info' ? 'Heads Up' : 'Success'}
+                  {toast.type === 'error' ? 'Action Failed' : toast.type === 'warning' ? 'Attention Needed' : toast.type === 'info' ? 'Heads Up' : toast.type === 'realtime' ? 'Live Update' : 'Success'}
                 </div>
                 <div style={styles.toastMessage}>{toast.message}</div>
               </div>

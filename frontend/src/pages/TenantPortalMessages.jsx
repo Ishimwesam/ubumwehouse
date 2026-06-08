@@ -45,7 +45,7 @@ const TenantPortalMessages = () => {
         if (!payload?.id) return;
         setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
         if (payload.sender_type === 'admin') {
-          emitAppToast('New message from admin', 'info');
+          emitAppToast('Live update: new message from admin', 'realtime');
         }
       } catch (_) {}
     };

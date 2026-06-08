@@ -24,6 +24,7 @@ const TenantPortalControl = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [sendingChat, setSendingChat] = useState(false);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [streamLive, setStreamLive] = useState(false);
 
   const accountsByPriority = useMemo(() => {
     return [...accounts].sort((a, b) => {
@@ -116,13 +117,16 @@ const TenantPortalControl = () => {
     if (!streamUrl) return undefined;
 
     const source = new EventSource(streamUrl);
+    const onConnected = () => setStreamLive(true);
+    source.addEventListener('connected', onConnected);
+
     const onMessage = (event) => {
       try {
         const payload = JSON.parse(event.data || '{}');
         if (!payload?.id || !payload?.tenant_id) return;
 
         if (payload.sender_type === 'tenant') {
-          emitAppToast(`New tenant message${payload.tenant_name ? ` from ${payload.tenant_name}` : ''}`, 'info');
+          emitAppToast(`Live update: new tenant message${payload.tenant_name ? ` from ${payload.tenant_name}` : ''}`, 'realtime');
         }
 
         setAccounts((prev) => prev.map((account) => {
@@ -145,9 +149,13 @@ const TenantPortalControl = () => {
     };
 
     source.addEventListener('message', onMessage);
-    source.onerror = () => {};
+    source.onerror = () => {
+      setStreamLive(false);
+    };
 
     return () => {
+      setStreamLive(false);
+      source.removeEventListener('connected', onConnected);
       source.removeEventListener('message', onMessage);
       source.close();
     };
@@ -237,6 +245,9 @@ const TenantPortalControl = () => {
         <article className="tenant-portal-control-panel">
           <div className="tenant-portal-control-panel-header">
             <h2>Tenant Inbox</h2>
+            <span className={`stream-pill ${streamLive ? 'live' : 'offline'}`}>
+              {streamLive ? 'Live updates on' : 'Live reconnecting...'}
+            </span>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -286,7 +297,11 @@ const TenantPortalControl = () => {
                         {account.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td>{Number(account.unread_tenant_messages || 0)}</td>
+                    <td>
+                      <span className={`unread-pill ${Number(account.unread_tenant_messages || 0) > 0 ? 'has-unread' : ''}`}>
+                        {Number(account.unread_tenant_messages || 0)}
+                      </span>
+                    </td>
                     <td>
                       <div className="actions">
                         <button
