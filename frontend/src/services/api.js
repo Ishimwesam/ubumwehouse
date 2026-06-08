@@ -84,7 +84,35 @@ const apiClient = axios.create({
   }
 });
 
-const isAuthRoute = (url = '') => url.includes('/auth/login') || url.includes('/auth/register');
+const isAuthRoute = (url = '') =>
+  url.includes('/auth/login')
+  || url.includes('/auth/register')
+  || url.includes('/tenant-portal/');
+const emitApiError = (error) => {
+  if (typeof window === 'undefined') return;
+
+  const status = error.response?.status || 0;
+  const recoverable = !status || status >= 500 || error.message === 'Network Error';
+  if (!recoverable) return;
+
+  window.dispatchEvent(new CustomEvent('app:api-error', {
+    detail: {
+      recoverable,
+      status,
+      path: error.config?.url || '',
+      message: getReadableApiError(error, 'The server could not complete this request.')
+    }
+  }));
+};
+
+export const markSuccessfulSync = () => {
+  if (typeof window === 'undefined') return;
+  const syncedAt = new Date().toISOString();
+  try {
+    localStorage.setItem('rms-last-successful-sync', syncedAt);
+  } catch (_) {}
+  window.dispatchEvent(new CustomEvent('app:data-sync-success', { detail: { syncedAt } }));
+};
 
 // Add token to requests
 apiClient.interceptors.request.use(
@@ -99,7 +127,10 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    markSuccessfulSync();
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401 && !isAuthRoute(error.config?.url)) {
       clearStoredAuthToken();
@@ -108,6 +139,8 @@ apiClient.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+
+    emitApiError(error);
 
     return Promise.reject(error);
   }
@@ -311,6 +344,21 @@ export const paymentService = {
   },
   delete: (id) => apiClient.delete(`/payments/${id}`),
   exportByBuilding: (buildingId) => apiClient.get(`/payments/building/${buildingId}/export`, { responseType: 'blob' })
+};
+
+export const tenantPortalService = {
+  access: (data) => apiClient.post('/tenant-portal/access', data),
+  uploadPaymentProof: (data) => {
+    const formData = new FormData();
+    Object.entries(data || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
+    });
+    return apiClient.post('/tenant-portal/payment-proof', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
 };
 
 // Dashboard Service

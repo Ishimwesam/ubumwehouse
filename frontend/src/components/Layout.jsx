@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { chatService, contractService, paymentService, resolveUploadUrl, tenantService, unitService } from '../services/api';
 import Sidebar, { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH } from './Sidebar';
 import SessionWarning from './SessionWarning';
+import ApiRecoveryNotice from './ApiRecoveryNotice';
+import NetworkStatusBanner from './NetworkStatusBanner';
 import { useSpinner } from '../context/SpinnerContext';
 
 // Theme context for light/dark mode
@@ -355,8 +357,11 @@ const routeMeta = (pathname) => {
   if (pathname.startsWith('/daily-income')) return { title: 'Daily Income', subtitle: 'Today’s collection summary and trends' };
   if (pathname.startsWith('/monthly-rent-sheet')) return { title: 'Rent Collection Sheet', subtitle: 'Monthly rent sheet and collection status' };
   if (pathname.startsWith('/calendar-events')) return { title: 'Events Calendar', subtitle: 'Schedules, reminders, and important dates' };
+  if (pathname.startsWith('/operations')) return { title: 'Operations Center', subtitle: 'Urgent work, reminders, and recovery workflows' };
+  if (pathname.startsWith('/export-center')) return { title: 'Export Center', subtitle: 'Reports, ledgers, sheets, and PDF downloads' };
   if (pathname.startsWith('/reports')) return { title: 'Reports Center', subtitle: 'Analytics, exports, and business insights' };
   if (pathname.startsWith('/advanced-reports')) return { title: 'Advanced Reports', subtitle: 'Deeper reporting and custom breakdowns' };
+  if (pathname.startsWith('/system-health')) return { title: 'System Health', subtitle: 'Uptime, backups, messaging, and recovery status' };
   if (pathname.startsWith('/settings')) return { title: 'Settings', subtitle: 'Profile, access, and system preferences' };
   return { title: 'Workspace', subtitle: 'UBUMWE System Company management console' };
 };
@@ -1618,6 +1623,8 @@ const Layout = ({ children }) => {
           </footer>
         </div>
         <SessionWarning />
+        <ApiRecoveryNotice />
+        <NetworkStatusBanner />
         {contextMenu.open ? (
           <div
             ref={contextMenuRef}
@@ -1691,9 +1698,12 @@ const Layout = ({ children }) => {
 const styles = {
   container: {
     display: 'flex',
+    width: '100%',
     height: '100vh',
+    minHeight: '100dvh',
     position: 'relative',
-    background: '#f6f8fc'
+    background: '#f6f8fc',
+    overflow: 'hidden'
   },
   overlay: {
     position: 'fixed',
@@ -1709,7 +1719,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     transition: 'margin-left 0.3s ease',
-    minWidth: 0
+    minWidth: 0,
+    maxWidth: '100%'
   },
   headerBar: {
     minHeight: '72px',
@@ -2873,8 +2884,10 @@ const styles = {
   content: {
     flex: 1,
     overflowY: 'auto',
+    overflowX: 'hidden',
     padding: '24px 28px 32px',
-    background: '#f6f8fc'
+    background: '#f6f8fc',
+    minWidth: 0
   },
   footerBar: {
     minHeight: '42px',

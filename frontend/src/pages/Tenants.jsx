@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { paymentService, tenantService, unitService } from '../services/api';
 import { useDataSync } from '../context/DataSyncContext';
 import useFeedbackToast from '../hooks/useFeedbackToast';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) =>
   `${parseFloat(value || 0).toLocaleString()} RWF`;
@@ -685,7 +686,7 @@ const Tenants = ({ reminderWindowOnly = false }) => {
       )
     }));
 
-  if (loading) return <div style={styles.loading}>Loading...</div>;
+  if (loading) return <PageLoader text="Loading tenants..." />;
 
   if (reminderWindowOnly) {
     return (

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { paymentService, resolveUploadUrl, tenantService } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
 const formatDate = (value) => {
@@ -122,7 +123,7 @@ const TenantLedger = () => {
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading tenant ledger...</div>;
+    return <PageLoader text="Loading tenant ledger..." />;
   }
 
   if (!ledger?.tenant) {

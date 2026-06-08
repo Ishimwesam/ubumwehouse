@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { buildingService, tenantService, paymentService } from '../services/api';
 import { FLOOR_OPTIONS, parseBuildingFloors } from '../utils/floorOptions';
 import useFeedbackToast from '../hooks/useFeedbackToast';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString()} RWF`;
 
@@ -193,7 +194,7 @@ const BuildingDetails = () => {
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading building details...</div>;
+    return <PageLoader text="Loading building details..." />;
   }
 
   return (

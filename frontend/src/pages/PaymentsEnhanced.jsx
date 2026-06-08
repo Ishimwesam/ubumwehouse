@@ -7,6 +7,7 @@ import { contractService, paymentService, resolveUploadUrl, tenantService, unitS
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
 import { useAuth } from '../context/AuthContext';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) =>
   `${parseFloat(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -664,12 +665,7 @@ const EnhancedPayments = () => {
   });
 
   if (loading) {
-    return (
-      <div style={styles.loading}>
-        <div style={styles.spinner}></div>
-        <p>Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading payments..." />;
   }
 
   return (

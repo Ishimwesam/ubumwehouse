@@ -86,6 +86,27 @@ export const sidebarItems = [
     description: 'Plan reminders, due dates, and follow-up events.'
   },
   {
+    key: 'operations',
+    label: 'Operations Center',
+    path: '/operations',
+    icon: 'operations',
+    description: 'Review urgent work and recovery workflows.'
+  },
+  {
+    key: 'export-center',
+    label: 'Export Center',
+    path: '/export-center',
+    icon: 'exportCenter',
+    description: 'Download reports, ledgers, and sheets.'
+  },
+  {
+    key: 'system-health',
+    label: 'System Health',
+    path: '/system-health',
+    icon: 'systemHealth',
+    description: 'Check uptime, backups, and recovery readiness.'
+  },
+  {
     key: 'settings',
     label: 'Settings',
     path: '/settings',

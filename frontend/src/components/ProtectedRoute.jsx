@@ -1,16 +1,13 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PageLoader from './PageLoader';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '2rem' }}>
-        Loading...
-      </div>
-    );
+    return <PageLoader text="Checking access..." />;
   }
 
   if (!isAuthenticated) {

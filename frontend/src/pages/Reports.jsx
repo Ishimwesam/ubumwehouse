@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { buildingService, dashboardService, paymentService, tenantService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString()} RWF`;
 const getInitialViewportWidth = () => (typeof window !== 'undefined' ? window.innerWidth : 1200);
@@ -194,7 +195,7 @@ const Reports = () => {
     }
   };
 
-  if (loading) return <div style={styles.loading}>Loading reports...</div>;
+  if (loading) return <PageLoader text="Loading reports..." />;
 
   return (
     <div id="reports-print" style={styles.printRoot}>

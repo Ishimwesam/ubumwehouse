@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { paymentService, resolveUploadUrl } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) =>
   `${parseFloat(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -204,7 +205,7 @@ const ManualPaymentConfirmation = () => {
 
       <div style={styles.card}>
         {loading ? (
-          <div style={styles.emptyState}>Loading pending payments...</div>
+          <PageLoader text="Loading pending payments..." minHeight="220px" />
         ) : filteredPayments.length === 0 ? (
           <div style={styles.emptyState}>
             {pendingPayments.length === 0 ? 'No pending payments found.' : 'No pending payments match the current search.'}

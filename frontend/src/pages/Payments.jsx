@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paymentService, resolveUploadUrl, tenantService } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) =>
   `${parseFloat(value || 0).toLocaleString()} RWF`;
@@ -191,7 +192,7 @@ const Payments = () => {
   }, [pendingPayments.length]);
   const confirmedPayments = payments.filter((payment) => payment.payment_status !== 'pending');
 
-  if (loading) return <div style={styles.loading}>Loading...</div>;
+  if (loading) return <PageLoader text="Loading payments..." />;
 
   return (
     <div>

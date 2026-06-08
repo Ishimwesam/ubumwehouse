@@ -6,6 +6,7 @@ import ReceiptModal from '../components/ReceiptModal';
 import { paymentService, resolveUploadUrl, tenantService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
+import PageLoader from '../components/PageLoader';
 
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -243,13 +244,7 @@ const PaymentHistoryPerTenant = () => {
   };
 
   if (loading) {
-
-    return (
-      <div style={styles.loading}>
-        <div style={styles.spinner}></div>
-        <p>Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Loading payment history..." />;
   }
 
   // Confirmed payments for summary table

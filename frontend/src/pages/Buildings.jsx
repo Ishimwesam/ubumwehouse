@@ -5,6 +5,7 @@ import { buildingService, dashboardService } from '../services/api';
 import { useDataSync } from '../context/DataSyncContext';
 import { FLOOR_OPTIONS, parseBuildingFloors } from '../utils/floorOptions';
 import useFeedbackToast from '../hooks/useFeedbackToast';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString()} RWF`;
 
@@ -269,7 +270,7 @@ const Buildings = () => {
     return buildingPerformance.find((item) => idsEqual(item.id, building.id) || idsEqual(item.building_id, building.id)) || null;
   };
 
-  if (loading) return <div style={styles.loading}>Loading...</div>;
+  if (loading) return <PageLoader text="Loading buildings..." />;
 
   return (
     <div className="buildings-page-shell" style={styles.container}>

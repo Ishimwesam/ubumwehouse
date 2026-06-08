@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { contractService, resolveUploadUrl, tenantService, unitService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
+import PageLoader from '../components/PageLoader';
 import '../styles/contracts.css';
 
 const addDays = (dateValue, days) => {
@@ -362,7 +363,7 @@ const Contracts = () => {
   }, [endingSoonContracts, showToast]);
 
   if (loading) {
-    return <div className="contracts-page__loading">Loading contracts...</div>;
+    return <PageLoader text="Loading contracts..." />;
   }
 
   return (

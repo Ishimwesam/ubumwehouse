@@ -137,11 +137,38 @@ const SidebarIcon = ({ name, active = false }) => {
           <path d="M7.5 14.1h2.5M11 14.1h2.5M14.5 14.1H17M7.5 17.8h2.5M11 17.8h2.5M14.5 17.8H17" />
         </svg>
       );
+    case 'operations':
+      return (
+        <svg {...common}>
+          <path d="M4 6.5h16" />
+          <path d="M4 12h16" />
+          <path d="M4 17.5h16" />
+          <circle cx="8" cy="6.5" r="1.6" fill={fill} stroke="none" />
+          <circle cx="14" cy="12" r="1.6" fill={fill} stroke="none" />
+          <circle cx="10.5" cy="17.5" r="1.6" fill={fill} stroke="none" />
+        </svg>
+      );
+    case 'exportCenter':
+      return (
+        <svg {...common}>
+          <path d="M7 3.5h7l4 4v13A1.5 1.5 0 0 1 16.5 22h-9A1.5 1.5 0 0 1 6 20.5V5A1.5 1.5 0 0 1 7 3.5Z" />
+          <path d="M14 3.5V8h4" />
+          <path d="M12 11v6" />
+          <path d="m9.5 14.5 2.5 2.5 2.5-2.5" />
+        </svg>
+      );
     case 'settings':
       return (
         <svg {...common}>
           <circle cx="12" cy="12" r="3.2" />
           <path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" />
+        </svg>
+      );
+    case 'systemHealth':
+      return (
+        <svg {...common}>
+          <path d="M12 21s7-3.5 7-9V5.8L12 3 5 5.8V12c0 5.5 7 9 7 9Z" />
+          <path d="M8.7 12.2h2.1l1.1-2.8 1.7 5 1.1-2.2h2.6" />
         </svg>
       );
     case 'logout':

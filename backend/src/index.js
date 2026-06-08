@@ -45,6 +45,7 @@ const expenseRoutes = require('./routes/expenseRoutes');
 const calendarEventRoutes = require('./routes/calendarEventRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const systemRoutes = require('./routes/systemRoutes');
+const tenantPortalRoutes = require('./routes/tenantPortalRoutes');
 const { startWhatsAppReminderScheduler } = require('./services/whatsappReminderService');
 const { startBackupScheduler } = require('./services/backupService');
 const { enforceDeviceLock } = require('./services/deviceLockService');
@@ -182,6 +183,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/calendar-events', calendarEventRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/tenant-portal', tenantPortalRoutes);
 
 if (isProduction) {
   app.use(express.static(frontendDistPath));

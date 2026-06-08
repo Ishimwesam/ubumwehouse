@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { dashboardService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
 const formatPercent = (value) => `${parseFloat(value || 0).toFixed(2)}%`;
@@ -64,14 +65,7 @@ const DailyIncomeSummary = () => {
   };
 
   if (loading) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.loading}>
-          <div style={styles.spinner}></div>
-          <p>Loading daily income summary...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader text="Loading daily income summary..." />;
   }
 
   const progressPercent = getProgressPercent();

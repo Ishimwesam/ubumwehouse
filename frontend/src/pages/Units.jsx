@@ -5,6 +5,7 @@ import { getReadableApiError, unitService, buildingService } from '../services/a
 import { useDataSync } from '../context/DataSyncContext';
 import { FLOOR_OPTIONS, parseBuildingFloors } from '../utils/floorOptions';
 import useFeedbackToast from '../hooks/useFeedbackToast';
+import PageLoader from '../components/PageLoader';
 
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -276,14 +277,7 @@ const Units = () => {
   };
 
   if (loading) {
-    return (
-      <div className="units-page-shell" style={styles.container}>
-        <div style={styles.loading}>
-          <div style={styles.loadingTitle}>Units / Rooms Management</div>
-          <div style={styles.loadingText}>Loading unit availability, rent, and building assignment records...</div>
-        </div>
-      </div>
-    );
+    return <PageLoader text="Loading unit availability, rent, and building assignment records..." />;
   }
 
   return (

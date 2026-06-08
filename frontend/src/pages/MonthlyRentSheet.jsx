@@ -7,6 +7,7 @@ import { buildingService, paymentService, tenantService, unitService } from '../
 import { useDataSync } from '../context/DataSyncContext';
 import useFeedbackToast from '../hooks/useFeedbackToast';
 import { ThemeContext } from '../components/Layout';
+import PageLoader from '../components/PageLoader';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString()} RWF`;
 const idsEqual = (first, second) => String(first || '') === String(second || '');
@@ -797,7 +798,7 @@ const MonthlyRentSheet = () => {
     setError('');
   };
 
-  if (loading) return <div style={ui.loading}>Loading...</div>;
+  if (loading) return <PageLoader text="Loading monthly rent sheet..." />;
 
   return (
     <div className="rent-sheet-page-shell" style={ui.container}>

@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { buildingService, contractService, dashboardService, paymentService, resolveUploadUrl, tenantService, unitService } from '../services/api';
 import { useDataSync } from '../context/DataSyncContext';
+import PageLoader from '../components/PageLoader';
 
 const fallbackBuildingImages = ['/candidate1.jpg', '/candidate2.jpg', '/sasa.jpg', '/dashboard-wallpaper.jpg'];
+const DASHBOARD_CACHE_KEY = 'rms-dashboard-cache-v1';
 
 const formatCurrency = (value) => `${parseFloat(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
 
@@ -139,6 +141,7 @@ const Dashboard = () => {
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cacheInfo, setCacheInfo] = useState(null);
   const canManageOperations = isManager();
 
   useEffect(() => {
@@ -160,6 +163,7 @@ const Dashboard = () => {
   const loadDashboard = async () => {
     setLoading(true);
     setError('');
+    setCacheInfo(null);
 
     const [summaryRes, buildingsRes, paymentsRes, tenantsRes, contractsRes, unitsRes] = await Promise.allSettled([
       dashboardService.getSummary(),
@@ -170,28 +174,40 @@ const Dashboard = () => {
       unitService.getAll()
     ]);
 
-    if (summaryRes.status === 'fulfilled') {
-      setSummary(summaryRes.value.data || {});
-    }
+    const hadFailure = [summaryRes, buildingsRes, paymentsRes, tenantsRes, contractsRes, unitsRes].some((result) => result.status === 'rejected');
+    const nextDashboard = {
+      summary: summaryRes.status === 'fulfilled' ? summaryRes.value.data || {} : null,
+      buildings: buildingsRes.status === 'fulfilled' ? buildingsRes.value.data || [] : null,
+      recentPayments: paymentsRes.status === 'fulfilled' ? paymentsRes.value.data || [] : null,
+      tenants: tenantsRes.status === 'fulfilled' ? tenantsRes.value.data || [] : null,
+      contracts: contractsRes.status === 'fulfilled' ? contractsRes.value.data || [] : null,
+      units: unitsRes.status === 'fulfilled' ? unitsRes.value.data || [] : null
+    };
 
-    if (buildingsRes.status === 'fulfilled') {
-      setBuildings(buildingsRes.value.data || []);
-    }
+    if (!hadFailure) {
+      setSummary(nextDashboard.summary);
+      setBuildings(nextDashboard.buildings);
+      setRecentPayments(nextDashboard.recentPayments);
+      setTenants(nextDashboard.tenants);
+      setContracts(nextDashboard.contracts);
+      setUnits(nextDashboard.units);
 
-    if (paymentsRes.status === 'fulfilled') {
-      setRecentPayments(paymentsRes.value.data || []);
-    }
-    if (tenantsRes.status === 'fulfilled') {
-      setTenants(tenantsRes.value.data || []);
-    }
-    if (contractsRes.status === 'fulfilled') {
-      setContracts(contractsRes.value.data || []);
-    }
-    if (unitsRes.status === 'fulfilled') {
-      setUnits(unitsRes.value.data || []);
-    }
-
-    if ([summaryRes, buildingsRes, paymentsRes, tenantsRes, contractsRes, unitsRes].some((result) => result.status === 'rejected')) {
+      try {
+        localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({ ...nextDashboard, cachedAt: new Date().toISOString() }));
+      } catch (_) {}
+    } else {
+      try {
+        const cached = JSON.parse(localStorage.getItem(DASHBOARD_CACHE_KEY) || 'null');
+        if (cached) {
+          setSummary(nextDashboard.summary || cached.summary || {});
+          setBuildings(nextDashboard.buildings || cached.buildings || []);
+          setRecentPayments(nextDashboard.recentPayments || cached.recentPayments || []);
+          setTenants(nextDashboard.tenants || cached.tenants || []);
+          setContracts(nextDashboard.contracts || cached.contracts || []);
+          setUnits(nextDashboard.units || cached.units || []);
+          setCacheInfo({ cachedAt: cached.cachedAt });
+        }
+      } catch (_) {}
       setError('Some dashboard data could not be loaded. Please ensure the backend server is running and reachable.');
     }
 
@@ -273,19 +289,16 @@ const Dashboard = () => {
     { label: 'Unpaid Tenants', value: unpaidTenants.length, hint: 'Open balances needing collection', path: '/monthly-rent-sheet', tone: '#dc2626' },
     { label: 'Pending Receipts', value: pendingPayments.length, hint: 'Approve or reject uploaded proof', path: '/manual-confirmation', tone: '#d97706' },
     { label: 'Contracts Ending', value: expiringContracts.length, hint: 'Renew or follow up before expiry', path: '/contracts', tone: '#7c3aed' },
-    { label: 'Vacant Units', value: vacantUnits.length, hint: 'Available rooms to assign', path: '/units', tone: '#0f766e' }
+    { label: 'Vacant Units', value: vacantUnits.length, hint: 'Available rooms to assign', path: '/units', tone: '#0f766e' },
+    { label: 'Operations Queue', value: unpaidTenants.length + pendingPayments.length + expiringContracts.length + vacantUnits.length, hint: 'Open all urgent work in one place', path: '/operations', tone: '#2563eb' },
+    { label: 'Export Center', value: 'PDF', hint: 'Reports, ledgers, and sheets', path: '/export-center', tone: '#475569' }
   ];
   const isTablet = viewportWidth < 1180;
   const isMobile = viewportWidth < 768;
   const isSmallPhone = viewportWidth < 520;
 
   if (loading) {
-    return (
-      <div style={styles.loadingWrap}>
-        <div style={styles.spinner} />
-        <p style={styles.loadingText}>Loading dashboard...</p>
-      </div>
-    );
+    return <PageLoader text="Loading dashboard..." />;
   }
 
   return (
@@ -303,6 +316,11 @@ const Dashboard = () => {
       </div>
 
       {error ? <div style={styles.errorBanner}>{error}</div> : null}
+      {cacheInfo ? (
+        <div style={styles.cacheBanner}>
+          Showing cached dashboard data from {new Date(cacheInfo.cachedAt).toLocaleString()}. Fresh data will replace it when the connection recovers.
+        </div>
+      ) : null}
 
       <div style={{
         ...styles.statGrid,
@@ -561,6 +579,17 @@ const styles = {
     color: '#b91c1c',
     fontSize: '14px',
     fontWeight: 600
+  },
+  cacheBanner: {
+    marginBottom: '18px',
+    padding: '13px 15px',
+    borderRadius: '12px',
+    background: '#fffbeb',
+    border: '1px solid #fde68a',
+    color: '#92400e',
+    fontSize: '13px',
+    lineHeight: 1.45,
+    fontWeight: 700
   },
   statGrid: {
     display: 'grid',
