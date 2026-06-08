@@ -43,3 +43,9 @@ services:
         value: false
       - key: ALLOW_DEV_TOKEN
         value: false
+      - key: VAPID_PUBLIC_KEY
+        value: BAe8XGZc5F4uZKVXdPtZhrRizEL-xABL1ZJRHAcvtdZd35VpMoyI_Q0RToC2LUomF8kL3nCkD_I8q92nK9DamS4
+      - key: VAPID_EMAIL
+        value: mailto:ubumwehouseltd@gmail.com
+      - key: VAPID_PRIVATE_KEY
+        sync: false

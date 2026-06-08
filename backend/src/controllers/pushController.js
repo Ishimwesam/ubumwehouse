@@ -70,7 +70,7 @@ const unsubscribeTenantPush = (req, res) => {
 const sendPushToTenant = (tenantId, title, body, url = '/tenant-portal/messages') => {
   const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-  const vapidEmail = process.env.VAPID_EMAIL || 'mailto:admin@ubumwehouse.rw';
+  const vapidEmail = process.env.VAPID_EMAIL || 'mailto:ubumwehouseltd@gmail.com';
 
   if (!vapidPublicKey || !vapidPrivateKey) return;
 
