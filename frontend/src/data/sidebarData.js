@@ -93,6 +93,14 @@ export const sidebarItems = [
     description: 'Review urgent work and recovery workflows.'
   },
   {
+    key: 'tenant-portal-control',
+    label: 'Tenant Portal Control',
+    path: '/tenant-portal-control',
+    icon: 'tenants',
+    allowedRoles: ['manager', 'admin'],
+    description: 'Control tenant portal access and account security.'
+  },
+  {
     key: 'export-center',
     label: 'Export Center',
     path: '/export-center',

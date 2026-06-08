@@ -382,6 +382,12 @@ export const tenantPortalService = {
   }
 };
 
+export const tenantPortalAdminService = {
+  listAccounts: () => apiClient.get('/tenant-portal/accounts'),
+  updateAccountStatus: (accountId, isActive) => apiClient.put(`/tenant-portal/accounts/${accountId}/status`, { is_active: isActive }),
+  resetAccountPassword: (accountId, password) => apiClient.post(`/tenant-portal/accounts/${accountId}/reset-password`, { password })
+};
+
 // Dashboard Service
 export const dashboardService = {
   getSummary: () => apiClient.get('/dashboard/summary'),

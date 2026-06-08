@@ -34,6 +34,7 @@ import VerifyLoginOtp from './pages/VerifyLoginOtp';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import TenantPortal from './pages/TenantPortal';
+import TenantPortalControl from './pages/TenantPortalControl';
 import { applyAppFont, getStoredAppFont } from './utils/appFont';
 
 import './styles/globals.css';
@@ -81,6 +82,7 @@ const ProtectedPageRoutes = () => {
           <Route path="/export-center" element={<ExportCenter />} />
           <Route path="/system-health" element={<SystemHealth />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/tenant-portal-control" element={withRoles(<TenantPortalControl />, ['manager', 'admin'])} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </AppErrorBoundary>
