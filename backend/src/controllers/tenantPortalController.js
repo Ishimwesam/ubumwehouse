@@ -288,11 +288,9 @@ const loginTenantPortal = (req, res) => {
   }
 
   db.get(
-    `SELECT a.id as account_id, a.username, a.password, ${tenantPortalFields}
+    `SELECT a.id as account_id, a.username, a.password, t.id as tenant_id
      FROM tenant_portal_accounts a
      INNER JOIN tenants t ON t.id = a.tenant_id
-     LEFT JOIN units u ON t.unit_id = u.id
-     LEFT JOIN buildings b ON u.building_id = b.id
      WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1
      LIMIT 1`,
     [normalizedUsername],
@@ -303,23 +301,7 @@ const loginTenantPortal = (req, res) => {
       }
 
       const account = { id: row.account_id, username: row.username };
-      const tenant = {
-        id: row.id,
-        full_name: row.full_name,
-        email: row.email,
-        phone: row.phone,
-        national_id: row.national_id,
-        status: row.status,
-        move_in_date: row.move_in_date,
-        move_out_date: row.move_out_date,
-        unit_id: row.unit_id,
-        unit_number: row.unit_number,
-        floor: row.floor,
-        building_name: row.building_name,
-        monthly_rent: row.monthly_rent,
-        current_period_paid: row.current_period_paid,
-        pending_amount: row.pending_amount
-      };
+      const tenant = { id: row.tenant_id };
       const token = createTenantToken(account, tenant);
 
       db.run('UPDATE tenant_portal_accounts SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [account.id], () => {});
