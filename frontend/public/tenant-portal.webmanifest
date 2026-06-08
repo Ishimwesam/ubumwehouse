@@ -1,0 +1,44 @@
+{
+  "name": "UBUMWE Tenant Portal",
+  "short_name": "Tenant Portal",
+  "description": "Tenant self-service portal for UBUMWE HOUSE LTD.",
+  "id": "/tenant-portal",
+  "start_url": "/tenant-portal",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/tenant-portal-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/samm.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Payments",
+      "short_name": "Payments",
+      "url": "/tenant-portal/payments"
+    },
+    {
+      "name": "Upload Receipt",
+      "short_name": "Receipt",
+      "url": "/tenant-portal/upload"
+    },
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "url": "/tenant-portal/messages"
+    }
+  ]
+}

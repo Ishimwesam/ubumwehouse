@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveUploadUrl, tenantPortalService } from '../services/api';
 import { emitAppToast } from '../context/ToastContext';
+import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -370,6 +371,7 @@ const TenantPortal = () => {
               {loading ? 'Checking...' : mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Open Portal'}
             </button>
           </form>
+          <TenantPortalInstallPrompt />
         </section>
       ) : (
         <div className="tp-dashboard">
@@ -413,7 +415,10 @@ const TenantPortal = () => {
                   Status: <strong>{statusLabel}</strong>
                 </p>
               </div>
-              <div className="tp-user">{accountName}</div>
+              <div className="tp-header-actions">
+                <TenantPortalInstallPrompt compact />
+                <div className="tp-user">{accountName}</div>
+              </div>
             </header>
 
             {error ? <div className="tp-alert error">{error}</div> : null}

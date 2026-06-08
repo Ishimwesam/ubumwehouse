@@ -14,3 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </SpinnerProvider>
   </React.StrictMode>,
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/tenant-portal-sw.js', { scope: '/' }).catch(() => {});
+  });
+}
