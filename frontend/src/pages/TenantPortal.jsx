@@ -3,13 +3,38 @@ import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import { emitAppToast } from '../context/ToastContext';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
-import useTenantUnread from '../hooks/useTenantUnread';
-import { clearUnread, incrementUnread, registerTenantPushSubscription, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
+import TenantPortalNav from '../components/TenantPortalNav';
+import { incrementUnread, registerTenantPushSubscription, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 const today = () => new Date().toISOString().slice(0, 10);
+const TENANT_PORTAL_CACHE_KEY = 'tenantPortalData';
+
+const readCachedPortalData = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = sessionStorage.getItem(TENANT_PORTAL_CACHE_KEY) || localStorage.getItem(TENANT_PORTAL_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  } catch (_) {
+    return null;
+  }
+};
+
+const writeCachedPortalData = (data) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const serialized = data ? JSON.stringify(data) : '';
+    if (serialized) {
+      sessionStorage.setItem(TENANT_PORTAL_CACHE_KEY, serialized);
+    } else {
+      sessionStorage.removeItem(TENANT_PORTAL_CACHE_KEY);
+      localStorage.removeItem(TENANT_PORTAL_CACHE_KEY);
+    }
+  } catch (_) {}
+};
+
 const formatDateTime = (value) => {
   if (!value) return '-';
   const parsed = new Date(value);
@@ -17,18 +42,26 @@ const formatDateTime = (value) => {
   return parsed.toLocaleString();
 };
 
-const IconGrid = () => <span aria-hidden="true">▦</span>;
+const getTenantName = (tenant) => String(tenant?.full_name || tenant?.tenant_name || '').trim();
+const hasTenantDisplayName = (data) => Boolean(getTenantName(data?.tenant));
+const isRejectedPayment = (payment) => String(payment?.payment_status || '').toLowerCase() === 'rejected';
+
 const IconWallet = () => <span aria-hidden="true">◫</span>;
 const IconCheck = () => <span aria-hidden="true">◉</span>;
 const IconFile = () => <span aria-hidden="true">◧</span>;
+const formatUnreadToast = (count) => `${count} unread message${count === 1 ? '' : 's'} in your inbox`;
+const portalBrandText = 'UBUMWE HOUSE LTD TENANT PORTAL';
 
 const TenantPortal = () => {
   const navigate = useNavigate();
   const [accessForm, setAccessForm] = useState({ identifier: '', accessCode: '' });
   const [mode, setMode] = useState('login');
   const [credentialForm, setCredentialForm] = useState({ username: '', password: '', confirmPassword: '', remember: true });
-  const [portalData, setPortalData] = useState(null);
-  const [bootLoading, setBootLoading] = useState(() => Boolean(tenantPortalService.getToken()));
+  const [portalData, setPortalData] = useState(() => readCachedPortalData());
+  const [bootLoading, setBootLoading] = useState(() => {
+    const cached = readCachedPortalData();
+    return Boolean(tenantPortalService.getToken() && (!cached || !hasTenantDisplayName(cached)));
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -38,7 +71,6 @@ const TenantPortal = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const unreadMessages = useTenantUnread();
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     payment_date: today(),
@@ -69,7 +101,12 @@ const TenantPortal = () => {
   const latestPayment = payments[0] || null;
   const accountName = 'UBUMWE HOUSE LTD';
   const bankName = tenant?.bank_name || 'UBUMWE HOUSE LTD - Official Collection Account';
-  const tenantDisplayName = (tenant?.full_name || tenant?.tenant_name || 'Tenant').toUpperCase();
+  const tenantName = getTenantName(tenant);
+  const tenantDisplayName = (tenantName || 'Your Account').toUpperCase();
+
+  useEffect(() => {
+    writeCachedPortalData(portalData);
+  }, [portalData]);
 
   const scrollTo = (sectionRef) => {
     if (!sectionRef?.current) return;
@@ -99,6 +136,7 @@ const TenantPortal = () => {
       .then((response) => {
         if (!mounted) return;
         setPortalData(response.data);
+        setBootLoading(false);
         setPaymentForm((prev) => ({
           ...prev,
           amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || ''
@@ -106,6 +144,8 @@ const TenantPortal = () => {
       })
       .catch(() => {
         tenantPortalService.clearToken();
+        setPortalData(null);
+        writeCachedPortalData(null);
       })
       .finally(() => {
         if (mounted) {
@@ -137,8 +177,8 @@ const TenantPortal = () => {
         if (!payload?.id) return;
         setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
         if (payload.sender_type === 'admin') {
-          incrementUnread();
-          emitAppToast('New reply from UBUMWE HOUSE LTD support', 'realtime');
+          const nextUnread = incrementUnread();
+          emitAppToast(formatUnreadToast(nextUnread), 'realtime');
           showBrowserNotification(
             'UBUMWE HOUSE LTD',
             payload.message || 'You have a new message from support.'
@@ -169,6 +209,7 @@ const TenantPortal = () => {
     try {
       const response = await tenantPortalService.access(accessForm);
       setPortalData(response.data);
+      setBootLoading(false);
       setPaymentForm((prev) => ({
         ...prev,
         amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || ''
@@ -203,6 +244,7 @@ const TenantPortal = () => {
       });
       tenantPortalService.setToken(response.data.token, credentialForm.remember);
       setPortalData(response.data);
+      setBootLoading(false);
       setSuccess('Your tenant portal account has been created and saved.');
     } catch (err) {
       setError(getReadableApiError(err, 'Tenant account registration failed.'));
@@ -225,6 +267,7 @@ const TenantPortal = () => {
       });
       tenantPortalService.setToken(response.data.token, credentialForm.remember);
       setPortalData(response.data);
+      setBootLoading(false);
       setSuccess('Signed in to tenant portal.');
     } catch (err) {
       setError(getReadableApiError(err, 'Tenant portal login failed.'));
@@ -236,6 +279,7 @@ const TenantPortal = () => {
   const refreshPortal = async () => {
     const response = await tenantPortalService.me();
     setPortalData(response.data);
+    setBootLoading(false);
   };
 
   const handleUpload = async (event) => {
@@ -291,13 +335,16 @@ const TenantPortal = () => {
               <span />
               <span />
             </div>
-            <strong>Opening tenant portal</strong>
-            <p>Checking your saved session and loading your account details.</p>
+            <strong>{portalBrandText}</strong>
+            <p>Opening the tenant portal and loading your account details.</p>
           </div>
         </section>
       ) : !tenant ? (
         <section className="tp-auth-shell">
           <form className="tp-auth-card" onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleAccess}>
+            <div className="tp-auth-brand">
+              <span>{portalBrandText}</span>
+            </div>
             <h2>{mode === 'login' ? 'Tenant Login' : mode === 'register' ? 'Create Tenant Account' : 'One-Time Access'}</h2>
             <div className="tp-mode-tabs">
               <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>Login</button>
@@ -385,19 +432,10 @@ const TenantPortal = () => {
               <div className="tp-brand-subtitle">Tenant Portal</div>
             </div>
 
-            <nav className="tp-nav">
-              <button type="button" className="active" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><IconGrid /> Dashboard</button>
-              <button type="button" onClick={() => navigate('/tenant-portal/payments')}>Payments</button>
-              <button type="button" onClick={() => navigate('/tenant-portal/upload')}>Upload Receipt</button>
-              <button type="button" onClick={() => navigate('/tenant-portal/maintenance')}>Maintenance</button>
-              <button type="button" className="tp-nav-msg-btn" onClick={() => { clearUnread(); navigate('/tenant-portal/messages'); }}>
-                Messages
-                {unreadMessages > 0 ? <span className="tp-nav-badge">{unreadMessages > 99 ? '99+' : unreadMessages}</span> : null}
-              </button>
-              <button type="button" onClick={() => navigate('/tenant-portal/announcements')}>Announcements</button>
-              <button type="button" onClick={() => navigate('/tenant-portal/profile')}>Profile</button>
-              <button type="button" onClick={() => navigate('/forgot-password')}>Change Password</button>
-            </nav>
+            <TenantPortalNav
+              current="dashboard"
+              onDashboardClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            />
 
             <button
               className="tp-logout"
@@ -406,6 +444,8 @@ const TenantPortal = () => {
                 tenantPortalService.clearToken();
                 setPortalData(null);
                 setMessages([]);
+                writeCachedPortalData(null);
+                setBootLoading(false);
               }}
             >
               Logout
@@ -461,7 +501,7 @@ const TenantPortal = () => {
                 <div className="tp-payment-list">
                   <div><span>Account Name</span><strong>{accountName}</strong></div>
                   <div><span>Bank Name</span><strong>{bankName}</strong></div>
-                  <div><span>Payment Reference</span><strong>{`${tenant?.full_name || 'Tenant'} / Unit ${tenant?.unit_number || 'N/A'}`}</strong></div>
+                  <div><span>Payment Reference</span><strong>{`${tenantName || 'Your Account'} / Unit ${tenant?.unit_number || 'N/A'}`}</strong></div>
                   <div><span>Last Payment Date</span><strong>{latestPayment ? formatDateTime(latestPayment.created_at || latestPayment.payment_date) : '-'}</strong></div>
                 </div>
                 <div className="tp-payment-actions">
@@ -540,7 +580,15 @@ const TenantPortal = () => {
                           <td>{payment.payment_date || '-'}</td>
                           <td>RENT - {payment.payment_period || '-'}</td>
                           <td>{formatCurrency(payment.amount)}</td>
-                          <td><span className={`tp-status-pill ${String(payment.payment_status || '').toLowerCase()}`}>{payment.payment_status || 'confirmed'}</span></td>
+                          <td>
+                            <span className={`tp-status-pill ${String(payment.payment_status || '').toLowerCase()}`}>{payment.payment_status || 'confirmed'}</span>
+                            {isRejectedPayment(payment) ? (
+                              <div className="tp-rejection-note">
+                                <strong>Reason:</strong> {payment.rejection_reason || 'No reason was recorded. Please contact admin.'}
+                                {payment.rejected_at ? <small>Rejected {formatDateTime(payment.rejected_at)}</small> : null}
+                              </div>
+                            ) : null}
+                          </td>
                           <td>
                             {getReceiptPath(payment) ? (
                               <a href={getReceiptPath(payment)} target="_blank" rel="noreferrer">Download</a>

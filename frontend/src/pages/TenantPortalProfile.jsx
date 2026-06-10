@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
+import TenantPortalNav from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const TenantPortalProfile = () => {
@@ -66,6 +67,7 @@ const TenantPortalProfile = () => {
           ) : null}
         </section>
       </section>
+      <TenantPortalNav current="profile" mobileOnly />
     </main>
   );
 };

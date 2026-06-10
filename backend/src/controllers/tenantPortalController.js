@@ -256,7 +256,7 @@ const loadPortalPayload = (tenant, callback) => {
     `SELECT p.id, p.amount, p.payment_date,
             COALESCE(p.payment_period, strftime('%Y-%m', p.payment_date)) as payment_period,
             COALESCE(p.payment_status, 'confirmed') as payment_status,
-            p.payment_method, p.receipt_path, p.notes,
+            p.payment_method, p.receipt_path, p.notes, p.rejection_reason, p.rejected_at,
             u.unit_number, b.name as building_name
      FROM payments p
      LEFT JOIN units u ON u.id = p.unit_id
@@ -398,9 +398,11 @@ const loginTenantPortal = (req, res) => {
   }
 
   db.get(
-    `SELECT a.id as account_id, a.username, a.password, t.id as tenant_id
+    `SELECT a.id as account_id, a.username, a.password, ${tenantPortalFields}
      FROM tenant_portal_accounts a
      INNER JOIN tenants t ON t.id = a.tenant_id
+     LEFT JOIN units u ON t.unit_id = u.id
+     LEFT JOIN buildings b ON u.building_id = b.id
     WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1 AND t.status = 'active'
      LIMIT 1`,
     [normalizedUsername],
@@ -411,7 +413,7 @@ const loginTenantPortal = (req, res) => {
       }
 
       const account = { id: row.account_id, username: row.username };
-      const tenant = { id: row.tenant_id };
+      const tenant = row;
       const token = createTenantToken(account, tenant);
 
       db.run('UPDATE tenant_portal_accounts SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [account.id], () => {});

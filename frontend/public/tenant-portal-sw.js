@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ubumwe-tenant-portal-v4';
+const CACHE_NAME = 'ubumwe-tenant-portal-v6';
 const APP_SHELL = [
   '/',
   '/tenant-portal',

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
+import TenantPortalNav from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
@@ -130,6 +131,7 @@ const TenantPortalUpload = () => {
           {tenant ? <p className="tp-empty" style={{ marginTop: 10 }}>Tenant: {tenant.full_name || '-'} / Unit {tenant.unit_number || '-'}</p> : null}
         </section>
       </section>
+      <TenantPortalNav current="upload" mobileOnly />
     </main>
   );
 };

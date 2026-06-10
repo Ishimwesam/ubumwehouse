@@ -3,7 +3,7 @@
   "short_name": "Tenant Portal",
   "description": "Tenant self-service portal for UBUMWE HOUSE LTD.",
   "id": "/tenant-portal",
-  "start_url": "/tenant-portal",
+  "start_url": "/tenant-portal-start.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
