@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import useTenantUnread from '../hooks/useTenantUnread';
 import { clearUnread } from '../utils/tenantNotification';
 
@@ -68,9 +68,24 @@ const navItems = [
   { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/forgot-password', extra: true }
 ];
 
+const getCurrentFromPath = (pathname = '') => {
+  const exactMatch = navItems.find((item) => item.path === pathname);
+  if (exactMatch) return exactMatch.id;
+
+  const nestedMatch = navItems
+    .filter((item) => item.path !== '/tenant-portal' && pathname.startsWith(item.path))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+
+  if (nestedMatch) return nestedMatch.id;
+  if (pathname.startsWith('/tenant-portal')) return 'dashboard';
+  return '';
+};
+
 const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const unreadMessages = useTenantUnread();
+  const activeItem = current || getCurrentFromPath(location.pathname);
 
   const handleClick = (item) => {
     if (item.id === 'messages') {
@@ -79,6 +94,11 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
 
     if (item.id === 'dashboard' && onDashboardClick) {
       onDashboardClick();
+      return;
+    }
+
+    if (location.pathname === item.path) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -92,7 +112,7 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
           key={item.id}
           type="button"
           className={[
-            current === item.id ? 'active' : '',
+            activeItem === item.id ? 'active' : '',
             item.id === 'messages' ? 'tp-nav-msg-btn' : '',
             item.extra ? 'tp-nav-extra' : ''
           ].filter(Boolean).join(' ')}

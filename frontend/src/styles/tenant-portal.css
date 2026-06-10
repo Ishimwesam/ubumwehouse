@@ -339,7 +339,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.tp-nav button:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 2px;
 }
 
 .tp-nav-icon {
@@ -1092,16 +1099,20 @@
 
   .tp-sidebar {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(12px + env(safe-area-inset-bottom));
     z-index: 50;
-    padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+    max-width: 430px;
+    margin: 0 auto;
+    padding: 8px;
     border-right: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
     background:
       linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(15, 23, 42, 0.98) 46%, rgba(15, 118, 110, 0.95));
-    box-shadow: 0 -18px 40px rgba(15, 23, 42, 0.32);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.34);
+    backdrop-filter: blur(18px);
   }
 
   .tp-brand-block {
@@ -1111,7 +1122,7 @@
   .tp-nav {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
     overflow: visible;
   }
 
@@ -1121,11 +1132,12 @@
 
   .tp-nav button {
     min-width: 0;
-    min-height: 50px;
+    min-height: 48px;
+    aspect-ratio: 1 / 1;
     justify-content: center;
     text-align: center;
-    padding: 6px 3px;
-    border-radius: 14px;
+    padding: 0;
+    border-radius: 18px;
     color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.1);
@@ -1142,9 +1154,9 @@
 
   .tp-nav button.active {
     color: #ffffff;
-    background: linear-gradient(135deg, #38bdf8, #2563eb);
+    background: linear-gradient(135deg, #38bdf8, #2563eb 64%, #0f766e);
     border-color: rgba(255, 255, 255, 0.36);
-    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.38);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.42);
   }
 
   .tp-nav button:hover {
@@ -1152,8 +1164,8 @@
   }
 
   .tp-nav-icon {
-    width: 24px;
-    height: 24px;
+    width: 23px;
+    height: 23px;
   }
 
   .tp-nav-label {
@@ -1162,8 +1174,8 @@
 
   .tp-nav-badge {
     position: absolute;
-    top: 3px;
-    right: 5px;
+    top: 4px;
+    right: 4px;
     min-width: 18px;
     height: 18px;
     padding: 0 4px;
@@ -1177,21 +1189,25 @@
 
   .tp-mobile-nav {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(12px + env(safe-area-inset-bottom));
     z-index: 50;
-    padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+    max-width: 430px;
+    margin: 0 auto;
+    padding: 8px;
     background:
       linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(15, 23, 42, 0.98) 46%, rgba(15, 118, 110, 0.95));
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 0 -18px 40px rgba(15, 23, 42, 0.32);
+    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.34);
+    backdrop-filter: blur(18px);
   }
 
   .tp-logout {
     position: absolute;
-    right: 10px;
-    top: -50px;
+    right: 4px;
+    top: -48px;
     margin-top: 0;
     padding: 8px 12px;
     background: rgba(15, 23, 42, 0.92);
@@ -1202,7 +1218,7 @@
   }
 
   .tp-main {
-    padding: 12px 12px 126px;
+    padding: 12px 12px 118px;
     background: transparent;
   }
 
