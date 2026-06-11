@@ -4,7 +4,14 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../../config/database');
 const paymentController = require('./paymentController');
 const { rentForPeriodExpression } = require('../services/rentHistoryService');
-const { sendPushToTenant } = require('./pushController');
+const { sendPushToAllTenants, sendPushToTenant } = require('./pushController');
+const {
+  registerTenantPortalClient,
+  registerAdminTenantPortalClient,
+  notifyTenantStream,
+  notifyAdminStream,
+  notifyAllTenants
+} = require('../services/tenantPortalRealtimeService');
 
 const currentPeriodExpression = "strftime('%Y-%m', 'now')";
 const currentTenantRentExpression = rentForPeriodExpression('t', 'u', currentPeriodExpression);
@@ -23,30 +30,11 @@ const tenantPortalJwtOptions = {
   algorithm: 'HS256'
 };
 
-const tenantPortalSseClients = new Map();
-const adminPortalSseClients = new Set();
-
 const getTenantPortalToken = (req) => {
   const headerToken = req.headers.authorization?.split(' ')[1];
   if (headerToken) return headerToken;
   const queryToken = String(req.query?.token || '').trim();
   return queryToken || '';
-};
-
-const writeSseEvent = (res, event, payload) => {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(payload)}\n\n`);
-};
-
-const notifyTenantStream = (tenantId, payload) => {
-  const clients = tenantPortalSseClients.get(String(tenantId));
-  if (!clients || !clients.size) return;
-  clients.forEach((res) => writeSseEvent(res, 'message', payload));
-};
-
-const notifyAdminStream = (payload) => {
-  if (!adminPortalSseClients.size) return;
-  adminPortalSseClients.forEach((res) => writeSseEvent(res, 'message', payload));
 };
 
 const tenantPortalFields = `
@@ -82,6 +70,9 @@ const normalizeText = (value = '') => String(value || '').trim().replace(/\s+/g,
 const normalizeLongText = (value = '') => String(value || '').trim().replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
 const maintenanceStatuses = new Set(['open', 'in_progress', 'resolved', 'closed']);
 const maintenancePriorities = new Set(['low', 'normal', 'urgent']);
+const tenantPaymentMethods = new Set(['cash', 'bank_transfer', 'check', 'mobile_money', 'other']);
+const isValidDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+const isValidPeriod = (value) => /^\d{4}-\d{2}$/.test(String(value || ''));
 const validatePassword = (password) => {
   if (typeof password !== 'string' || password.length < 8) return 'Password must be at least 8 characters.';
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return 'Password must include at least one letter and one number.';
@@ -96,6 +87,11 @@ const normalizeMaintenanceStatus = (value = 'open') => {
 const normalizeMaintenancePriority = (value = 'normal') => {
   const normalized = String(value || 'normal').trim().toLowerCase();
   return maintenancePriorities.has(normalized) ? normalized : 'normal';
+};
+
+const normalizeTenantPaymentMethod = (value = 'bank_transfer') => {
+  const normalized = String(value || 'bank_transfer').trim().toLowerCase();
+  return tenantPaymentMethods.has(normalized) ? normalized : null;
 };
 
 const createTenantToken = (account, tenant) => {
@@ -508,6 +504,110 @@ const createTenantPortalMaintenanceRequest = (req, res) => {
   });
 };
 
+const updateTenantPortalMaintenanceRequest = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const requestId = String(req.params.requestId || '').trim();
+    const title = normalizeText(req.body?.title);
+    const category = normalizeText(req.body?.category || 'General').slice(0, 80) || 'General';
+    const priority = normalizeMaintenancePriority(req.body?.priority);
+    const description = normalizeLongText(req.body?.description);
+
+    if (!requestId) return res.status(400).json({ error: 'Maintenance request id is required.' });
+    if (!title) return res.status(400).json({ error: 'Maintenance title is required.' });
+    if (!description) return res.status(400).json({ error: 'Maintenance description is required.' });
+    if (title.length > 140) return res.status(400).json({ error: 'Maintenance title is too long (max 140 characters).' });
+    if (description.length > 1600) return res.status(400).json({ error: 'Maintenance description is too long (max 1600 characters).' });
+
+    db.get(
+      `SELECT id, status
+       FROM tenant_portal_maintenance_requests
+       WHERE id = ? AND tenant_id = ?`,
+      [requestId, tenant.id],
+      (findErr, existing) => {
+        if (findErr) return res.status(500).json({ error: 'Error loading maintenance request.' });
+        if (!existing) return res.status(404).json({ error: 'Maintenance request not found.' });
+        if (!['open', 'in_progress'].includes(String(existing.status || '').toLowerCase())) {
+          return res.status(400).json({ error: 'Resolved or closed requests can no longer be edited.' });
+        }
+
+        return db.run(
+          `UPDATE tenant_portal_maintenance_requests
+           SET title = ?, category = ?, priority = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND tenant_id = ?`,
+          [title, category, priority, description, requestId, tenant.id],
+          function onUpdate(updateErr) {
+            if (updateErr) return res.status(500).json({ error: 'Error updating maintenance request.' });
+            if (!this.changes) return res.status(404).json({ error: 'Maintenance request not found.' });
+
+            return db.get(
+              `SELECT id, tenant_id, unit_id, title, category, priority, description, status,
+                      admin_note, resolved_at, created_at, updated_at
+               FROM tenant_portal_maintenance_requests
+               WHERE id = ? AND tenant_id = ?`,
+              [requestId, tenant.id],
+              (fetchErr, row) => {
+                if (fetchErr) return res.status(500).json({ error: 'Maintenance request updated but failed to load response.' });
+                notifyAdminStream({
+                  event_type: 'maintenance_request_updated',
+                  id: row.id,
+                  tenant_id: row.tenant_id,
+                  tenant_name: tenant.full_name,
+                  title: row.title,
+                  priority: row.priority
+                });
+                return res.json(row);
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+};
+
+const deleteTenantPortalMaintenanceRequest = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const requestId = String(req.params.requestId || '').trim();
+    if (!requestId) return res.status(400).json({ error: 'Maintenance request id is required.' });
+
+    db.get(
+      `SELECT id, title, status
+       FROM tenant_portal_maintenance_requests
+       WHERE id = ? AND tenant_id = ?`,
+      [requestId, tenant.id],
+      (findErr, existing) => {
+        if (findErr) return res.status(500).json({ error: 'Error loading maintenance request.' });
+        if (!existing) return res.status(404).json({ error: 'Maintenance request not found.' });
+        if (String(existing.status || '').toLowerCase() !== 'open') {
+          return res.status(400).json({ error: 'Only open requests can be deleted.' });
+        }
+
+        return db.run(
+          `DELETE FROM tenant_portal_maintenance_requests
+           WHERE id = ? AND tenant_id = ?`,
+          [requestId, tenant.id],
+          function onDelete(deleteErr) {
+            if (deleteErr) return res.status(500).json({ error: 'Error deleting maintenance request.' });
+            if (!this.changes) return res.status(404).json({ error: 'Maintenance request not found.' });
+            notifyAdminStream({
+              event_type: 'maintenance_request_deleted',
+              id: requestId,
+              tenant_id: tenant.id,
+              tenant_name: tenant.full_name,
+              title: existing.title
+            });
+            return res.json({ message: 'Maintenance request deleted successfully.', id: requestId });
+          }
+        );
+      }
+    );
+  });
+};
+
 const getTenantPortalAnnouncements = (req, res) => {
   return findTenantFromToken(req, (err) => {
     if (err) return res.status(err.status || 500).json({ error: err.error });
@@ -543,6 +643,131 @@ const uploadTenantPaymentProof = (req, res) => {
     req.body.notes = `Tenant portal upload${req.body.notes ? `: ${req.body.notes}` : ''}`;
 
     return paymentController.createPayment(req, res);
+  });
+};
+
+const updateTenantPaymentProof = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const paymentId = String(req.params.paymentId || '').trim();
+    const amount = Number(req.body?.amount || 0);
+    const paymentDate = normalizeText(req.body?.payment_date);
+    const paymentPeriod = normalizeText(req.body?.payment_period || (paymentDate ? paymentDate.slice(0, 7) : ''));
+    const paymentMethod = normalizeTenantPaymentMethod(req.body?.payment_method);
+    const notes = normalizeLongText(req.body?.notes || '');
+    const receiptPath = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!paymentId) return res.status(400).json({ error: 'Payment id is required.' });
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
+    if (!isValidDate(paymentDate)) return res.status(400).json({ error: 'Payment date must use YYYY-MM-DD format.' });
+    if (!isValidPeriod(paymentPeriod)) return res.status(400).json({ error: 'Payment period must use YYYY-MM format.' });
+    if (!paymentMethod) return res.status(400).json({ error: 'Invalid payment method.' });
+
+    db.get(
+      `SELECT id, tenant_id, unit_id, payment_status, receipt_path
+       FROM payments
+       WHERE id = ? AND tenant_id = ?`,
+      [paymentId, tenant.id],
+      (findErr, payment) => {
+        if (findErr) return res.status(500).json({ error: 'Error loading payment proof.' });
+        if (!payment) return res.status(404).json({ error: 'Payment proof not found.' });
+
+        const status = String(payment.payment_status || 'confirmed').toLowerCase();
+        if (status === 'confirmed') {
+          return res.status(400).json({ error: 'Confirmed payments cannot be edited from the tenant portal.' });
+        }
+        if (!receiptPath && !payment.receipt_path) {
+          return res.status(400).json({ error: 'Receipt file is required.' });
+        }
+
+        const sql = receiptPath
+          ? `UPDATE payments
+             SET amount = ?, payment_date = ?, payment_period = ?, payment_method = ?,
+                 receipt_path = ?, notes = ?, payment_status = 'pending',
+                 rejection_reason = NULL, rejected_by = NULL, rejected_at = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND tenant_id = ?`
+          : `UPDATE payments
+             SET amount = ?, payment_date = ?, payment_period = ?, payment_method = ?,
+                 notes = ?, payment_status = 'pending',
+                 rejection_reason = NULL, rejected_by = NULL, rejected_at = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND tenant_id = ?`;
+
+        const params = receiptPath
+          ? [amount, paymentDate, paymentPeriod, paymentMethod, receiptPath, `Tenant portal update${notes ? `: ${notes}` : ''}`, paymentId, tenant.id]
+          : [amount, paymentDate, paymentPeriod, paymentMethod, `Tenant portal update${notes ? `: ${notes}` : ''}`, paymentId, tenant.id];
+
+        return db.run(sql, params, function onUpdate(updateErr) {
+          if (updateErr) return res.status(500).json({ error: 'Error updating payment proof.' });
+          if (!this.changes) return res.status(404).json({ error: 'Payment proof not found.' });
+
+          return db.get(
+            `SELECT id, amount, payment_date, payment_period, payment_status, payment_method,
+                    receipt_path, notes, rejection_reason, rejected_at
+             FROM payments
+             WHERE id = ? AND tenant_id = ?`,
+            [paymentId, tenant.id],
+            (fetchErr, row) => {
+              if (fetchErr) return res.status(500).json({ error: 'Payment proof updated but failed to load response.' });
+              notifyAdminStream({
+                event_type: 'tenant_payment_proof_updated',
+                id: row.id,
+                tenant_id: tenant.id,
+                tenant_name: tenant.full_name,
+                amount: row.amount,
+                payment_period: row.payment_period
+              });
+              return res.json(row);
+            }
+          );
+        });
+      }
+    );
+  });
+};
+
+const deleteTenantPaymentProof = (req, res) => {
+  return findTenantFromToken(req, (err, tenant) => {
+    if (err) return res.status(err.status || 500).json({ error: err.error });
+
+    const paymentId = String(req.params.paymentId || '').trim();
+    if (!paymentId) return res.status(400).json({ error: 'Payment id is required.' });
+
+    db.get(
+      `SELECT id, amount, payment_period, payment_status
+       FROM payments
+       WHERE id = ? AND tenant_id = ?`,
+      [paymentId, tenant.id],
+      (findErr, payment) => {
+        if (findErr) return res.status(500).json({ error: 'Error loading payment proof.' });
+        if (!payment) return res.status(404).json({ error: 'Payment proof not found.' });
+
+        const status = String(payment.payment_status || 'confirmed').toLowerCase();
+        if (status === 'confirmed') {
+          return res.status(400).json({ error: 'Confirmed payments cannot be deleted from the tenant portal.' });
+        }
+
+        return db.run(
+          'DELETE FROM payments WHERE id = ? AND tenant_id = ?',
+          [paymentId, tenant.id],
+          function onDelete(deleteErr) {
+            if (deleteErr) return res.status(500).json({ error: 'Error deleting payment proof.' });
+            if (!this.changes) return res.status(404).json({ error: 'Payment proof not found.' });
+            notifyAdminStream({
+              event_type: 'tenant_payment_proof_deleted',
+              id: paymentId,
+              tenant_id: tenant.id,
+              tenant_name: tenant.full_name,
+              amount: payment.amount,
+              payment_period: payment.payment_period
+            });
+            return res.json({ message: 'Payment proof deleted successfully.', id: paymentId });
+          }
+        );
+      }
+    );
   });
 };
 
@@ -586,20 +811,8 @@ const streamTenantPortalMessages = (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders?.();
 
-    const set = tenantPortalSseClients.get(tenantId) || new Set();
-    set.add(res);
-    tenantPortalSseClients.set(tenantId, set);
-
-    writeSseEvent(res, 'connected', { tenant_id: tenantId, connected_at: new Date().toISOString() });
-    const heartbeat = setInterval(() => writeSseEvent(res, 'ping', { ts: Date.now() }), 25000);
-
-    req.on('close', () => {
-      clearInterval(heartbeat);
-      const clients = tenantPortalSseClients.get(tenantId);
-      if (!clients) return;
-      clients.delete(res);
-      if (!clients.size) tenantPortalSseClients.delete(tenantId);
-    });
+    const cleanup = registerTenantPortalClient(tenantId, res);
+    req.on('close', cleanup);
 
     return undefined;
   });
@@ -614,14 +827,8 @@ const streamAdminTenantMessages = (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders?.();
 
-    adminPortalSseClients.add(res);
-    writeSseEvent(res, 'connected', { connected_at: new Date().toISOString() });
-    const heartbeat = setInterval(() => writeSseEvent(res, 'ping', { ts: Date.now() }), 25000);
-
-    req.on('close', () => {
-      clearInterval(heartbeat);
-      adminPortalSseClients.delete(res);
-    });
+    const cleanup = registerAdminTenantPortalClient(res);
+    req.on('close', cleanup);
 
     return undefined;
   });
@@ -865,8 +1072,25 @@ const updateTenantPortalMaintenanceRequestForAdmin = (req, res) => {
          FROM tenant_portal_maintenance_requests
          WHERE id = ?`,
         [requestId],
-        (fetchErr, row) => {
-          if (fetchErr) return res.status(500).json({ error: 'Maintenance request updated but failed to load response.' });
+          (fetchErr, row) => {
+            if (fetchErr) return res.status(500).json({ error: 'Maintenance request updated but failed to load response.' });
+          notifyTenantStream(row.tenant_id, {
+            event_type: 'tenant_maintenance_update',
+            id: `maintenance-${row.id}-${row.updated_at || Date.now()}`,
+            maintenance_id: row.id,
+            title: 'Maintenance updated',
+            message: `${row.title || 'Your maintenance request'} is now ${String(row.status || 'updated').replace(/_/g, ' ')}.`,
+            status: row.status,
+            admin_note: row.admin_note,
+            created_at: row.updated_at || new Date().toISOString(),
+            actionPath: '/tenant-portal/maintenance'
+          });
+          sendPushToTenant(
+            row.tenant_id,
+            'Maintenance updated',
+            `${row.title || 'Your request'} is now ${String(row.status || 'updated').replace(/_/g, ' ')}.`,
+            '/tenant-portal/maintenance'
+          );
           return res.json(row);
         }
       );
@@ -916,6 +1140,18 @@ const createTenantPortalAnnouncementForAdmin = (req, res) => {
 
       db.get('SELECT * FROM tenant_portal_announcements WHERE id = ?', [announcementId], (fetchErr, row) => {
         if (fetchErr) return res.status(500).json({ error: 'Announcement created but failed to load response.' });
+        if (row.is_published) {
+          notifyAllTenants({
+            event_type: 'tenant_announcement',
+            id: `announcement-${row.id}-${row.published_at || row.created_at || Date.now()}`,
+            announcement_id: row.id,
+            title: row.title,
+            message: row.body,
+            created_at: row.published_at || row.created_at || new Date().toISOString(),
+            actionPath: '/tenant-portal/announcements'
+          });
+          sendPushToAllTenants(row.title, row.body, '/tenant-portal/announcements');
+        }
         return res.status(201).json({ ...row, is_published: Boolean(row.is_published) });
       });
     }
@@ -949,6 +1185,18 @@ const updateTenantPortalAnnouncementForAdmin = (req, res) => {
 
       db.get('SELECT * FROM tenant_portal_announcements WHERE id = ?', [announcementId], (fetchErr, row) => {
         if (fetchErr) return res.status(500).json({ error: 'Announcement updated but failed to load response.' });
+        if (row.is_published) {
+          notifyAllTenants({
+            event_type: 'tenant_announcement',
+            id: `announcement-${row.id}-${row.updated_at || row.published_at || Date.now()}`,
+            announcement_id: row.id,
+            title: row.title,
+            message: row.body,
+            created_at: row.updated_at || row.published_at || row.created_at || new Date().toISOString(),
+            actionPath: '/tenant-portal/announcements'
+          });
+          sendPushToAllTenants(row.title, row.body, '/tenant-portal/announcements');
+        }
         return res.json({ ...row, is_published: Boolean(row.is_published) });
       });
     }
@@ -973,8 +1221,12 @@ module.exports = {
   getTenantPortalMe,
   getTenantPortalMaintenanceRequests,
   createTenantPortalMaintenanceRequest,
+  updateTenantPortalMaintenanceRequest,
+  deleteTenantPortalMaintenanceRequest,
   getTenantPortalAnnouncements,
   uploadTenantPaymentProof,
+  updateTenantPaymentProof,
+  deleteTenantPaymentProof,
   getTenantPortalMessages,
   streamTenantPortalMessages,
   sendTenantPortalMessage,

@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const db = require('../../config/database');
 const { getRentForPeriod, paymentRentForPeriodExpression } = require('../services/rentHistoryService');
+const { notifyTenantStream } = require('../services/tenantPortalRealtimeService');
+const { sendPushToTenant } = require('./pushController');
 
 const getPaymentPeriod = (paymentPeriod, paymentDate) => {
   if (paymentPeriod) return paymentPeriod;
@@ -19,6 +21,32 @@ const normalizeOptionalNotes = (value) => (
   value === undefined || value === null ? null : normalizeNotes(value)
 );
 const createVerificationCode = (paymentId) => `UB-${String(paymentId || uuidv4()).replace(/-/g, '').slice(0, 10).toUpperCase()}`;
+
+const notifyTenantPaymentUpdate = (payment, status, details = {}) => {
+  if (!payment?.tenant_id) return;
+  const normalizedStatus = String(status || '').toLowerCase();
+  const isRejected = normalizedStatus === 'rejected';
+  const title = isRejected ? 'Receipt rejected' : 'Receipt approved';
+  const reasonText = details.reason ? ` Reason: ${details.reason}` : '';
+  const message = isRejected
+    ? `Your payment receipt was rejected.${reasonText}`
+    : 'Your payment receipt was approved and your balance was updated.';
+
+  const payload = {
+    event_type: 'tenant_payment_update',
+    id: `payment-${payment.id || details.paymentId || Date.now()}-${normalizedStatus}-${Date.now()}`,
+    payment_id: payment.id || details.paymentId || null,
+    title,
+    message,
+    status: normalizedStatus,
+    rejection_reason: details.reason || '',
+    created_at: new Date().toISOString(),
+    actionPath: '/tenant-portal/payments'
+  };
+
+  notifyTenantStream(payment.tenant_id, payload);
+  sendPushToTenant(payment.tenant_id, title, message, '/tenant-portal/payments');
+};
 
 const validateTenantUnitAssignment = ({ tenantId, unitId }, callback) => {
   if (!tenantId || !unitId) {
@@ -425,7 +453,7 @@ const confirmPayment = (req, res) => {
   const { id } = req.params;
 
   db.get(
-    `SELECT tenant_id, unit_id, amount, payment_date, COALESCE(payment_period, strftime('%Y-%m', payment_date)) as payment_period,
+    `SELECT id, tenant_id, unit_id, amount, payment_date, COALESCE(payment_period, strftime('%Y-%m', payment_date)) as payment_period,
             payment_status, receipt_path
      FROM payments
      WHERE id = ?`,
@@ -468,6 +496,7 @@ const confirmPayment = (req, res) => {
                 return res.status(500).json({ error: 'Payment confirmed, but balance could not be updated' });
               }
 
+              notifyTenantPaymentUpdate(payment, 'confirmed');
               res.json({ message: 'Payment confirmed successfully' });
             });
           }
@@ -482,7 +511,7 @@ const updatePayment = (req, res) => {
   const { tenant_id, unit_id, amount, payment_date, payment_period, payment_method, notes, payment_status, confirmation_notes } = req.body;
   const receiptPath = req.file ? `/uploads/${req.file.filename}` : null;
 
-  db.get('SELECT tenant_id, unit_id FROM payments WHERE id = ?', [id], (findErr, payment) => {
+  db.get('SELECT id, tenant_id, unit_id FROM payments WHERE id = ?', [id], (findErr, payment) => {
     if (findErr) return res.status(500).json({ error: 'Error fetching payment' });
     if (!payment) return res.status(404).json({ error: 'Payment not found' });
     const nextTenantId = tenant_id || payment.tenant_id;
@@ -508,6 +537,7 @@ const updatePayment = (req, res) => {
 
           return recomputeBalance(payment.tenant_id, payment.unit_id, (balanceErr) => {
             if (balanceErr) return res.status(500).json({ error: 'Payment rejected, but balance could not be updated' });
+            notifyTenantPaymentUpdate(payment, 'rejected', { reason });
             return res.json({ message: 'Payment rejected' });
           });
         }
@@ -573,6 +603,7 @@ const updatePayment = (req, res) => {
                     return res.status(500).json({ error: 'Payment confirmed, but balance could not be updated' });
                   }
 
+                  notifyTenantPaymentUpdate(payment, 'confirmed');
                   res.json({ message: 'Payment confirmed successfully' });
                 });
               });

@@ -17,6 +17,21 @@ const TenantPortalAnnouncements = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const loadAnnouncements = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError('');
+    }
+    try {
+      const response = await tenantPortalService.getAnnouncements();
+      setAnnouncements(response.data?.announcements || []);
+    } catch (err) {
+      if (!silent) setError(getReadableApiError(err, 'Failed to load announcements.'));
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     const token = tenantPortalService.getToken();
@@ -25,24 +40,23 @@ const TenantPortalAnnouncements = () => {
       return undefined;
     }
 
-    setLoading(true);
-    tenantPortalService.getAnnouncements()
-      .then((response) => {
-        if (!mounted) return;
-        setAnnouncements(response.data?.announcements || []);
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        setError(getReadableApiError(err, 'Failed to load announcements.'));
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+    loadAnnouncements().finally(() => {
+      if (!mounted) return;
+    });
 
     return () => {
       mounted = false;
     };
   }, [navigate]);
+
+  useEffect(() => {
+    const onPortalEvent = (event) => {
+      if (event.detail?.event_type !== 'tenant_announcement') return;
+      loadAnnouncements({ silent: true });
+    };
+    window.addEventListener('tp:portal-event', onPortalEvent);
+    return () => window.removeEventListener('tp:portal-event', onPortalEvent);
+  }, []);
 
   return (
     <main className="tp-page tp-subpage">

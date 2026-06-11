@@ -71,7 +71,7 @@ const unsubscribeTenantPush = (req, res) => {
   return undefined;
 };
 
-const sendPushToTenant = (tenantId, title, body, url = '/tenant-portal/messages') => {
+const sendPushRows = (rows, title, body, url) => {
   const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || FALLBACK_VAPID_PRIVATE_KEY;
   const vapidEmail = process.env.VAPID_EMAIL || FALLBACK_VAPID_EMAIL;
@@ -79,31 +79,43 @@ const sendPushToTenant = (tenantId, title, body, url = '/tenant-portal/messages'
   if (!vapidPublicKey || !vapidPrivateKey) return;
 
   webpush.setVapidDetails(vapidEmail, vapidPublicKey, vapidPrivateKey);
+  const payload = JSON.stringify({ title, body, url });
 
+  rows.forEach((row) => {
+    const subscription = {
+      endpoint: row.endpoint,
+      keys: { p256dh: row.p256dh, auth: row.auth }
+    };
+
+    webpush.sendNotification(subscription, payload).catch((pushErr) => {
+      if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
+        db.run(
+          'DELETE FROM tenant_push_subscriptions WHERE tenant_id = ? AND endpoint = ?',
+          [row.tenant_id, row.endpoint]
+        );
+      }
+    });
+  });
+};
+
+const sendPushToTenant = (tenantId, title, body, url = '/tenant-portal/messages') => {
   db.all(
     'SELECT * FROM tenant_push_subscriptions WHERE tenant_id = ?',
     [tenantId],
     (err, rows) => {
       if (err || !rows?.length) return;
+      sendPushRows(rows, title, body, url);
+    }
+  );
+};
 
-      const payload = JSON.stringify({ title, body, url });
-
-      rows.forEach((row) => {
-        const subscription = {
-          endpoint: row.endpoint,
-          keys: { p256dh: row.p256dh, auth: row.auth }
-        };
-
-        webpush.sendNotification(subscription, payload).catch((pushErr) => {
-          if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
-            // Subscription is expired or invalid — remove it
-            db.run(
-              'DELETE FROM tenant_push_subscriptions WHERE tenant_id = ? AND endpoint = ?',
-              [tenantId, row.endpoint]
-            );
-          }
-        });
-      });
+const sendPushToAllTenants = (title, body, url = '/tenant-portal/announcements') => {
+  db.all(
+    'SELECT * FROM tenant_push_subscriptions',
+    [],
+    (err, rows) => {
+      if (err || !rows?.length) return;
+      sendPushRows(rows, title, body, url);
     }
   );
 };
@@ -112,5 +124,6 @@ module.exports = {
   getVapidPublicKey,
   subscribeTenantPush,
   unsubscribeTenantPush,
-  sendPushToTenant
+  sendPushToTenant,
+  sendPushToAllTenants
 };

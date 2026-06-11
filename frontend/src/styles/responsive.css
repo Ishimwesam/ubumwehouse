@@ -54,6 +54,212 @@ table {
   max-width: 100%;
 }
 
+.main-system-install-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: linear-gradient(180deg, #ffffff 0%, #f2f8ff 100%);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.main-system-install-button {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.main-system-install-dismiss {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.main-header-right,
+.main-header-action-panel {
+  min-width: 0;
+}
+
+.main-header-action-panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-top-header .header-icon-button,
+.app-top-header .account-menu-button {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  border: 1px solid rgba(191, 219, 254, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06)),
+    linear-gradient(135deg, #0f3b6f 0%, #0b2a55 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-top-header .header-icon-button:hover,
+.app-top-header .account-menu-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 211, 252, 0.76) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)),
+    linear-gradient(135deg, #0e7490 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 20px 34px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.app-top-header .header-icon-button-core {
+  color: #ffffff !important;
+  filter: drop-shadow(0 2px 4px rgba(2, 8, 23, 0.38));
+}
+
+.app-top-header .header-icon-button svg,
+.app-top-header .account-menu-button svg {
+  width: 27px !important;
+  height: 27px !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.8 !important;
+  overflow: visible;
+}
+
+.app-top-header .header-icon-button svg *,
+.app-top-header .account-menu-button svg * {
+  stroke: #ffffff !important;
+}
+
+.app-top-header .header-icon-badge {
+  top: -7px !important;
+  right: -7px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  font-size: 11px !important;
+  border: 2px solid #071b3a !important;
+  box-shadow: 0 10px 18px rgba(220, 38, 38, 0.42) !important;
+}
+
+.notification-dropdown-shell {
+  overflow: hidden;
+  padding: 0 !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(14, 165, 233, 0.24) !important;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(45, 212, 191, 0.16), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(241, 248, 255, 0.99)) !important;
+  box-shadow: 0 28px 70px rgba(2, 8, 23, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.74) inset !important;
+}
+
+.notification-dropdown-shell .notification-scroll-area {
+  max-height: min(520px, 72vh) !important;
+  padding: 12px !important;
+  margin: 0 !important;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+}
+
+.notification-item-shell {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%) !important;
+  border-radius: 18px !important;
+  padding: 12px !important;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08) !important;
+}
+
+.notification-item-shell.unread {
+  border-color: rgba(37, 99, 235, 0.35) !important;
+  background:
+    linear-gradient(180deg, rgba(239, 246, 255, 0.96), #ffffff),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.12), transparent 58%) !important;
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.16) !important;
+}
+
+.notification-dropdown-topbar {
+  position: relative;
+  padding: 16px 16px 12px !important;
+  margin: 0 !important;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(45, 212, 191, 0.25), transparent 36%),
+    linear-gradient(135deg, rgba(7, 27, 58, 0.98), rgba(8, 57, 95, 0.96)) !important;
+}
+
+.notification-dropdown-topbar::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+}
+
+.notification-dropdown-title,
+.notification-dropdown-summary {
+  position: relative;
+  z-index: 1;
+}
+
+.notification-dropdown-title {
+  color: #ffffff !important;
+  font-size: 16px !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+.notification-dropdown-summary {
+  color: #c7f9ff !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.notification-dropdown-shell .mark-all-read-button {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.notification-dropdown-shell .notification-main-button {
+  min-height: 54px;
+}
+
+.notification-dropdown-shell .notification-title-text {
+  color: #0f172a !important;
+  font-size: 14px !important;
+}
+
+.notification-dropdown-shell .notification-read-button,
+.notification-dropdown-shell [title="Mark as read"] {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #2563eb, #0891b2) !important;
+  border: none !important;
+}
+
 .page-transition-shell *,
 .animated-dropdown *,
 .app-sidebar * {
@@ -210,5 +416,341 @@ table {
   .page-transition-shell [style*="padding: 20px"],
   .page-transition-shell [style*="padding: 18px"] {
     padding: 14px !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .app-content-shell {
+    padding-left: clamp(22px, 2.4vw, 38px) !important;
+    padding-right: clamp(22px, 2.4vw, 38px) !important;
+  }
+
+  .page-transition-shell {
+    max-width: min(1720px, 100%);
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-top-header {
+    padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  .app-top-header {
+    align-items: flex-start !important;
+  }
+
+  .app-top-header .brand-live-row {
+    display: none !important;
+  }
+
+  .app-top-header .header-digital-clock {
+    display: none !important;
+  }
+
+  .app-footer-clock {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .account-menu-button,
+  .header-icon-button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .header-icon-button svg,
+  .account-menu-button svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .main-system-install-button {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-header-right {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .main-global-search-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 48px !important;
+    border: 1.5px solid rgba(59, 130, 246, 0.24) !important;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1) !important;
+  }
+
+  .main-header-action-panel {
+    justify-self: stretch;
+    display: inline-flex;
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-between;
+    overflow-x: visible;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    gap: 7px;
+    padding: 8px;
+    border-radius: 24px;
+    border: 1px solid rgba(125, 211, 252, 0.28);
+    background:
+      radial-gradient(circle at 14% 18%, rgba(45, 212, 191, 0.26), transparent 34%),
+      radial-gradient(circle at 86% 20%, rgba(96, 165, 250, 0.24), transparent 32%),
+      linear-gradient(135deg, rgba(7, 27, 58, 0.98), rgba(13, 47, 95, 0.98));
+    box-shadow: 0 18px 36px rgba(2, 8, 23, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 28;
+    scrollbar-width: none;
+  }
+
+  .main-header-action-panel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .main-header-action-panel > div,
+  .main-header-action-panel > button,
+  .main-header-action-panel > .main-system-install-prompt {
+    flex: 1 1 0;
+    min-width: 0;
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  .main-header-action-panel .header-icon-button,
+  .main-header-action-panel .account-menu-button {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    border: 1px solid rgba(191, 219, 254, 0.32) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08)),
+      linear-gradient(135deg, #0f3b6f 0%, #0b2a55 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 22px rgba(2, 8, 23, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  }
+
+  .main-header-action-panel .header-icon-button-core {
+    color: #ffffff !important;
+    filter: drop-shadow(0 2px 4px rgba(2, 8, 23, 0.35));
+  }
+
+  .main-header-action-panel .header-icon-button svg {
+    width: 27px !important;
+    height: 27px !important;
+    stroke-width: 3 !important;
+    stroke: #ffffff !important;
+    color: #ffffff !important;
+    overflow: visible;
+  }
+
+  .main-header-action-panel .header-icon-button svg *,
+  .main-header-action-panel .account-menu-button svg * {
+    stroke: #ffffff !important;
+  }
+
+  .main-header-action-panel .header-icon-badge {
+    top: -7px !important;
+    right: -7px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+    border: 2px solid #071b3a !important;
+    box-shadow: 0 10px 18px rgba(220, 38, 38, 0.42) !important;
+  }
+
+  .main-header-action-panel .account-menu-button {
+    padding: 4px !important;
+  }
+
+  .main-header-action-panel .account-menu-button span,
+  .main-header-action-panel .account-menu-button img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .main-header-action-panel .main-system-install-prompt {
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    gap: 4px;
+  }
+
+  .main-header-action-panel .main-system-install-button {
+    width: 50px !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    padding: 0 !important;
+    justify-content: center;
+    border: 1px solid rgba(191, 219, 254, 0.32);
+    background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+    box-shadow: 0 12px 22px rgba(2, 8, 23, 0.28);
+  }
+
+  .main-header-action-panel .main-system-install-button svg {
+    width: 25px;
+    height: 25px;
+    stroke-width: 3;
+  }
+
+  .main-header-action-panel .main-system-install-button span,
+  .main-header-action-panel .main-system-install-dismiss {
+    display: none;
+  }
+
+  .app-main-shell {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .animated-dropdown.notification-dropdown-shell,
+  .animated-dropdown.chat-dropdown-shell,
+  .animated-dropdown.profile-dropdown-shell {
+    position: fixed !important;
+    top: calc(96px + env(safe-area-inset-top, 0px)) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(94vw, 430px) !important;
+    max-width: min(94vw, 430px) !important;
+    max-height: min(76dvh, 620px) !important;
+    z-index: 120 !important;
+  }
+
+  .animated-dropdown.chat-dropdown-shell {
+    max-height: min(74dvh, 620px) !important;
+  }
+
+  .animated-dropdown.notification-dropdown-shell {
+    padding: 0 !important;
+    border-radius: 26px !important;
+    border: 1px solid rgba(14, 165, 233, 0.24) !important;
+    background:
+      radial-gradient(circle at 16% 0%, rgba(45, 212, 191, 0.18), transparent 32%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(241, 248, 255, 0.99)) !important;
+    box-shadow: 0 28px 70px rgba(2, 8, 23, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.74) inset !important;
+    overflow: hidden;
+  }
+
+  .notification-dropdown-shell .notification-dropdown-topbar {
+    padding: 16px 16px 12px;
+    margin: 0 !important;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(45, 212, 191, 0.25), transparent 36%),
+      linear-gradient(135deg, rgba(7, 27, 58, 0.98), rgba(8, 57, 95, 0.96));
+  }
+
+  .notification-dropdown-shell .notification-dropdown-topbar::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  }
+
+  .notification-dropdown-shell .notification-dropdown-title {
+    font-size: 16px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0 !important;
+    color: #ffffff !important;
+  }
+
+  .notification-dropdown-shell .notification-dropdown-summary {
+    color: #c7f9ff !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+
+  .notification-dropdown-shell .mark-all-read-button {
+    background: rgba(255, 255, 255, 0.14) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .notification-dropdown-shell .notification-scroll-area {
+    max-height: calc(min(76dvh, 620px) - 76px) !important;
+    padding: 12px !important;
+    margin: 0 !important;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  }
+
+  .notification-dropdown-shell .notification-item-shell {
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%) !important;
+    border-radius: 18px !important;
+    padding: 12px !important;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .notification-dropdown-shell .notification-item-shell.unread {
+    border-color: rgba(37, 99, 235, 0.35) !important;
+    background:
+      linear-gradient(180deg, rgba(239, 246, 255, 0.96), #ffffff),
+      linear-gradient(90deg, rgba(37, 99, 235, 0.12), transparent 58%) !important;
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.16) !important;
+  }
+
+  .notification-dropdown-shell .notification-main-button {
+    min-height: 54px;
+  }
+
+  .notification-dropdown-shell .notification-title-text {
+    color: #0f172a !important;
+    font-size: 14px !important;
+  }
+
+  .notification-dropdown-shell .notification-read-button {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2563eb, #0891b2) !important;
+    border: none !important;
+  }
+
+  .chat-composer-input,
+  .chat-dropdown-shell input,
+  .chat-dropdown-shell select,
+  .chat-dropdown-shell textarea {
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .app-top-header {
+    min-height: 56px !important;
+    position: sticky;
+    top: 0;
+    z-index: 35;
+  }
+
+  .app-footer-clock {
+    display: none !important;
+  }
+
+  .app-content-shell {
+    padding-bottom: 16px !important;
+  }
+
+  .animated-dropdown.chat-dropdown-shell {
+    max-height: min(72dvh, 420px) !important;
   }
 }

@@ -1,19 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import { emitAppToast } from '../context/ToastContext';
-import TenantPortalNav from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantNotificationPermissionButton } from '../components/TenantPortalNav';
+import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
 import useTenantUnread from '../hooks/useTenantUnread';
-import { clearUnread, incrementUnread, registerTenantPushSubscription, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
+import { clearUnread, registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
-
-const formatUnreadToast = (count) => `${count} unread message${count === 1 ? '' : 's'} in your inbox`;
-
-const IconWallet = () => <span aria-hidden="true">◫</span>;
-
-const IconCheck = () => <span aria-hidden="true">◉</span>;
-
-const IconFile = () => <span aria-hidden="true">◧</span>;
 
 const TenantPortalMessages = () => {
   const navigate = useNavigate();
@@ -75,32 +67,16 @@ const TenantPortalMessages = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const streamUrl = tenantPortalService.getStreamUrl();
-    if (!streamUrl) return undefined;
-
-    const source = new EventSource(streamUrl);
-    const onMessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data || '{}');
-        if (!payload?.id) return;
-        setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
-        if (payload.sender_type === 'admin') {
-          const nextUnread = incrementUnread();
-          emitAppToast(formatUnreadToast(nextUnread), 'realtime');
-          showBrowserNotification(
-            'UBUMWE HOUSE LTD',
-            payload.message || 'You have a new message from support.'
-          );
-        }
-      } catch (_) {}
+    const onPortalEvent = (event) => {
+      const payload = event.detail || {};
+      if (!payload?.id || !payload.sender_type) return;
+      setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
     };
 
-    source.addEventListener('message', onMessage);
-    source.onerror = () => {};
+    window.addEventListener('tp:portal-event', onPortalEvent);
 
     return () => {
-      source.removeEventListener('message', onMessage);
-      source.close();
+      window.removeEventListener('tp:portal-event', onPortalEvent);
     };
   }, []);
 
@@ -139,16 +115,19 @@ const TenantPortalMessages = () => {
 
           <TenantPortalNav current="messages" />
 
-          <button
-            className="tp-logout"
-            type="button"
-            onClick={() => {
-              tenantPortalService.clearToken();
-              navigate('/tenant-portal');
-            }}
-          >
-            Logout
-          </button>
+          <div className="tp-sidebar-actions">
+            <TenantNotificationPermissionButton inline />
+            <button
+              className="tp-logout"
+              type="button"
+              onClick={() => {
+                tenantPortalService.clearToken();
+                navigate('/tenant-portal');
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </aside>
 
         <section className="tp-main">
@@ -172,21 +151,21 @@ const TenantPortalMessages = () => {
 
           <section className="tp-stats-row">
             <article className="tp-stat-card">
-              <div className="tp-stat-icon rent"><IconWallet /></div>
+              <div className="tp-stat-icon rent"><StatIconWallet /></div>
               <div>
                 <span>Tenant</span>
                 <strong>{tenantDisplayName}</strong>
               </div>
             </article>
             <article className="tp-stat-card">
-              <div className="tp-stat-icon paid"><IconCheck /></div>
+              <div className="tp-stat-icon paid"><StatIconCheck /></div>
               <div>
                 <span>Inbox State</span>
                 <strong className="paid">{messages.length ? `${messages.length} messages` : 'Empty'}</strong>
               </div>
             </article>
             <article className="tp-stat-card">
-              <div className="tp-stat-icon outstanding"><IconFile /></div>
+              <div className="tp-stat-icon outstanding"><StatIconFile /></div>
               <div>
                 <span>Unread</span>
                 <strong className="outstanding">{unreadMessages}</strong>

@@ -1,7 +1,25 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { tenantPortalService } from '../services/api';
+import { emitAppToast } from '../context/ToastContext';
 import useTenantUnread from '../hooks/useTenantUnread';
-import { clearUnread } from '../utils/tenantNotification';
+import {
+  clearUnread,
+  incrementUnread,
+  registerTenantPushSubscription,
+  requestNotificationPermission,
+  showBrowserNotification
+} from '../utils/tenantNotification';
+
+const seenRealtimeIds = new Set();
+
+const BellGlyph = () => (
+  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+    <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10 21a2 2 0 0 0 4 0" />
+  </svg>
+);
 
 const NavIcon = ({ children }) => (
   <span className="tp-nav-icon" aria-hidden="true">
@@ -68,6 +86,210 @@ const navItems = [
   { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/forgot-password', extra: true }
 ];
 
+const getRealtimeCopy = (payload = {}) => {
+  if (payload.sender_type === 'admin') {
+    return {
+      title: 'UBUMWE HOUSE LTD',
+      message: payload.message || 'You have a new message from support.'
+    };
+  }
+  if (payload.event_type === 'tenant_payment_update') {
+    return {
+      title: payload.title || 'Payment update',
+      message: payload.message || 'Your payment status was updated.'
+    };
+  }
+  if (payload.event_type === 'tenant_announcement') {
+    return {
+      title: payload.title || 'New announcement',
+      message: payload.message || 'A new announcement is available.'
+    };
+  }
+  if (payload.event_type === 'tenant_maintenance_update') {
+    return {
+      title: payload.title || 'Maintenance update',
+      message: payload.message || 'Your maintenance request was updated.'
+    };
+  }
+  return null;
+};
+
+const TenantPortalRealtimeBridge = () => {
+  const navigate = useNavigate();
+  const [popup, setPopup] = React.useState(null);
+  const dismissTimerRef = React.useRef(null);
+
+  const dismissPopup = React.useCallback(() => {
+    if (dismissTimerRef.current) {
+      clearTimeout(dismissTimerRef.current);
+      dismissTimerRef.current = null;
+    }
+    setPopup(null);
+  }, []);
+
+  const showPopup = React.useCallback((nextPopup) => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+    setPopup(nextPopup);
+    dismissTimerRef.current = setTimeout(() => {
+      setPopup(null);
+      dismissTimerRef.current = null;
+    }, 9000);
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      registerTenantPushSubscription(tenantPortalService);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const streamUrl = tenantPortalService.getStreamUrl();
+    if (!streamUrl) return undefined;
+
+    const source = new EventSource(streamUrl);
+    const onMessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data || '{}');
+        const eventId = payload?.id || `${payload?.event_type || payload?.sender_type || 'event'}-${payload?.created_at || Date.now()}`;
+        if (seenRealtimeIds.has(eventId)) return;
+        seenRealtimeIds.add(eventId);
+        if (seenRealtimeIds.size > 200) seenRealtimeIds.clear();
+
+        window.dispatchEvent(new CustomEvent('tp:portal-event', { detail: payload }));
+
+        const copy = getRealtimeCopy(payload);
+        if (!copy) return;
+
+        if (payload.sender_type === 'admin') {
+          incrementUnread();
+        }
+
+        emitAppToast(copy.message, 'realtime');
+        showPopup({
+          id: eventId,
+          title: copy.title,
+          message: copy.message,
+          path: payload.actionPath || (payload.sender_type === 'admin' ? '/tenant-portal/messages' : '/tenant-portal')
+        });
+        showBrowserNotification(copy.title, copy.message, {
+          tag: eventId,
+          data: { url: payload.actionPath || '/tenant-portal' }
+        });
+      } catch (_) {}
+    };
+
+    source.addEventListener('message', onMessage);
+    source.onerror = () => {};
+
+    return () => {
+      source.removeEventListener('message', onMessage);
+      source.close();
+    };
+  }, [showPopup]);
+
+  React.useEffect(() => () => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+  }, []);
+
+  if (!popup || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="tp-realtime-popup" role="status" aria-live="polite">
+      <div className="tp-realtime-popup-glow" aria-hidden="true" />
+      <div className="tp-realtime-popup-copy">
+        <span>Live update</span>
+        <strong>{popup.title}</strong>
+        <p>{popup.message}</p>
+      </div>
+      <div className="tp-realtime-popup-actions">
+        <button
+          type="button"
+          className="tp-realtime-popup-open"
+          onClick={() => {
+            const targetPath = popup.path || '/tenant-portal';
+            dismissPopup();
+            navigate(targetPath);
+          }}
+        >
+          Open
+        </button>
+        <button type="button" className="tp-realtime-popup-close" onClick={dismissPopup} aria-label="Dismiss notification">
+          x
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+export const TenantNotificationPermissionButton = ({ inline = false, floating = false }) => {
+  const [permission, setPermission] = React.useState(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+    return Notification.permission;
+  });
+  const [busy, setBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    const syncPermission = () => {
+      if (!('Notification' in window)) {
+        setPermission('unsupported');
+        return;
+      }
+      setPermission(Notification.permission);
+    };
+    window.addEventListener('focus', syncPermission);
+    return () => window.removeEventListener('focus', syncPermission);
+  }, []);
+
+  if (permission === 'unsupported') return null;
+
+  const enabled = permission === 'granted';
+
+  const handleEnable = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const nextPermission = enabled ? 'granted' : await requestNotificationPermission();
+      setPermission(nextPermission);
+      if (nextPermission === 'granted') {
+        await registerTenantPushSubscription(tenantPortalService);
+        emitAppToast(enabled ? 'Phone alerts are working' : 'Phone notifications enabled', 'success');
+        await showBrowserNotification(
+          'UBUMWE HOUSE LTD',
+          enabled ? 'Alerts are active on this phone.' : 'Phone notifications are now enabled.',
+          {
+            tag: 'tenant-alerts-test',
+            data: { url: '/tenant-portal' }
+          }
+        );
+      } else if (nextPermission === 'denied') {
+        emitAppToast('Notifications are blocked in phone settings', 'error');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={[
+        'tp-phone-notification-button',
+        inline ? 'inline' : '',
+        floating ? 'floating' : ''
+      ].filter(Boolean).join(' ')}
+      onClick={handleEnable}
+      disabled={busy}
+      aria-label={enabled ? 'Test phone notifications' : 'Enable phone notifications'}
+      title={enabled ? 'Test phone notifications' : 'Enable phone notifications'}
+    >
+      <span className="tp-phone-notification-icon"><BellGlyph /></span>
+      <span>{busy ? 'Enabling...' : enabled ? 'Alerts On' : 'Enable Alerts'}</span>
+    </button>
+  );
+};
+
 const getCurrentFromPath = (pathname = '') => {
   const exactMatch = navItems.find((item) => item.path === pathname);
   if (exactMatch) return exactMatch.id;
@@ -106,28 +328,33 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
   };
 
   return (
-    <nav className={`tp-nav${mobileOnly ? ' tp-mobile-nav' : ''}`} aria-label="Tenant portal navigation">
-      {navItems.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          className={[
-            activeItem === item.id ? 'active' : '',
-            item.id === 'messages' ? 'tp-nav-msg-btn' : '',
-            item.extra ? 'tp-nav-extra' : ''
-          ].filter(Boolean).join(' ')}
-          onClick={() => handleClick(item)}
-          aria-label={item.label}
-          title={item.label}
-        >
-          {icons[item.id]}
-          <span className="tp-nav-label">{item.shortLabel || item.label}</span>
-          {item.id === 'messages' && unreadMessages > 0 ? (
-            <span className="tp-nav-badge">{unreadMessages > 99 ? '99+' : unreadMessages}</span>
-          ) : null}
-        </button>
-      ))}
-    </nav>
+    <>
+      <TenantPortalRealtimeBridge />
+      {mobileOnly ? <TenantNotificationPermissionButton floating /> : null}
+      <nav className={`tp-nav${mobileOnly ? ' tp-mobile-nav' : ''}`} aria-label="Tenant portal navigation">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={[
+              activeItem === item.id ? 'active' : '',
+              item.id === 'messages' ? 'tp-nav-msg-btn' : '',
+              item.extra ? 'tp-nav-extra' : ''
+            ].filter(Boolean).join(' ')}
+            onClick={() => handleClick(item)}
+            aria-label={item.label}
+            aria-current={activeItem === item.id ? 'page' : undefined}
+            title={item.label}
+          >
+            {icons[item.id]}
+            {!mobileOnly ? <span className="tp-nav-label">{item.shortLabel || item.label}</span> : null}
+            {item.id === 'messages' && unreadMessages > 0 ? (
+              <span className="tp-nav-badge">{unreadMessages > 99 ? '99+' : unreadMessages}</span>
+            ) : null}
+          </button>
+        ))}
+      </nav>
+    </>
   );
 };
 

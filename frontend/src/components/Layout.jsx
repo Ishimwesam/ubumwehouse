@@ -15,6 +15,7 @@ import Sidebar, { SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH } from './Sidebar';
 import SessionWarning from './SessionWarning';
 import ApiRecoveryNotice from './ApiRecoveryNotice';
 import NetworkStatusBanner from './NetworkStatusBanner';
+import MainSystemInstallPrompt from './MainSystemInstallPrompt';
 import { useSpinner } from '../context/SpinnerContext';
 
 // Theme context for light/dark mode
@@ -26,25 +27,25 @@ const HeaderIconButton = ({ children, badge, onClick, title }) => (
     className="header-icon-button"
     onClick={onClick}
     title={title}
+    aria-label={title}
     style={{
-      width: 46,
-      height: 46,
+      width: 48,
+      height: 48,
       borderRadius: '999px',
-      border: '1px solid rgba(189, 205, 232, 0.95)',
-      background: 'linear-gradient(180deg, #ffffff 0%, #f7faff 55%, #eef5ff 100%)',
+      border: '1.5px solid rgba(149, 175, 222, 0.9)',
+      background: 'linear-gradient(180deg, #f0f6ff 0%, #e6f0fd 100%)',
       color: '#16224a',
       position: 'relative',
       cursor: 'pointer',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0 16px 32px rgba(37, 71, 127, 0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
-      overflow: 'hidden',
+      boxShadow: '0 2px 8px rgba(37, 71, 127, 0.12)',
+      overflow: 'visible',
       transition: 'transform 0.2s ease, box-shadow 0.24s ease, border-color 0.24s ease'
     }}
   >
-    <span className="header-icon-button-glow" />
-    <span className="header-icon-button-core">{children}</span>
+    <span className="header-icon-button-core" style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{children}</span>
     {badge > 0 ? (
       <span className="header-icon-badge" style={{
         position: 'absolute',
@@ -69,7 +70,7 @@ const HeaderIconButton = ({ children, badge, onClick, title }) => (
 );
 
 const BellIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1b2c63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2d6d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
     <path d="M10 21a2 2 0 0 0 4 0" />
   </svg>
@@ -124,7 +125,7 @@ const CheckIcon = () => (
 );
 
 const ChatIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1b2c63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2d6d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.78-.88L3 21l1.97-5.27A8.5 8.5 0 1 1 21 11.5Z" />
   </svg>
 );
@@ -142,13 +143,13 @@ const MenuIcon = () => (
 );
 
 const MoonIcon = () => (
-  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2d6d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 14.4A7.6 7.6 0 0 1 9.6 3 8.2 8.2 0 1 0 21 14.4Z" />
   </svg>
 );
 
 const SunIcon = () => (
-  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2d6d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="4" />
     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
   </svg>
@@ -169,7 +170,7 @@ const SearchIcon = () => (
 );
 
 const KeyboardIcon = () => (
-  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2d6d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="5" width="18" height="14" rx="2" />
     <path d="M7 9h.01M11 9h.01M15 9h.01M19 9h.01M7 13h.01M11 13h.01M15 13h.01M8 17h8" />
   </svg>
@@ -451,7 +452,12 @@ const Layout = ({ children }) => {
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, selectionText: '' });
   const [notifications, setNotifications] = useState([]);
+  const [realtimeNotifications, setRealtimeNotifications] = useState([]);
   const [notificationRefreshTick, setNotificationRefreshTick] = useState(0);
+  const [notificationStatus, setNotificationStatus] = useState({ state: 'connecting', label: 'Connecting live updates' });
+  const [liveToast, setLiveToast] = useState(null); // { message, actionPath, id }
+  const [bellPulsing, setBellPulsing] = useState(false);
+  const prevUnreadRef = React.useRef(0);
   const [readNotifications, setReadNotifications] = useState(() => {
     try {
       const raw = localStorage.getItem(notificationStoreKey);
@@ -500,29 +506,123 @@ const Layout = ({ children }) => {
     } catch (_) {}
   }, [sidebarCollapsed]);
 
+  const mergeNotificationItems = (items = []) => items
+    .filter(Boolean)
+    .filter((item, index, allItems) => allItems.findIndex((candidate) => candidate.id === item.id) === index)
+    .sort((first, second) => {
+      const firstDate = normalizeDate(first.createdAt)?.getTime() || 0;
+      const secondDate = normalizeDate(second.createdAt)?.getTime() || 0;
+      return secondDate - firstDate;
+    })
+    .slice(0, 18)
+    .map((item) => ({
+      ...item,
+      tone: item.tone || getNotificationTone(item.type),
+      read: !!readNotifications[item.id]
+    }));
+
+  const getSettledData = (result, fallback = []) => (
+    result.status === 'fulfilled' ? (result.value?.data || fallback) : fallback
+  );
+
+  const createRealtimeNotification = (eventData = {}) => {
+    const method = String(eventData.method || '').toUpperCase();
+    const path = String(eventData.path || '').toLowerCase();
+    const createdAt = eventData.at || new Date().toISOString();
+    const id = `realtime-${method || 'event'}-${path.replace(/[^a-z0-9]+/g, '-') || 'system'}-${createdAt}`;
+
+    if (path.includes('/payments') && method === 'POST') {
+      return { id, type: 'payment', title: 'Payment recorded', message: 'A new payment or receipt was added to the system.', createdAt, actionPath: '/payments' };
+    }
+    if (path.includes('/payments') && method === 'PUT') {
+      return { id, type: 'payment', title: 'Payment updated', message: 'A payment record changed. Review the latest payment status.', createdAt, actionPath: '/payments' };
+    }
+    if (path.includes('/tenants') && method === 'POST') {
+      return { id, type: 'tenant', title: 'Tenant added', message: 'A new tenant was registered in the system.', createdAt, actionPath: '/tenants' };
+    }
+    if (path.includes('/tenants') && method === 'PUT') {
+      return { id, type: 'tenant', title: 'Tenant updated', message: 'A tenant record was updated.', createdAt, actionPath: '/tenants' };
+    }
+    if (path.includes('/contracts') && method === 'POST') {
+      return { id, type: 'contract', title: 'Contract created', message: 'A new contract was created.', createdAt, actionPath: '/contracts' };
+    }
+    if (path.includes('/contracts') && method === 'PUT') {
+      return { id, type: 'contract', title: 'Contract updated', message: 'A contract record was updated.', createdAt, actionPath: '/contracts' };
+    }
+    if (path.includes('/units') && method === 'POST') {
+      return { id, type: 'unit', title: 'Unit added', message: 'A new unit was added.', createdAt, actionPath: '/units' };
+    }
+    if (path.includes('/units') && method === 'PUT') {
+      return { id, type: 'unit', title: 'Unit updated', message: 'A unit record was updated.', createdAt, actionPath: '/units' };
+    }
+    if (path.includes('/buildings') && method === 'POST') {
+      return { id, type: 'unit', title: 'Building added', message: 'A new building was added.', createdAt, actionPath: '/buildings' };
+    }
+    if (path.includes('/expenses') && method === 'POST') {
+      return { id, type: 'payment', title: 'Expense recorded', message: 'A new expense was recorded.', createdAt, actionPath: '/expenses' };
+    }
+    if (path.includes('/calendar') || path.includes('/events')) {
+      return { id, type: 'event', title: 'Calendar updated', message: 'A calendar event or reminder changed.', createdAt, actionPath: '/calendar-events' };
+    }
+    if (path.includes('/tenant-portal')) {
+      return { id, type: 'tenant', title: 'Tenant portal activity', message: 'Tenant portal information changed.', createdAt, actionPath: '/tenant-portal-control' };
+    }
+    if (method === 'DELETE') {
+      return { id, type: 'event', title: 'Record deleted', message: 'A system record was deleted.', createdAt, actionPath: null };
+    }
+
+    return null;
+  };
+
+  const createTenantMessageNotification = (message = {}) => {
+    if (message.sender_type !== 'tenant') return null;
+    const createdAt = message.created_at || new Date().toISOString();
+    return {
+      id: `tenant-message-${message.id || createdAt}`,
+      type: 'tenant',
+      title: 'Tenant portal message',
+      message: `${message.tenant_name || 'A tenant'} sent a new message.`,
+      createdAt,
+      actionPath: '/tenant-portal-control',
+      tone: 'info'
+    };
+  };
+
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      setRealtimeNotifications([]);
       return;
     }
 
     const loadNotifications = async () => {
-      try {
-        const [paymentsRes, tenantsRes, contractsRes, unitsRes, remindersRes, tenantPortalAccountsRes] = await Promise.all([
-          paymentService.getAll(),
-          tenantService.getAll(),
-          contractService.getAll(),
-          unitService.getAll(),
-          tenantService.getReminderEvents(),
-          tenantPortalAdminService.listAccounts().catch(() => ({ data: [] }))
-        ]);
+      const settledResults = await Promise.allSettled([
+        paymentService.getAll(),
+        tenantService.getAll(),
+        contractService.getAll(),
+        unitService.getAll(),
+        tenantService.getReminderEvents(),
+        tenantPortalAdminService.listAccounts()
+      ]);
+      const [paymentsRes, tenantsRes, contractsRes, unitsRes, remindersRes, tenantPortalAccountsRes] = settledResults;
+      const failedCount = settledResults.filter((result) => result.status === 'rejected').length;
 
-        const payments = paymentsRes.data || [];
-        const tenants = tenantsRes.data || [];
-        const contracts = contractsRes.data || [];
-        const units = unitsRes.data || [];
-        const reminderEvents = remindersRes.data || [];
-        const tenantPortalAccounts = tenantPortalAccountsRes.data || [];
+      setNotificationStatus((current) => {
+        if (current.state === 'live' && failedCount < settledResults.length) return current;
+        if (failedCount === 0) return { state: 'synced', label: 'Synced just now' };
+        if (failedCount < settledResults.length) return { state: 'partial', label: 'Live with retrying sources' };
+        return { state: 'offline', label: 'Retrying notification services' };
+      });
+
+        const payments = getSettledData(paymentsRes);
+        const tenants = getSettledData(tenantsRes);
+        const contracts = getSettledData(contractsRes);
+        const units = getSettledData(unitsRes);
+        const reminderEvents = getSettledData(remindersRes);
+        const tenantPortalAccountsData = getSettledData(tenantPortalAccountsRes, {});
+        const tenantPortalAccounts = Array.isArray(tenantPortalAccountsData)
+          ? tenantPortalAccountsData
+          : (tenantPortalAccountsData.accounts || []);
         setGlobalSearchData({ tenants, payments, contracts, units });
 
         const nextNotifications = [];
@@ -670,57 +770,114 @@ const Layout = ({ children }) => {
           });
         }
 
-        const deduped = nextNotifications
-          .filter((item, index, allItems) => allItems.findIndex((candidate) => candidate.id === item.id) === index)
-          .sort((first, second) => {
-            const firstDate = normalizeDate(first.createdAt)?.getTime() || 0;
-            const secondDate = normalizeDate(second.createdAt)?.getTime() || 0;
-            return secondDate - firstDate;
-          })
-          .slice(0, 14)
-          .map((item) => ({
-            ...item,
-            tone: getNotificationTone(item.type),
-            read: !!readNotifications[item.id]
-          }));
-
-        setNotifications(deduped);
-      } catch (error) {
-        setNotifications([
-          {
-            id: 'notification-load-error',
-            type: 'event',
-            title: 'Notification error',
-            message: 'Failed to load notifications.',
-            createdAt: new Date().toISOString(),
-            tone: 'danger',
-            read: false
-          }
-        ]);
-      }
+      setNotifications(mergeNotificationItems([...realtimeNotifications, ...nextNotifications]));
     };
 
     loadNotifications();
     const intervalId = setInterval(loadNotifications, 60000);
     return () => clearInterval(intervalId);
-  }, [user, readNotifications, notificationRefreshTick]);
+  }, [user, readNotifications, notificationRefreshTick, realtimeNotifications]);
 
   useEffect(() => {
     if (!user) return undefined;
 
     const streamUrl = realtimeService.getNotificationStreamUrl();
-    if (!streamUrl) return undefined;
+    if (!streamUrl) {
+      setNotificationStatus({ state: 'polling', label: 'Polling updates' });
+      return undefined;
+    }
+
+    const pathToToast = (method, path) => {
+      const p = String(path || '').toLowerCase();
+      if (p.includes('/payments') && method === 'POST') return { message: 'New payment recorded', actionPath: '/payments' };
+      if (p.includes('/payments') && method === 'PUT') return { message: 'Payment updated', actionPath: '/payments' };
+      if (p.includes('/tenants') && method === 'POST') return { message: 'New tenant added', actionPath: '/tenants' };
+      if (p.includes('/tenants') && method === 'PUT') return { message: 'Tenant record updated', actionPath: '/tenants' };
+      if (p.includes('/contracts') && method === 'POST') return { message: 'New contract created', actionPath: '/contracts' };
+      if (p.includes('/contracts') && method === 'PUT') return { message: 'Contract updated', actionPath: '/contracts' };
+      if (p.includes('/units') && method === 'POST') return { message: 'New unit added', actionPath: '/units' };
+      if (p.includes('/units') && method === 'PUT') return { message: 'Unit updated', actionPath: '/units' };
+      if (p.includes('/buildings') && method === 'POST') return { message: 'New building added', actionPath: '/buildings' };
+      if (p.includes('/expenses') && method === 'POST') return { message: 'Expense recorded', actionPath: '/expenses' };
+      if (p.includes('/calendar') || p.includes('/events')) return { message: 'Calendar updated', actionPath: '/calendar-events' };
+      if (p.includes('/tenant-portal') && method === 'POST') return { message: 'Tenant portal activity', actionPath: '/tenant-portal-control' };
+      if (method === 'DELETE') return { message: 'Record deleted', actionPath: null };
+      return null;
+    };
 
     const source = new EventSource(streamUrl);
-    const handleRefresh = () => {
+    source.onopen = () => {
+      setNotificationStatus({ state: 'live', label: 'Live now' });
+    };
+    const handleRefresh = (evt) => {
+      try {
+        const data = JSON.parse(evt.data || '{}');
+        const realtimeNotification = createRealtimeNotification(data);
+        if (realtimeNotification) {
+          setRealtimeNotifications((prev) => mergeNotificationItems([realtimeNotification, ...prev]));
+          setNotifications((prev) => mergeNotificationItems([realtimeNotification, ...prev]));
+        }
+
+        const toast = pathToToast(data.method, data.path);
+        if (toast) {
+          const toastId = `toast-${Date.now()}`;
+          setLiveToast({ ...toast, id: toastId });
+          setBellPulsing(true);
+          setTimeout(() => setLiveToast(null), 5000);
+          setTimeout(() => setBellPulsing(false), 2000);
+        }
+      } catch (_) { /* ignore */ }
       setNotificationRefreshTick((current) => current + 1);
     };
 
     source.addEventListener('refresh', handleRefresh);
-    source.onerror = () => {};
+    source.onerror = () => {
+      setNotificationStatus({ state: 'reconnecting', label: 'Reconnecting live updates' });
+    };
 
     return () => {
       source.removeEventListener('refresh', handleRefresh);
+      source.close();
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const streamUrl = tenantPortalAdminService.getStreamUrl();
+    if (!streamUrl) return undefined;
+
+    const source = new EventSource(streamUrl);
+    source.onopen = () => {
+      setNotificationStatus({ state: 'live', label: 'Live now' });
+    };
+    const handleMessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data || '{}');
+        const realtimeNotification = createTenantMessageNotification(data);
+        if (!realtimeNotification) return;
+
+        setRealtimeNotifications((prev) => mergeNotificationItems([realtimeNotification, ...prev]));
+        setNotifications((prev) => mergeNotificationItems([realtimeNotification, ...prev]));
+        setLiveToast({
+          id: realtimeNotification.id,
+          message: realtimeNotification.message,
+          actionPath: realtimeNotification.actionPath
+        });
+        setBellPulsing(true);
+        setTimeout(() => setLiveToast(null), 5000);
+        setTimeout(() => setBellPulsing(false), 2000);
+        setNotificationRefreshTick((current) => current + 1);
+      } catch (_) { /* ignore malformed stream messages */ }
+    };
+
+    source.addEventListener('message', handleMessage);
+    source.onerror = () => {
+      setNotificationStatus({ state: 'reconnecting', label: 'Reconnecting live updates' });
+    };
+
+    return () => {
+      source.removeEventListener('message', handleMessage);
       source.close();
     };
   }, [user?.id]);
@@ -837,6 +994,15 @@ const Layout = ({ children }) => {
   }, 0);
 
   const unreadNotificationCount = notifications.filter((item) => !item.read).length;
+
+  // Pulse bell when unread count grows (new item arrived while panel closed)
+  React.useEffect(() => {
+    if (!showNotifications && unreadNotificationCount > prevUnreadRef.current) {
+      setBellPulsing(true);
+      setTimeout(() => setBellPulsing(false), 2000);
+    }
+    prevUnreadRef.current = unreadNotificationCount;
+  }, [unreadNotificationCount, showNotifications]);
   const chatTargets = [
     { id: 'ROOM_GLOBAL', full_name: 'Team Room', username: 'Everyone', role: 'shared' },
     ...chatUsers.filter((chatUser) => chatUser.id !== user?.id)
@@ -862,6 +1028,7 @@ const Layout = ({ children }) => {
     });
   }, [showChatRoom, filteredChatMessages.length, selectedChatTarget]);
   const isTablet = viewportWidth < 1080;
+  const isTabletHeader = viewportWidth < 1180;
   const isCompactHeader = viewportWidth < 920;
   const isTinyHeader = viewportWidth < 640;
   const headerDigitalClock = currentTime.toLocaleTimeString([], {
@@ -1240,12 +1407,13 @@ const Layout = ({ children }) => {
             className="app-top-header"
             style={{
               ...styles.headerBar,
-              padding: isMobile ? '10px 14px' : isTablet ? '0 18px' : styles.headerBar.padding,
-              minHeight: isMobile ? '64px' : styles.headerBar.minHeight,
-              flexWrap: isTinyHeader ? 'wrap' : 'nowrap'
+              padding: isMobile ? '10px 14px' : isTabletHeader ? '8px 14px 10px' : styles.headerBar.padding,
+              minHeight: isMobile ? '64px' : isTabletHeader ? '70px' : styles.headerBar.minHeight,
+              flexWrap: isTinyHeader || isTabletHeader ? 'wrap' : 'nowrap',
+              rowGap: isTabletHeader ? '8px' : undefined
             }}
           >
-            <div style={styles.headerLeft}>
+            <div style={{ ...styles.headerLeft, width: isTabletHeader ? '100%' : 'auto' }}>
               {isMobile ? (
                 <button type="button" style={styles.mobileMenuButton} onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
                   <MenuIcon />
@@ -1256,32 +1424,34 @@ const Layout = ({ children }) => {
                   <img src="/samm.svg" alt="UBUMWE SYSTEM COMPANY" style={styles.brandLogo} />
                 </div>
                 <div style={styles.brandCopy}>
-                  <div className="brand-live-row" style={styles.brandTickerRow}>
-                    <div className="workspace-offline-marquee" style={styles.brandTickerWrap} aria-label="UBUMWE SYSTEM COMPANY ticker">
-                      <div className="workspace-offline-track" style={styles.brandTickerTrack}>
-                        <span className="ticker-chip ticker-chip-primary" style={styles.brandTickerPrimary}>UBUMWE</span>
-                        <span className="ticker-divider" style={styles.brandTickerDivider}>|</span>
-                        <span className="ticker-chip ticker-chip-secondary" style={styles.brandTickerSecondary}>SYSTEM COMPANY</span>
-                        <span className="ticker-divider" style={styles.brandTickerDivider}>|</span>
-                        <span className="ticker-chip ticker-chip-primary" style={styles.brandTickerPrimary}>UBUMWE</span>
-                        <span className="ticker-divider" style={styles.brandTickerDivider}>|</span>
-                        <span className="ticker-chip ticker-chip-secondary" style={styles.brandTickerSecondary}>SYSTEM COMPANY</span>
+                  {!isCompactHeader ? (
+                    <div className="brand-live-row" style={styles.brandTickerRow}>
+                      <div className="workspace-offline-marquee" style={styles.brandTickerWrap} aria-label="UBUMWE SYSTEM COMPANY ticker">
+                        <div className="workspace-offline-track" style={styles.brandTickerTrack}>
+                          <span className="ticker-chip ticker-chip-primary" style={styles.brandTickerPrimary}>UBUMWE</span>
+                          <span className="ticker-divider" style={styles.brandTickerDivider}>|</span>
+                          <span className="ticker-chip ticker-chip-secondary" style={styles.brandTickerSecondary}>SYSTEM COMPANY</span>
+                          <span className="ticker-divider" style={styles.brandTickerDivider}>|</span>
+                          <span className="ticker-chip ticker-chip-primary" style={styles.brandTickerPrimary}>UBUMWE</span>
+                          <span className="ticker-divider" style={styles.brandTickerDivider}>|</span>
+                          <span className="ticker-chip ticker-chip-secondary" style={styles.brandTickerSecondary}>SYSTEM COMPANY</span>
+                        </div>
+                      </div>
+                      <div className="header-digital-clock" style={styles.headerDigitalClock} title="Live digital clock">
+                        <span className="header-digital-clock-icon" style={styles.headerDigitalClockIcon}><ClockIcon /></span>
+                        <span className="header-digital-clock-text" style={styles.headerDigitalClockText}>
+                          <span className="clock-segment clock-segment-hours" style={styles.headerDigitalClockSegment}>{clockHours}</span>
+                          <span className="clock-colon" style={styles.headerDigitalClockColon}>:</span>
+                          <span className="clock-segment clock-segment-minutes" style={styles.headerDigitalClockSegment}>{clockMinutes}</span>
+                          <span className="clock-colon" style={styles.headerDigitalClockColon}>:</span>
+                          <span className="clock-segment clock-segment-seconds" style={styles.headerDigitalClockSegment}>
+                            <span className="clock-seconds-tens">{clockSeconds.charAt(0)}</span>
+                            <span className="clock-seconds-ones">{clockSeconds.charAt(1)}</span>
+                          </span>
+                        </span>
                       </div>
                     </div>
-                    <div className="header-digital-clock" style={styles.headerDigitalClock} title="Live digital clock">
-                      <span className="header-digital-clock-icon" style={styles.headerDigitalClockIcon}><ClockIcon /></span>
-                      <span className="header-digital-clock-text" style={styles.headerDigitalClockText}>
-                        <span className="clock-segment clock-segment-hours" style={styles.headerDigitalClockSegment}>{clockHours}</span>
-                        <span className="clock-colon" style={styles.headerDigitalClockColon}>:</span>
-                        <span className="clock-segment clock-segment-minutes" style={styles.headerDigitalClockSegment}>{clockMinutes}</span>
-                        <span className="clock-colon" style={styles.headerDigitalClockColon}>:</span>
-                        <span className="clock-segment clock-segment-seconds" style={styles.headerDigitalClockSegment}>
-                          <span className="clock-seconds-tens">{clockSeconds.charAt(0)}</span>
-                          <span className="clock-seconds-ones">{clockSeconds.charAt(1)}</span>
-                        </span>
-                      </span>
-                    </div>
-                  </div>
+                  ) : null}
                   <div style={{ ...styles.headerTitle, fontSize: isMobile ? '14px' : isCompactHeader ? '15px' : styles.headerTitle.fontSize }}>
                     {currentRoute.title}
                   </div>
@@ -1290,9 +1460,9 @@ const Layout = ({ children }) => {
               </div>
             </div>
 
-            <div style={{ ...styles.headerRight, gap: isMobile ? '2px' : styles.headerRight.gap, width: isTinyHeader ? '100%' : 'auto', justifyContent: isTinyHeader ? 'space-between' : 'flex-end' }}>
-              {!isTinyHeader ? (
-                <div style={styles.globalSearchWrap}>
+            <div className="main-header-right" style={{ ...styles.headerRight, gap: isMobile ? '2px' : styles.headerRight.gap, width: isTinyHeader || isTabletHeader ? '100%' : 'auto', justifyContent: isTinyHeader ? 'space-between' : 'flex-end', flexWrap: isTabletHeader ? 'wrap' : 'nowrap' }}>
+              {!isCompactHeader ? (
+                <div className="main-global-search-wrap" style={styles.globalSearchWrap}>
                   <SearchIcon />
                   <input
                     id="global-search-input"
@@ -1332,6 +1502,9 @@ const Layout = ({ children }) => {
                 </div>
               ) : null}
 
+              <div className="main-header-action-panel" aria-label="Quick header actions">
+                {!isCompactHeader ? <MainSystemInstallPrompt /> : null}
+
               <HeaderIconButton
                 title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 onClick={toggleTheme}
@@ -1361,17 +1534,53 @@ const Layout = ({ children }) => {
                       if (next) setShowChatRoom(false);
                       return next;
                     });
+                    setBellPulsing(false);
+                    setLiveToast(null);
                   }}
                 >
-                  <BellIcon />
+                  <span className={bellPulsing ? 'bell-icon-pulsing' : undefined} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <BellIcon />
+                  </span>
                 </HeaderIconButton>
+
+                {/* Live real-time toast popup */}
+                {liveToast ? (
+                  <div
+                    className="live-notif-toast"
+                    role="alert"
+                    style={styles.liveToast}
+                  >
+                    <span style={styles.liveToastDot} />
+                    <span style={styles.liveToastMessage}>{liveToast.message}</span>
+                    {liveToast.actionPath ? (
+                      <button
+                        type="button"
+                        style={styles.liveToastAction}
+                        onClick={() => {
+                          setLiveToast(null);
+                          showSpinner();
+                          setTimeout(() => { navigate(liveToast.actionPath); hideSpinner(); }, 300);
+                        }}
+                      >
+                        View →
+                      </button>
+                    ) : null}
+                    <button type="button" style={styles.liveToastClose} onClick={() => setLiveToast(null)} aria-label="Dismiss">✕</button>
+                  </div>
+                ) : null}
 
                 {showNotifications ? (
                   <div className="animated-dropdown notification-dropdown-shell" style={{ ...styles.headerDropdown, width: isMobile ? 'min(92vw, 320px)' : styles.headerDropdown.width }} ref={notificationPanelRef}>
-                    <div style={styles.notificationDropdownHeader}>
+                    <div className="notification-dropdown-topbar" style={styles.notificationDropdownHeader}>
                       <div>
-                        <div style={styles.dropdownTitle}>Notifications</div>
-                        <div style={styles.notificationSummary}>{unreadNotificationCount} unread of {notifications.length}</div>
+                        <div className="notification-dropdown-title" style={styles.dropdownTitle}>Notifications</div>
+                        <div style={styles.notificationHeaderMeta}>
+                          <div className="notification-dropdown-summary" style={styles.notificationSummary}>{unreadNotificationCount} unread of {notifications.length}</div>
+                          <span className={`notification-live-pill ${notificationStatus.state}`} style={styles.notificationStatusPill}>
+                            <span className="notification-live-dot" />
+                            {notificationStatus.label}
+                          </span>
+                        </div>
                       </div>
                       {notifications.length > 0 ? (
                         <button type="button" className="mark-all-read-button" onClick={handleMarkAllNotificationsRead} style={styles.markAllReadButton}>
@@ -1412,7 +1621,12 @@ const Layout = ({ children }) => {
                               <span style={styles.notificationMessage}>{item.message}</span>
                               <span style={styles.notificationRowBottom}>
                                 <span style={styles.notificationTime}>{formatNotificationTime(item.createdAt)}</span>
-                                <span style={styles.notificationTypePill}>{item.type}</span>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={styles.notificationTypePill}>{item.type}</span>
+                                  {item.actionPath ? (
+                                    <span style={styles.notificationGoHint}>Tap to view →</span>
+                                  ) : null}
+                                </span>
                               </span>
                             </span>
                           </button>
@@ -1649,6 +1863,7 @@ const Layout = ({ children }) => {
                     </div>
                   </div>
                 ) : null}
+              </div>
               </div>
             </div>
           </div>
@@ -2403,6 +2618,28 @@ const styles = {
     fontSize: '12px',
     fontWeight: 700
   },
+  notificationHeaderMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexWrap: 'wrap',
+    marginTop: '3px'
+  },
+  notificationStatusPill: {
+    minHeight: '22px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    borderRadius: '999px',
+    padding: '0 8px',
+    background: 'rgba(255, 255, 255, 0.14)',
+    color: '#dffbff',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
+    fontSize: '10px',
+    fontWeight: 900,
+    lineHeight: 1,
+    whiteSpace: 'nowrap'
+  },
   notificationScrollArea: {
     maxHeight: 'min(62vh, 430px)',
     overflowY: 'auto',
@@ -2493,6 +2730,72 @@ const styles = {
     textTransform: 'capitalize',
     letterSpacing: '0.03em',
     border: '1px solid rgba(191, 219, 254, 0.85)'
+  },
+  notificationGoHint: {
+    fontSize: '10px',
+    fontWeight: 800,
+    color: '#2563eb',
+    letterSpacing: '0.02em'
+  },
+  liveToast: {
+    position: 'absolute',
+    top: 'calc(100% + 10px)',
+    right: 0,
+    minWidth: '240px',
+    maxWidth: '320px',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
+    color: '#ffffff',
+    borderRadius: '18px',
+    padding: '12px 14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    boxShadow: '0 24px 48px rgba(15, 23, 42, 0.32)',
+    zIndex: 9999,
+    animation: 'liveToastIn 0.32s cubic-bezier(.22,.84,.26,1)',
+    border: '1px solid rgba(96, 165, 250, 0.3)'
+  },
+  liveToastDot: {
+    width: '9px',
+    height: '9px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%)',
+    flexShrink: 0,
+    boxShadow: '0 0 0 4px rgba(96, 165, 250, 0.25)',
+    animation: 'liveToastDotBlink 1s ease-in-out infinite'
+  },
+  liveToastMessage: {
+    flex: 1,
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#e2e8f0',
+    lineHeight: 1.3
+  },
+  liveToastAction: {
+    background: 'linear-gradient(135deg, #2563eb 0%, #0891b2 100%)',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '999px',
+    padding: '5px 12px',
+    fontSize: '11px',
+    fontWeight: 800,
+    cursor: 'pointer',
+    flexShrink: 0
+  },
+  liveToastClose: {
+    background: 'rgba(255,255,255,0.1)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: '999px',
+    color: '#94a3b8',
+    width: '22px',
+    height: '22px',
+    fontSize: '10px',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    padding: 0
   },
   notificationUnreadDot: {
     width: '9px',
@@ -2984,6 +3287,29 @@ if (typeof window !== 'undefined' && !document.getElementById('dropdown-anim-sty
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
+    @keyframes bellShake {
+      0%, 100% { transform: rotate(0deg); }
+      15% { transform: rotate(-18deg); }
+      30% { transform: rotate(16deg); }
+      45% { transform: rotate(-12deg); }
+      60% { transform: rotate(10deg); }
+      75% { transform: rotate(-6deg); }
+      88% { transform: rotate(4deg); }
+    }
+    @keyframes liveToastIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes liveToastDotBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .bell-icon-pulsing {
+      animation: bellShake 0.7s ease-in-out;
+    }
+    .live-notif-toast {
+      animation: liveToastIn 0.32s cubic-bezier(.22,.84,.26,1);
+    }
     .animated-dropdown {
       animation: dropdownIn 0.34s cubic-bezier(.22,.84,.26,1);
       animation-fill-mode: forwards;
@@ -3047,8 +3373,39 @@ if (typeof window !== 'undefined' && !document.getElementById('dropdown-anim-sty
       transform: translateY(-2px);
       box-shadow: 0 18px 32px rgba(37, 71, 127, 0.1);
     }
-    .notification-main-button:hover .notificationTitleText {
+    .notification-main-button:hover .notification-title-text {
       color: #1d4ed8;
+    }
+    .notification-live-pill {
+      position: relative;
+      z-index: 1;
+    }
+    .notification-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+      flex-shrink: 0;
+    }
+    .notification-live-pill.reconnecting .notification-live-dot,
+    .notification-live-pill.partial .notification-live-dot,
+    .notification-live-pill.polling .notification-live-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18);
+      animation: notificationLivePulse 1.2s ease-in-out infinite;
+    }
+    .notification-live-pill.offline .notification-live-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+    }
+    .notification-live-pill.live .notification-live-dot,
+    .notification-live-pill.synced .notification-live-dot {
+      animation: notificationLivePulse 1.8s ease-in-out infinite;
+    }
+    @keyframes notificationLivePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.72); opacity: 0.72; }
     }
     .mark-all-read-button:hover {
       box-shadow: 0 14px 24px rgba(37, 99, 235, 0.12);

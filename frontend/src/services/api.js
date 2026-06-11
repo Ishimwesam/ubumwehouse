@@ -23,6 +23,20 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 export const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+const getRealtimeApiBaseUrl = () => {
+  if (typeof window === 'undefined') return API_BASE_URL;
+
+  const isNetlifyApp = window.location.hostname === 'ubumwehouse.netlify.app'
+    || window.location.hostname.endsWith('--ubumwehouse.netlify.app');
+
+  if (API_BASE_URL === '/api' && isNetlifyApp) {
+    return 'https://ubumwehouse-prod.onrender.com/api';
+  }
+
+  return API_BASE_URL;
+};
+
+const REALTIME_API_BASE_URL = getRealtimeApiBaseUrl();
 
 export const resolveBackendUrl = (path = '') => {
   if (!path) return API_ROOT_URL || '';
@@ -90,6 +104,15 @@ export const getReadableApiError = (error, fallbackMessage = 'Request failed.') 
   return fallbackMessage;
 };
 
+export const isRecoverableApiError = (error) => {
+  const status = error?.response?.status || 0;
+  return !status || status >= 500 || error?.message === 'Network Error';
+};
+
+const waitForRetry = (attempt) => new Promise((resolve) => {
+  globalThis.setTimeout(resolve, 650 * attempt);
+});
+
 export const getStoredAuthToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
 export const clearStoredAuthToken = () => {
   localStorage.removeItem('token');
@@ -153,6 +176,13 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    const retryConfig = error.config || {};
+    const retryCount = retryConfig.__retryCount || 0;
+    if (retryConfig.__tenantPortalRetry && isRecoverableApiError(error) && retryCount < 2) {
+      retryConfig.__retryCount = retryCount + 1;
+      return waitForRetry(retryConfig.__retryCount).then(() => apiClient(retryConfig));
+    }
+
     if (error.response?.status === 401 && !isAuthRoute(error.config?.url)) {
       clearStoredAuthToken();
 
@@ -193,7 +223,10 @@ export const authService = {
     const formData = new FormData();
     formData.append('profile_picture', file);
 
-    return apiClient.post('/auth/profile-picture', formData);
+    // Must unset Content-Type so axios/browser sets multipart boundary automatically
+    return apiClient.post('/auth/profile-picture', formData, {
+      headers: { 'Content-Type': undefined }
+    });
   }
 };
 
@@ -213,7 +246,7 @@ export const realtimeService = {
   getNotificationStreamUrl: () => {
     const token = getStoredAuthToken();
     if (!token) return null;
-    return `${API_BASE_URL}/realtime/stream?token=${encodeURIComponent(token)}`;
+    return `${REALTIME_API_BASE_URL}/realtime/stream?token=${encodeURIComponent(token)}`;
   }
 };
 
@@ -380,7 +413,7 @@ export const tenantPortalService = {
   getStreamUrl: () => {
     const token = tenantPortalService.getToken();
     if (!token) return null;
-    return `${API_BASE_URL}/tenant-portal/stream?token=${encodeURIComponent(token)}`;
+    return `${REALTIME_API_BASE_URL}/tenant-portal/stream?token=${encodeURIComponent(token)}`;
   },
   setToken: (token, remember = false) => {
     sessionStorage.removeItem('tenantPortalToken');
@@ -393,25 +426,35 @@ export const tenantPortalService = {
     sessionStorage.removeItem('tenantPortalToken');
     localStorage.removeItem('tenantPortalToken');
   },
-  access: (data) => apiClient.post('/tenant-portal/access', data),
+  access: (data) => apiClient.post('/tenant-portal/access', data, { __tenantPortalRetry: true }),
   register: (data) => apiClient.post('/tenant-portal/register', data),
-  login: (data) => apiClient.post('/tenant-portal/login', data),
+  login: (data) => apiClient.post('/tenant-portal/login', data, { __tenantPortalRetry: true }),
   me: () => apiClient.get('/tenant-portal/me', {
+    __tenantPortalRetry: true,
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
   getMessages: () => apiClient.get('/tenant-portal/messages', {
+    __tenantPortalRetry: true,
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
   sendMessage: (message) => apiClient.post('/tenant-portal/messages', { message }, {
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
   getMaintenanceRequests: () => apiClient.get('/tenant-portal/maintenance', {
+    __tenantPortalRetry: true,
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
   createMaintenanceRequest: (data) => apiClient.post('/tenant-portal/maintenance', data, {
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
+  updateMaintenanceRequest: (requestId, data) => apiClient.put(`/tenant-portal/maintenance/${requestId}`, data, {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
+  deleteMaintenanceRequest: (requestId) => apiClient.delete(`/tenant-portal/maintenance/${requestId}`, {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
   getAnnouncements: () => apiClient.get('/tenant-portal/announcements', {
+    __tenantPortalRetry: true,
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
   }),
   uploadPaymentProof: (data) => {
@@ -425,6 +468,29 @@ export const tenantPortalService = {
     return apiClient.post('/tenant-portal/payment-proof', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+  },
+  updatePaymentProof: (paymentId, data) => {
+    const formData = new FormData();
+    Object.entries(data || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
+    });
+    const token = tenantPortalService.getToken();
+    return apiClient.put(`/tenant-portal/payment-proof/${paymentId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+  },
+  deletePaymentProof: (paymentId) => {
+    const token = tenantPortalService.getToken();
+    return apiClient.delete(`/tenant-portal/payment-proof/${paymentId}`, {
+      headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
@@ -448,7 +514,7 @@ export const tenantPortalAdminService = {
   getStreamUrl: () => {
     const token = getStoredAuthToken();
     if (!token) return null;
-    return `${API_BASE_URL}/tenant-portal/accounts/stream?token=${encodeURIComponent(token)}`;
+    return `${REALTIME_API_BASE_URL}/tenant-portal/accounts/stream?token=${encodeURIComponent(token)}`;
   },
   listAccounts: () => apiClient.get('/tenant-portal/accounts'),
   updateAccountStatus: (accountId, isActive) => apiClient.put(`/tenant-portal/accounts/${accountId}/status`, { is_active: isActive }),

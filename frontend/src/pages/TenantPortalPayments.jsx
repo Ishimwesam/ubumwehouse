@@ -60,6 +60,21 @@ const TenantPortalPayments = () => {
 
   const companyName = useMemo(() => 'UBUMWE HOUSE LTD', []);
 
+  const loadPortalData = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError('');
+    }
+    try {
+      const response = await tenantPortalService.me();
+      setPortalData(response.data);
+    } catch (err) {
+      if (!silent) setError(getReadableApiError(err, 'Failed to load payment history.'));
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
   const handleDownloadStatement = () => {
     const headers = ['Payment Date', 'Rent Month', 'Amount Paid', 'Payment Method', 'Transaction Reference', 'Payment Status', 'Rejection Reason'];
     const csv = [
@@ -84,24 +99,23 @@ const TenantPortalPayments = () => {
       return undefined;
     }
 
-    setLoading(true);
-    tenantPortalService.me()
-      .then((response) => {
-        if (!mounted) return;
-        setPortalData(response.data);
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        setError(getReadableApiError(err, 'Failed to load payment history.'));
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+    loadPortalData().finally(() => {
+      if (!mounted) return;
+    });
 
     return () => {
       mounted = false;
     };
   }, [navigate]);
+
+  useEffect(() => {
+    const onPortalEvent = (event) => {
+      if (event.detail?.event_type !== 'tenant_payment_update') return;
+      loadPortalData({ silent: true });
+    };
+    window.addEventListener('tp:portal-event', onPortalEvent);
+    return () => window.removeEventListener('tp:portal-event', onPortalEvent);
+  }, []);
 
   return (
     <main className="tp-page tp-subpage">

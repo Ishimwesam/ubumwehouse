@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
-import { emitAppToast } from '../context/ToastContext';
+import { getReadableApiError, isRecoverableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
-import TenantPortalNav from '../components/TenantPortalNav';
-import { incrementUnread, registerTenantPushSubscription, requestNotificationPermission, showBrowserNotification } from '../utils/tenantNotification';
+import TenantPortalNav, { TenantNotificationPermissionButton } from '../components/TenantPortalNav';
+import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
+import { registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -46,10 +46,6 @@ const getTenantName = (tenant) => String(tenant?.full_name || tenant?.tenant_nam
 const hasTenantDisplayName = (data) => Boolean(getTenantName(data?.tenant));
 const isRejectedPayment = (payment) => String(payment?.payment_status || '').toLowerCase() === 'rejected';
 
-const IconWallet = () => <span aria-hidden="true">◫</span>;
-const IconCheck = () => <span aria-hidden="true">◉</span>;
-const IconFile = () => <span aria-hidden="true">◧</span>;
-const formatUnreadToast = (count) => `${count} unread message${count === 1 ? '' : 's'} in your inbox`;
 const portalBrandText = 'UBUMWE HOUSE LTD TENANT PORTAL';
 
 const TenantPortal = () => {
@@ -71,6 +67,8 @@ const TenantPortal = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [deletingPaymentId, setDeletingPaymentId] = useState('');
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     payment_date: today(),
@@ -114,6 +112,19 @@ const TenantPortal = () => {
   };
 
   const getReceiptPath = (payment) => resolveTenantUploadUrl(payment?.receipt_path || '') || '';
+  const canManagePayment = (payment) => ['pending', 'rejected'].includes(String(payment?.payment_status || '').toLowerCase());
+
+  const resetPaymentForm = () => {
+    setEditingPayment(null);
+    setPaymentForm({
+      amount: tenant?.balance || tenant?.monthly_rent || '',
+      payment_date: today(),
+      payment_period: currentPeriod(),
+      payment_method: 'bank_transfer',
+      notes: '',
+      receipt: null
+    });
+  };
 
   const loadMessages = async () => {
     if (!tenantPortalService.getToken()) return;
@@ -142,7 +153,14 @@ const TenantPortal = () => {
           amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || ''
         }));
       })
-      .catch(() => {
+      .catch((err) => {
+        if (!mounted) return;
+        const cached = readCachedPortalData();
+        if (isRecoverableApiError(err) && (portalData || cached)) {
+          setPortalData(portalData || cached);
+          setError('Connection is reconnecting. Showing your saved tenant details for now.');
+          return;
+        }
         tenantPortalService.clearToken();
         setPortalData(null);
         writeCachedPortalData(null);
@@ -167,32 +185,30 @@ const TenantPortal = () => {
   }, [tenant?.id]);
 
   useEffect(() => {
-    const streamUrl = tenantPortalService.getStreamUrl();
-    if (!streamUrl) return undefined;
-
-    const source = new EventSource(streamUrl);
-    const onMessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data || '{}');
-        if (!payload?.id) return;
+    const onPortalEvent = (event) => {
+      const payload = event.detail || {};
+      if (payload.sender_type) {
         setMessages((prev) => (prev.some((item) => item.id === payload.id) ? prev : [...prev, payload]));
-        if (payload.sender_type === 'admin') {
-          const nextUnread = incrementUnread();
-          emitAppToast(formatUnreadToast(nextUnread), 'realtime');
-          showBrowserNotification(
-            'UBUMWE HOUSE LTD',
-            payload.message || 'You have a new message from support.'
-          );
-        }
-      } catch (_) {}
+        return;
+      }
+
+      if (!['tenant_payment_update', 'tenant_announcement', 'tenant_maintenance_update'].includes(payload.event_type)) return;
+
+      tenantPortalService.me()
+        .then((response) => {
+          setPortalData(response.data);
+          setPaymentForm((prev) => ({
+            ...prev,
+            amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || prev.amount
+          }));
+        })
+        .catch(() => {});
     };
 
-    source.addEventListener('message', onMessage);
-    source.onerror = () => {};
+    window.addEventListener('tp:portal-event', onPortalEvent);
 
     return () => {
-      source.removeEventListener('message', onMessage);
-      source.close();
+      window.removeEventListener('tp:portal-event', onPortalEvent);
     };
   }, []);
 
@@ -288,7 +304,7 @@ const TenantPortal = () => {
       setError('Login is required before uploading payment proof.');
       return;
     }
-    if (!paymentForm.receipt) {
+    if (!editingPayment && !paymentForm.receipt) {
       setError('Upload a receipt image or PDF before submitting proof.');
       return;
     }
@@ -297,14 +313,56 @@ const TenantPortal = () => {
     setError('');
     setSuccess('');
     try {
-      await tenantPortalService.uploadPaymentProof(paymentForm);
-      setSuccess('Payment proof uploaded. It is now pending staff confirmation.');
-      setPaymentForm((prev) => ({ ...prev, receipt: null, notes: '' }));
+      if (editingPayment) {
+        await tenantPortalService.updatePaymentProof(editingPayment.id, paymentForm);
+        setSuccess('Payment proof updated. It is now pending staff confirmation again.');
+      } else {
+        await tenantPortalService.uploadPaymentProof(paymentForm);
+        setSuccess('Payment proof uploaded. It is now pending staff confirmation.');
+      }
+      resetPaymentForm();
+      setShowUploadForm(false);
       await refreshPortal();
     } catch (err) {
-      setError(getReadableApiError(err, 'Failed to upload payment proof.'));
+      setError(getReadableApiError(err, editingPayment ? 'Failed to update payment proof.' : 'Failed to upload payment proof.'));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleEditPayment = (payment) => {
+    if (!canManagePayment(payment)) return;
+    setEditingPayment(payment);
+    setShowUploadForm(true);
+    setPaymentForm({
+      amount: payment.amount || '',
+      payment_date: payment.payment_date || today(),
+      payment_period: payment.payment_period || currentPeriod(),
+      payment_method: payment.payment_method || 'bank_transfer',
+      notes: '',
+      receipt: null
+    });
+    setError('');
+    setSuccess('');
+    setTimeout(() => scrollTo(uploadSectionRef), 0);
+  };
+
+  const handleDeletePayment = async (payment) => {
+    if (!canManagePayment(payment)) return;
+    if (!window.confirm('Delete this payment proof from your tenant portal history?')) return;
+
+    setDeletingPaymentId(payment.id);
+    setError('');
+    setSuccess('');
+    try {
+      await tenantPortalService.deletePaymentProof(payment.id);
+      if (editingPayment?.id === payment.id) resetPaymentForm();
+      setSuccess('Payment proof deleted.');
+      await refreshPortal();
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to delete payment proof.'));
+    } finally {
+      setDeletingPaymentId('');
     }
   };
 
@@ -423,6 +481,7 @@ const TenantPortal = () => {
             </button>
           </form>
           <TenantPortalInstallPrompt />
+          <TenantNotificationPermissionButton inline />
         </section>
       ) : (
         <div className="tp-dashboard">
@@ -437,19 +496,22 @@ const TenantPortal = () => {
               onDashboardClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
 
-            <button
-              className="tp-logout"
-              type="button"
-              onClick={() => {
-                tenantPortalService.clearToken();
-                setPortalData(null);
-                setMessages([]);
-                writeCachedPortalData(null);
-                setBootLoading(false);
-              }}
-            >
-              Logout
-            </button>
+            <div className="tp-sidebar-actions">
+              <TenantNotificationPermissionButton inline />
+              <button
+                className="tp-logout"
+                type="button"
+                onClick={() => {
+                  tenantPortalService.clearToken();
+                  setPortalData(null);
+                  setMessages([]);
+                  writeCachedPortalData(null);
+                  setBootLoading(false);
+                }}
+              >
+                Logout
+              </button>
+            </div>
           </aside>
 
           <section className="tp-main">
@@ -473,21 +535,21 @@ const TenantPortal = () => {
 
             <section className="tp-stats-row">
               <article className="tp-stat-card">
-                <div className="tp-stat-icon rent"><IconWallet /></div>
+                <div className="tp-stat-icon rent"><StatIconWallet /></div>
                 <div>
                   <span>Monthly Rent</span>
                   <strong>{formatCurrency(tenant.monthly_rent)}</strong>
                 </div>
               </article>
               <article className="tp-stat-card">
-                <div className="tp-stat-icon paid"><IconCheck /></div>
+                <div className="tp-stat-icon paid"><StatIconCheck /></div>
                 <div>
                   <span>Paid Amount</span>
                   <strong className="paid">{formatCurrency(tenant.current_period_paid)}</strong>
                 </div>
               </article>
               <article className="tp-stat-card">
-                <div className="tp-stat-icon outstanding"><IconFile /></div>
+                <div className="tp-stat-icon outstanding"><StatIconFile /></div>
                 <div>
                   <span>Outstanding Balance</span>
                   <strong className="outstanding">{formatCurrency(tenant.balance)}</strong>
@@ -516,6 +578,11 @@ const TenantPortal = () => {
 
                 {showUploadForm ? (
                   <form className="tp-upload-form" onSubmit={handleUpload}>
+                    {editingPayment ? (
+                      <div className="tp-alert info full">
+                        Editing rejected/pending receipt. Saving will resend it for staff confirmation.
+                      </div>
+                    ) : null}
                     <label>
                       Amount
                       <input type="number" min="1" value={paymentForm.amount} onChange={(event) => setPaymentForm((prev) => ({ ...prev, amount: event.target.value }))} required />
@@ -539,15 +606,21 @@ const TenantPortal = () => {
                     </label>
                     <label className="full">
                       Receipt image or PDF
-                      <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setPaymentForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required />
+                      <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setPaymentForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required={!editingPayment} />
+                      {editingPayment ? <small>Leave empty to keep the current receipt file.</small> : null}
                     </label>
                     <label className="full">
                       Notes
                       <textarea value={paymentForm.notes} onChange={(event) => setPaymentForm((prev) => ({ ...prev, notes: event.target.value }))} rows={3} />
                     </label>
                     <button className="tp-btn-primary" type="submit" disabled={uploading}>
-                      {uploading ? 'Uploading...' : 'Submit Proof'}
+                      {uploading ? (editingPayment ? 'Updating...' : 'Uploading...') : editingPayment ? 'Update Proof' : 'Submit Proof'}
                     </button>
+                    {editingPayment ? (
+                      <button className="tp-btn-secondary" type="button" onClick={resetPaymentForm}>
+                        Cancel Edit
+                      </button>
+                    ) : null}
                   </form>
                 ) : null}
               </article>
@@ -572,6 +645,7 @@ const TenantPortal = () => {
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Receipt</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -596,9 +670,28 @@ const TenantPortal = () => {
                               <span>-</span>
                             )}
                           </td>
+                          <td>
+                            {canManagePayment(payment) ? (
+                              <div className="tp-row-actions">
+                                <button type="button" className="tp-btn-secondary" onClick={() => handleEditPayment(payment)}>
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="tp-btn-danger"
+                                  onClick={() => handleDeletePayment(payment)}
+                                  disabled={deletingPaymentId === payment.id}
+                                >
+                                  {deletingPaymentId === payment.id ? 'Deleting...' : 'Delete'}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="tp-locked-note">Locked</span>
+                            )}
+                          </td>
                         </tr>
                       )) : (
-                        <tr><td colSpan="5">No payment history yet.</td></tr>
+                        <tr><td colSpan="6">No payment history yet.</td></tr>
                       )}
                     </tbody>
                   </table>

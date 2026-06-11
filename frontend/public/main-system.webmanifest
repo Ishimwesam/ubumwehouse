@@ -1,0 +1,44 @@
+{
+  "name": "UBUMWE System",
+  "short_name": "UBUMWE",
+  "description": "UBUMWE SYSTEM COMPANY management platform with tenant portal access.",
+  "id": "/",
+  "start_url": "/main-system-start.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/samm-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/samm-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard"
+    },
+    {
+      "name": "Payments",
+      "short_name": "Payments",
+      "url": "/payments"
+    },
+    {
+      "name": "Tenant Portal",
+      "short_name": "Tenant",
+      "url": "/tenant-portal"
+    }
+  ]
+}

@@ -16,7 +16,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/tenant-portal-sw.js', { scope: '/' }).catch(() => {});
+  window.addEventListener('load', async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations
+          .filter((registration) => registration.active?.scriptURL?.includes('/tenant-portal-sw.js'))
+          .map((registration) => registration.unregister())
+      );
+      await navigator.serviceWorker.register('/main-system-sw.js', { scope: '/' });
+    } catch (_) {}
   });
 }

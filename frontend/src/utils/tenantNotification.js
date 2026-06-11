@@ -37,20 +37,36 @@ export const requestNotificationPermission = async () => {
   }
 };
 
-export const showBrowserNotification = (title, body, options = {}) => {
+export const showBrowserNotification = async (title, body, options = {}) => {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
   try {
-    const notification = new Notification(title, {
+    const notificationOptions = {
       body,
       icon: '/samm-192.png',
       badge: '/samm-192.png',
       tag: 'tp-admin-message',
       renotify: true,
+      data: { url: '/tenant-portal', ...(options.data || {}) },
       ...options
+    };
+
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      if (registration?.showNotification) {
+        await registration.showNotification(title, notificationOptions);
+        return;
+      }
+    }
+
+    const notification = new Notification(title, {
+      ...notificationOptions,
+      body: notificationOptions.body
     });
     notification.onclick = () => {
       window.focus();
+      const targetUrl = notificationOptions.data?.url;
+      if (targetUrl) window.location.assign(targetUrl);
       notification.close();
     };
   } catch (_) {}

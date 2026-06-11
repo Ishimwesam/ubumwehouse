@@ -18,6 +18,8 @@ const TenantPortalMaintenance = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState('');
+  const [editingRequest, setEditingRequest] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [form, setForm] = useState({
@@ -49,6 +51,20 @@ const TenantPortalMaintenance = () => {
     loadRequests();
   }, [navigate]);
 
+  useEffect(() => {
+    const onPortalEvent = (event) => {
+      if (event.detail?.event_type !== 'tenant_maintenance_update') return;
+      loadRequests();
+    };
+    window.addEventListener('tp:portal-event', onPortalEvent);
+    return () => window.removeEventListener('tp:portal-event', onPortalEvent);
+  }, []);
+
+  const resetForm = () => {
+    setForm({ title: '', category: 'General', priority: 'normal', description: '' });
+    setEditingRequest(null);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.title.trim() || !form.description.trim()) {
@@ -60,14 +76,50 @@ const TenantPortalMaintenance = () => {
     setError('');
     setSuccess('');
     try {
-      const response = await tenantPortalService.createMaintenanceRequest(form);
-      setRequests((current) => [response.data, ...current]);
-      setForm({ title: '', category: 'General', priority: 'normal', description: '' });
-      setSuccess('Maintenance request submitted. Staff can now track it in portal control.');
+      if (editingRequest) {
+        const response = await tenantPortalService.updateMaintenanceRequest(editingRequest.id, form);
+        setRequests((current) => current.map((request) => (request.id === editingRequest.id ? response.data : request)));
+        setSuccess('Maintenance request updated.');
+      } else {
+        const response = await tenantPortalService.createMaintenanceRequest(form);
+        setRequests((current) => [response.data, ...current]);
+        setSuccess('Maintenance request submitted. Staff can now track it in portal control.');
+      }
+      resetForm();
     } catch (err) {
-      setError(getReadableApiError(err, 'Failed to submit maintenance request.'));
+      setError(getReadableApiError(err, editingRequest ? 'Failed to update maintenance request.' : 'Failed to submit maintenance request.'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEdit = (request) => {
+    setEditingRequest(request);
+    setForm({
+      title: request.title || '',
+      category: request.category || 'General',
+      priority: request.priority || 'normal',
+      description: request.description || ''
+    });
+    setError('');
+    setSuccess('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (request) => {
+    if (!window.confirm('Delete this open maintenance request?')) return;
+    setDeletingId(request.id);
+    setError('');
+    setSuccess('');
+    try {
+      await tenantPortalService.deleteMaintenanceRequest(request.id);
+      setRequests((current) => current.filter((item) => item.id !== request.id));
+      if (editingRequest?.id === request.id) resetForm();
+      setSuccess('Maintenance request deleted.');
+    } catch (err) {
+      setError(getReadableApiError(err, 'Failed to delete maintenance request.'));
+    } finally {
+      setDeletingId('');
     }
   };
 
@@ -89,7 +141,14 @@ const TenantPortalMaintenance = () => {
 
         <section className="tp-main-grid">
           <article className="tp-card">
-            <h2>Create Request</h2>
+            <div className="tp-card-header-row">
+              <h2>{editingRequest ? 'Update Request' : 'Create Request'}</h2>
+              {editingRequest ? (
+                <button className="tp-btn-secondary" type="button" onClick={resetForm}>
+                  Cancel Edit
+                </button>
+              ) : null}
+            </div>
             <form className="tp-upload-form maintenance-form" onSubmit={handleSubmit}>
               <label>
                 Title
@@ -132,7 +191,7 @@ const TenantPortalMaintenance = () => {
                 />
               </label>
               <button className="tp-btn-primary" type="submit" disabled={submitting}>
-                {submitting ? 'Submitting...' : 'Submit Request'}
+                {submitting ? (editingRequest ? 'Updating...' : 'Submitting...') : editingRequest ? 'Update Request' : 'Submit Request'}
               </button>
             </form>
           </article>
@@ -156,6 +215,23 @@ const TenantPortalMaintenance = () => {
                       <span>{formatDateTime(request.created_at)}</span>
                     </div>
                     {request.admin_note ? <small>{request.admin_note}</small> : null}
+                    <div className="tp-request-actions">
+                      {['open', 'in_progress'].includes(String(request.status || '').toLowerCase()) ? (
+                        <button type="button" className="tp-btn-secondary" onClick={() => handleEdit(request)}>
+                          Edit
+                        </button>
+                      ) : null}
+                      {String(request.status || '').toLowerCase() === 'open' ? (
+                        <button
+                          type="button"
+                          className="tp-btn-danger"
+                          onClick={() => handleDelete(request)}
+                          disabled={deletingId === request.id}
+                        >
+                          {deletingId === request.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      ) : null}
+                    </div>
                   </article>
                 ))}
               </div>
