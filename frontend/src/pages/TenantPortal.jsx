@@ -101,6 +101,7 @@ const TenantPortal = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [deletingPaymentId, setDeletingPaymentId] = useState('');
   const [paymentForm, setPaymentForm] = useState({
@@ -581,6 +582,57 @@ const TenantPortal = () => {
           </aside>
 
           <section className="tp-main tp-portal-overview">
+            <header className="tp-mobile-app-header" aria-label="Tenant portal app header">
+              <button type="button" aria-label="Open tenant menu" onClick={() => setMobileMenuOpen((open) => !open)} aria-expanded={mobileMenuOpen}>
+                <span />
+                <span />
+                <span />
+              </button>
+              <div className="tp-mobile-brand">
+                <div className="tp-house-logo" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <strong>{propertyName}</strong>
+                <small>{text.homePriority}</small>
+              </div>
+              <div className="tp-mobile-header-actions">
+                <button type="button" aria-label={text.notifications} onClick={() => navigate('/tenant-portal/announcements')}>
+                  <PortalGlyph type="bell" />
+                  {notificationCount > 0 ? <strong>{notificationCount}</strong> : null}
+                </button>
+                <button type="button" aria-label={text.messages} onClick={() => navigate('/tenant-portal/messages')}>
+                  <PortalGlyph type="message" />
+                  {unreadMessageCount > 0 ? <strong>{unreadMessageCount}</strong> : null}
+                </button>
+              </div>
+            </header>
+
+            {mobileMenuOpen ? (
+              <section className="tp-mobile-menu-panel" aria-label="Tenant quick menu">
+                <TenantLanguageSelect />
+                <TenantNotificationPermissionButton inline />
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/upload'); }}>{text.uploadReceipt}</button>
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>{text.documentsReceipts}</button>
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/announcements'); }}>{text.announcementsTitle}</button>
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>{text.support}</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    tenantPortalService.clearToken();
+                    setPortalData(null);
+                    setMessages([]);
+                    writeCachedPortalData(null);
+                    setMobileMenuOpen(false);
+                    setBootLoading(false);
+                  }}
+                >
+                  {text.logout}
+                </button>
+              </section>
+            ) : null}
+
             <header className="tp-portal-topbar">
               <div>
                 <h1>{formatTenantText(text.welcomeBack, { name: tenantFirstName })}</h1>
@@ -627,6 +679,11 @@ const TenantPortal = () => {
                 </div>
                 <strong>{formatCurrency(currentBalance)}</strong>
                 <p>{formatTenantText(text.rentDueReminderMessage, { date: formatShortDate(dueDate) })}</p>
+                {currentBalance > 0 ? (
+                  <button type="button" className="tp-summary-pay-button" onClick={() => navigate('/tenant-portal/upload')}>
+                    {text.payRentNow}
+                  </button>
+                ) : null}
                 <button type="button" onClick={() => navigate('/tenant-portal/payments')}>{text.viewDetails}<span>&rsaquo;</span></button>
               </article>
               <article className="tp-portal-summary-card">
@@ -677,6 +734,11 @@ const TenantPortal = () => {
                   <span className="blue"><PortalGlyph type="message" /></span>
                   <strong>{text.messages}</strong>
                   <small>{text.sendViewMessages}</small>
+                </button>
+                <button type="button" onClick={() => navigate('/tenant-portal/profile')}>
+                  <span className="blue"><PortalGlyph type="user" /></span>
+                  <strong>{text.profile}</strong>
+                  <small>{text.profileInfo}</small>
                 </button>
               </div>
             </section>

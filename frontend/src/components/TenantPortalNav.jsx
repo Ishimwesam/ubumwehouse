@@ -106,9 +106,9 @@ const navItems = [
   { id: 'maintenance', label: 'Maintenance', path: '/tenant-portal/maintenance' },
   { id: 'documents', label: 'Documents & Receipts', shortLabel: 'Docs', path: '/tenant-portal/payments', extra: true },
   { id: 'lease', label: 'My Lease', shortLabel: 'Lease', path: '/tenant-portal', extra: true },
-  { id: 'profile', label: 'Profile', path: '/tenant-portal/profile', extra: true },
+  { id: 'profile', label: 'Profile', path: '/tenant-portal/profile' },
   { id: 'support', label: 'Support', path: '/tenant-portal/messages', extra: true },
-  { id: 'upload', label: 'Upload Receipt', shortLabel: 'Upload', path: '/tenant-portal/upload' },
+  { id: 'upload', label: 'Upload Receipt', shortLabel: 'Upload', path: '/tenant-portal/upload', extra: true },
   { id: 'announcements', label: 'Announcements', shortLabel: 'Notices', path: '/tenant-portal/announcements', extra: true },
   { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/forgot-password', extra: true }
 ];
@@ -124,7 +124,7 @@ const languages = [
 const navTranslations = {
   en: {
     dashboard: 'Home',
-    payments: 'Pay',
+    payments: 'Payments',
     history: 'History',
     upload: 'Receipt',
     maintenance: 'Repair',
@@ -190,6 +190,7 @@ const navTranslations = {
     documentsReceipts: 'Documents & Receipts',
     viewDownload: 'View and download',
     sendViewMessages: 'Send or view messages',
+    profileInfo: 'My information',
     announcementsTitle: 'Announcements',
     upcomingPayment: 'Upcoming Payment',
     recentPayments: 'Recent Payments',
@@ -208,7 +209,7 @@ const navTranslations = {
   },
   fr: {
     dashboard: 'Accueil',
-    payments: 'Payer',
+    payments: 'Paiements',
     history: 'Historique',
     upload: 'Recu',
     maintenance: 'Reparer',
@@ -274,6 +275,7 @@ const navTranslations = {
     documentsReceipts: 'Documents et recus',
     viewDownload: 'Voir et telecharger',
     sendViewMessages: 'Envoyer ou voir messages',
+    profileInfo: 'Mes informations',
     announcementsTitle: 'Annonces',
     upcomingPayment: 'Paiement a venir',
     recentPayments: 'Paiements recents',
@@ -358,6 +360,7 @@ const navTranslations = {
     documentsReceipts: 'Inyandiko na risiti',
     viewDownload: 'Reba kandi ukuremo',
     sendViewMessages: 'Ohereza cyangwa urebe ubutumwa',
+    profileInfo: 'Amakuru yanjye',
     announcementsTitle: 'Amatangazo',
     upcomingPayment: 'Ubwishyu butaha',
     recentPayments: 'Ubwishyu bwa vuba',
