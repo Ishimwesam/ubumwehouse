@@ -2815,16 +2815,16 @@
 
 @media (max-width: 768px) {
   .tp-main.tp-portal-overview {
-    padding: calc(env(safe-area-inset-top, 0px) + 16px) 22px calc(122px + env(safe-area-inset-bottom, 0px));
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 28px calc(118px + env(safe-area-inset-bottom, 0px));
     background: #ffffff;
   }
 
   .tp-mobile-app-header {
     display: grid;
-    grid-template-columns: 46px minmax(0, 1fr) auto;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 10px;
+    margin-bottom: 18px;
   }
 
   .tp-mobile-app-header > button,
@@ -2836,8 +2836,8 @@
   }
 
   .tp-mobile-app-header > button {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     display: grid;
     align-content: center;
     gap: 6px;
@@ -2845,7 +2845,7 @@
   }
 
   .tp-mobile-app-header > button span {
-    width: 28px;
+    width: 26px;
     height: 3px;
     border-radius: 999px;
     background: currentColor;
@@ -2860,16 +2860,16 @@
 
   .tp-mobile-brand .tp-house-logo {
     display: block;
-    width: 112px;
-    height: 48px;
-    margin: 0 auto -2px;
-    transform: scale(0.82);
+    width: 104px;
+    height: 42px;
+    margin: 0 auto -6px;
+    transform: scale(0.7);
     transform-origin: center bottom;
   }
 
   .tp-mobile-brand strong {
     color: #0b56c5;
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1;
     font-weight: 900;
     text-align: center;
@@ -2878,7 +2878,7 @@
 
   .tp-mobile-brand small {
     color: #475569;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     text-align: center;
   }
@@ -2886,13 +2886,13 @@
   .tp-mobile-header-actions {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .tp-mobile-header-actions button {
-    width: 40px;
-    height: 40px;
-    padding: 7px;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
     position: relative;
   }
 
@@ -2960,17 +2960,18 @@
   }
 
   .tp-portal-topbar {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     gap: 12px;
   }
 
   .tp-portal-topbar h1 {
-    font-size: 24px;
+    font-size: 28px;
+    line-height: 1.08;
   }
 
   .tp-portal-topbar p,
   .tp-portal-rent-alert p {
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .tp-portal-top-actions {
@@ -2979,7 +2980,9 @@
   }
 
   .tp-portal-top-actions .tp-top-action,
-  .tp-portal-top-actions .tp-user {
+  .tp-portal-top-actions .tp-user,
+  .tp-portal-top-actions .tp-language-select,
+  .tp-portal-top-actions .tp-install-card.compact {
     display: none;
   }
 
@@ -2992,24 +2995,18 @@
     font-size: 12px;
   }
 
-  .tp-portal-top-actions .tp-language-select,
-  .tp-portal-top-actions .tp-install-card.compact,
-  .tp-user {
-    width: 100%;
-  }
-
-  .tp-user {
-    justify-content: center;
-    padding: 8px;
-    border: 1px solid #dbe4ef;
-    border-radius: 999px;
-    background: #ffffff;
-  }
-
   .tp-portal-rent-alert {
     grid-template-columns: auto minmax(0, 1fr);
-    padding: 14px;
-    gap: 10px;
+    padding: 13px 16px;
+    gap: 12px;
+    min-height: 82px;
+    margin-bottom: 16px;
+  }
+
+  .tp-info-dot {
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
   }
 
   .tp-portal-rent-alert .tp-btn-primary {
@@ -3030,12 +3027,22 @@
   }
 
   .tp-portal-summary-card:first-child {
-    gap: 14px;
-    padding: 22px 24px 26px;
+    gap: 12px;
+    padding: 20px 24px 24px;
   }
 
   .tp-portal-summary-card:first-child > strong {
     font-size: 34px;
+  }
+
+  .tp-summary-icon {
+    width: 56px;
+    height: 56px;
+    padding: 16px;
+  }
+
+  .tp-portal-summary-card p {
+    font-size: 15px;
   }
 
   .tp-portal-summary-card:first-child > button:not(.tp-summary-pay-button) {
@@ -3046,7 +3053,7 @@
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    min-height: 54px;
+    min-height: 48px;
     width: 100%;
     margin-top: 8px !important;
     padding: 0 18px !important;
@@ -3059,25 +3066,54 @@
 
   .tp-action-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: 12px;
   }
 
   .tp-action-grid button {
-    min-height: 128px;
-    padding: 14px 8px 12px;
+    min-height: 112px;
+    padding: 12px 8px 10px;
   }
 
   .tp-action-grid span {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
   }
 
   .tp-action-grid strong {
     font-size: 13px;
+    line-height: 1.15;
   }
 
   .tp-action-grid small {
-    font-size: 11px;
+    font-size: 10px;
+  }
+
+  .tp-quick-action-panel {
+    margin-bottom: 16px;
+  }
+
+  .tp-portal-card h2 {
+    margin-bottom: 14px;
+    font-size: 17px;
+  }
+
+  .tp-portal-bottom-grid {
+    gap: 0;
+  }
+
+  .tp-portal-bottom-grid .tp-portal-card:nth-child(1),
+  .tp-portal-bottom-grid .tp-portal-card:nth-child(2) {
+    display: none;
+  }
+
+  .tp-recent-payment-list > div {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+  }
+
+  .tp-recent-payment-list em {
+    grid-column: auto;
+    justify-self: auto;
   }
 
   .tp-feed-item {

@@ -142,6 +142,7 @@ const TenantPortal = () => {
   const dueDate = rentDue.due_date || '';
   const daysUntilDue = Number(rentDue.days_until_due ?? 0);
   const dueDaysText = Math.max(daysUntilDue, 0);
+  const tenantPortalBrandName = 'IHURIRO HOUSE';
   const propertyName = tenant?.building_name || accountName;
   const currentPeriodLabel = rentDue.period || currentPeriod();
   const recentPayments = payments.slice(0, 3);
@@ -545,7 +546,7 @@ const TenantPortal = () => {
                 <span />
                 <span />
               </div>
-              <div className="tp-brand-title">{propertyName}</div>
+              <div className="tp-brand-title">{tenantPortalBrandName}</div>
               <div className="tp-brand-subtitle">{text.homePriority}</div>
             </div>
 
@@ -594,7 +595,7 @@ const TenantPortal = () => {
                   <span />
                   <span />
                 </div>
-                <strong>{propertyName}</strong>
+                <strong>{tenantPortalBrandName}</strong>
                 <small>{text.homePriority}</small>
               </div>
               <div className="tp-mobile-header-actions">
