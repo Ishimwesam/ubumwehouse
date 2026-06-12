@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav, { TenantLanguageSelect, TenantNotificationPermissionButton, useTenantLanguage } from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantLanguageSelect, TenantMobileAppHeader, TenantNotificationPermissionButton, useTenantLanguage } from '../components/TenantPortalNav';
 import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
 import useTenantUnread from '../hooks/useTenantUnread';
 import { clearUnread, registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
@@ -133,6 +133,7 @@ const TenantPortalMessages = () => {
         </aside>
 
         <section className="tp-main">
+          <TenantMobileAppHeader current="messages" />
           <header className="tp-header">
             <div>
               <h1>{text.messagesTitle}</h1>

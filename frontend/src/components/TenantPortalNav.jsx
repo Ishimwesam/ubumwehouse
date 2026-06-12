@@ -1023,6 +1023,169 @@ const getCurrentFromPath = (pathname = '') => {
   return '';
 };
 
+const TENANT_PORTAL_BRAND_NAME = 'UBUMWE HOUSE SYSTEM';
+const TENANT_PORTAL_EMAIL = 'ubumwehouseltd@gmail.com';
+
+const TenantMobileAppHeader = ({
+  current = '',
+  notificationCount = 0,
+  brandName = TENANT_PORTAL_BRAND_NAME,
+  contactEmail = TENANT_PORTAL_EMAIL,
+  onDashboardClick,
+  onLogout
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const unreadMessages = useTenantUnread();
+  const [, copy] = useTenantLanguage();
+  const [open, setOpen] = React.useState(false);
+  const activeItem = current || getCurrentFromPath(location.pathname);
+
+  const goTo = (path) => {
+    setOpen(false);
+    if (path === '/tenant-portal' && onDashboardClick) {
+      onDashboardClick();
+      return;
+    }
+    navigate(path);
+  };
+
+  const handleLogout = () => {
+    setOpen(false);
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+    tenantPortalService.clearToken();
+    navigate('/tenant-portal');
+  };
+
+  return (
+    <>
+      <header className="tp-mobile-app-header" aria-label="Tenant portal app header">
+        <button type="button" aria-label="Open tenant menu" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
+          <span />
+          <span />
+          <span />
+        </button>
+        <div className="tp-mobile-brand">
+          <div className="tp-house-logo" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <strong>{brandName}</strong>
+          <small>{copy.homePriority}</small>
+        </div>
+        <div className="tp-mobile-header-actions">
+          <button type="button" aria-label={copy.notifications} onClick={() => navigate('/tenant-portal/announcements')}>
+            {icons.announcements}
+            {notificationCount > 0 ? <strong>{notificationCount > 99 ? '99+' : notificationCount}</strong> : null}
+          </button>
+          <button type="button" aria-label={copy.messages} onClick={() => navigate('/tenant-portal/messages')}>
+            {icons.messages}
+            {unreadMessages > 0 ? <strong>{unreadMessages > 99 ? '99+' : unreadMessages}</strong> : null}
+          </button>
+        </div>
+      </header>
+
+      {open ? (
+        <div className="tp-mobile-drawer-shell" role="presentation">
+          <button className="tp-mobile-drawer-backdrop" type="button" aria-label="Close tenant menu" onClick={() => setOpen(false)} />
+          <aside className="tp-mobile-menu-panel" aria-label="Tenant app sidebar">
+            <button className="tp-mobile-menu-close" type="button" aria-label="Close tenant menu" onClick={() => setOpen(false)}>x</button>
+            <div className="tp-mobile-menu-brand">
+              <div className="tp-house-logo" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <strong>{brandName}</strong>
+              <small>{copy.homePriority}</small>
+            </div>
+
+            <div className="tp-mobile-menu-controls">
+              <TenantLanguageSelect />
+              <TenantNotificationPermissionButton inline />
+            </div>
+
+            <div className="tp-mobile-menu-list">
+              <button className={activeItem === 'dashboard' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal')}>
+                {icons.dashboard}
+                <b>{copy.dashboard}</b>
+              </button>
+              <button className={activeItem === 'upload' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/upload')}>
+                {icons.payments}
+                <b>{copy.payRent}</b>
+              </button>
+              <button className={activeItem === 'payments' || activeItem === 'history' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/payments')}>
+                {icons.history}
+                <b>{copy.paymentHistory}</b>
+              </button>
+              <button type="button" onClick={() => goTo('/tenant-portal/payments')}>
+                {icons.documents}
+                <b>{copy.receipts}</b>
+              </button>
+              <button className={activeItem === 'announcements' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/announcements')}>
+                {icons.announcements}
+                <b>{copy.notifications}</b>
+                {notificationCount > 0 ? <em>{notificationCount > 99 ? '99+' : notificationCount}</em> : null}
+              </button>
+              <button className={activeItem === 'messages' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/messages')}>
+                {icons.messages}
+                <b>{copy.messages}</b>
+                {unreadMessages > 0 ? <em>{unreadMessages > 99 ? '99+' : unreadMessages}</em> : null}
+              </button>
+              <button className={activeItem === 'maintenance' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/maintenance')}>
+                {icons.maintenance}
+                <b>{copy.maintenanceTitle}</b>
+              </button>
+              <button type="button" onClick={() => goTo('/tenant-portal')}>
+                {icons.lease}
+                <b>{copy.lease}</b>
+              </button>
+              <button type="button" onClick={() => goTo('/tenant-portal/payments')}>
+                {icons.documents}
+                <b>{copy.documents}</b>
+              </button>
+              <button className={activeItem === 'profile' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/profile')}>
+                {icons.profile}
+                <b>{copy.profile}</b>
+              </button>
+              <hr />
+              <a href={`mailto:${contactEmail}`}>
+                {icons.support}
+                <b>{copy.contactManagement}</b>
+              </a>
+              <button type="button" onClick={() => goTo('/tenant-portal/messages')}>
+                {icons.support}
+                <b>{copy.helpSupport}</b>
+              </button>
+              <button type="button" onClick={() => goTo('/tenant-portal/profile')}>
+                {icons.password}
+                <b>{copy.settings}</b>
+              </button>
+              <button type="button" onClick={() => goTo('/tenant-portal/profile')}>
+                {icons.password}
+                <b>{copy.privacySecurity}</b>
+              </button>
+              <hr />
+              <button className="logout" type="button" onClick={handleLogout}>
+                {icons.password}
+                <b>{copy.logout}</b>
+              </button>
+            </div>
+            <div className="tp-mobile-menu-secure">
+              {icons.password}
+              <p>{copy.secureProtected}</p>
+            </div>
+          </aside>
+        </div>
+      ) : null}
+    </>
+  );
+};
+
 const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1051,8 +1214,6 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
   return (
     <>
       <TenantPortalRealtimeBridge />
-      {mobileOnly ? <TenantNotificationPermissionButton floating /> : null}
-      {mobileOnly ? <TenantLanguageSelect compact /> : null}
       <nav className={`tp-nav${mobileOnly ? ' tp-mobile-nav' : ''}`} aria-label="Tenant portal navigation">
         {navItems.map((item) => (
           <button
@@ -1081,4 +1242,4 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
 };
 
 export default TenantPortalNav;
-export { formatTenantText, TenantLanguageSelect, useTenantLanguage };
+export { formatTenantText, TenantLanguageSelect, TenantMobileAppHeader, useTenantLanguage };

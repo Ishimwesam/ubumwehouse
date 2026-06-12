@@ -633,6 +633,10 @@ const TenantPortal = () => {
                     <strong>{tenantPortalBrandName}</strong>
                     <small>{text.homePriority}</small>
                   </div>
+                  <div className="tp-mobile-menu-controls">
+                    <TenantLanguageSelect />
+                    <TenantNotificationPermissionButton inline />
+                  </div>
                   <div className="tp-mobile-menu-list">
                     <button className="active" type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal'); }}>
                       <span><PortalGlyph type="home" /></span>

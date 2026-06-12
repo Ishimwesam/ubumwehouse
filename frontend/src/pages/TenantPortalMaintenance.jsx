@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav, { useTenantLanguage } from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantMobileAppHeader, useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const formatDateTime = (value) => {
@@ -127,6 +127,7 @@ const TenantPortalMaintenance = () => {
   return (
     <main className="tp-page tp-subpage">
       <section className="tp-main tp-subpage-main">
+        <TenantMobileAppHeader current="maintenance" />
         <header className="tp-header">
           <div>
             <h1>{text.maintenanceTitle}</h1>

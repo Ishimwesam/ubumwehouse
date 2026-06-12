@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import TenantRentDueNotice from '../components/TenantRentDueNotice';
-import TenantPortalNav, { useTenantLanguage } from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantMobileAppHeader, useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -122,6 +122,7 @@ const TenantPortalPayments = () => {
   return (
     <main className="tp-page tp-subpage">
       <section className="tp-main tp-subpage-main">
+        <TenantMobileAppHeader current="payments" />
         <header className="tp-header">
           <div>
             <h1>{companyName} {text.paymentHistory}</h1>
