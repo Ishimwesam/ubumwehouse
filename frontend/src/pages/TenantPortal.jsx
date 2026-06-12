@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, isRecoverableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
+import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
-import TenantPortalNav, { TenantNotificationPermissionButton } from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantLanguageSelect, TenantNotificationPermissionButton } from '../components/TenantPortalNav';
 import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
 import { registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
@@ -497,6 +498,7 @@ const TenantPortal = () => {
             />
 
             <div className="tp-sidebar-actions">
+              <TenantLanguageSelect />
               <TenantNotificationPermissionButton inline />
               <button
                 className="tp-logout"
@@ -606,11 +608,10 @@ const TenantPortal = () => {
                     </label>
                     <div className="full tp-upload-field">
                       <span>Receipt image or PDF</span>
-                      <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setPaymentForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required={!editingPayment} />
-                      <label className="tp-camera-receipt">
-                        Take receipt photo
-                        <input type="file" accept="image/*" capture="environment" onChange={(event) => setPaymentForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} />
-                      </label>
+                      <ReceiptCaptureInput
+                        file={paymentForm.receipt}
+                        onFileSelected={(file) => setPaymentForm((prev) => ({ ...prev, receipt: file }))}
+                      />
                       {editingPayment ? <small>Leave empty to keep the current receipt file.</small> : null}
                     </div>
                     <label className="full">

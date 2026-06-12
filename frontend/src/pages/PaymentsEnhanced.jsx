@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReceiptModal from '../components/ReceiptModal';
+import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
 import { contractService, paymentService, resolveUploadUrl, tenantService, unitService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useDataSync } from '../context/DataSyncContext';
@@ -318,16 +319,13 @@ const EnhancedPayments = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0] || null;
-
+  const handleReceiptFileSelected = (file) => {
     if (!file) {
       setFormData({ ...formData, receipt: null });
       return;
     }
 
     if (!receiptAllowedTypes.has(file.type) || file.size > maxReceiptSize) {
-      e.target.value = '';
       showToast('Receipt must be a JPG, PNG, or PDF file up to 10MB.', 'warning');
       setFormData({ ...formData, receipt: null });
       return;
@@ -1049,24 +1047,11 @@ const EnhancedPayments = () => {
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Receipt (Image/PDF)</label>
-                <div style={styles.receiptInputRow}>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    style={{ ...styles.input, flex: '1 1 220px' }}
-                    accept=".jpg,.jpeg,.png,.pdf"
-                  />
-                  <label style={styles.cameraButton}>
-                    Take Photo
-                    <input
-                      type="file"
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      capture="environment"
-                      style={styles.hiddenFileInput}
-                    />
-                  </label>
-                </div>
+                <ReceiptCaptureInput
+                  file={formData.receipt}
+                  onFileSelected={handleReceiptFileSelected}
+                  inputStyle={{ ...styles.input, flex: '1 1 220px' }}
+                />
                 {formData.receipt ? (
                   <div style={styles.receiptUploadPreview}>
                     {receiptPreviewUrl ? (
@@ -1991,29 +1976,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem'
-  },
-  receiptInputRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    flexWrap: 'wrap'
-  },
-  cameraButton: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '44px',
-    padding: '0 1rem',
-    borderRadius: '0.75rem',
-    border: '1px solid #99f6e4',
-    backgroundColor: '#f0fdfa',
-    color: '#0f766e',
-    fontWeight: 800,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap'
-  },
-  hiddenFileInput: {
-    display: 'none'
   },
   receiptPreviewImage: {
     width: '72px',

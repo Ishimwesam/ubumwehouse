@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { paymentService, resolveUploadUrl, tenantService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import PageLoader from '../components/PageLoader';
+import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
 
 const formatCurrency = (value) =>
   `${parseFloat(value || 0).toLocaleString()} RWF`;
@@ -163,8 +164,7 @@ const Payments = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0] || null;
+  const handleReceiptFileSelected = (file) => {
     setFormData({ ...formData, receipt: file });
     if (file) {
       setError('');
@@ -341,26 +341,10 @@ const Payments = () => {
 
               <div style={styles.formGroup}>
                 <label>Upload Receipt (Image/PDF)</label>
-                <div style={styles.receiptInputRow}>
-                  <input
-                    type="file"
-                    name="receipt"
-                    onChange={handleFileChange}
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    required={!editingId}
-                  />
-                  <label style={styles.cameraButton}>
-                    Take Photo
-                    <input
-                      type="file"
-                      name="receipt"
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      capture="environment"
-                      style={styles.hiddenFileInput}
-                    />
-                  </label>
-                </div>
+                <ReceiptCaptureInput
+                  file={formData.receipt}
+                  onFileSelected={handleReceiptFileSelected}
+                />
               </div>
 
               {selectedTenant && (
@@ -717,28 +701,6 @@ const styles = {
   formGroup: {
     display: 'flex',
     flexDirection: 'column'
-  },
-  receiptInputRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    flexWrap: 'wrap'
-  },
-  cameraButton: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '38px',
-    padding: '0 0.9rem',
-    borderRadius: '0.5rem',
-    border: '1px solid #99f6e4',
-    backgroundColor: '#f0fdfa',
-    color: '#0f766e',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  hiddenFileInput: {
-    display: 'none'
   },
   formActions: {
     display: 'flex',

@@ -24,7 +24,7 @@ if ('serviceWorker' in navigator) {
           .filter((registration) => registration.active?.scriptURL?.includes('/tenant-portal-sw.js'))
           .map((registration) => registration.unregister())
       );
-      const registration = await navigator.serviceWorker.register('/main-system-sw.js?v=9', { scope: '/' });
+      const registration = await navigator.serviceWorker.register('/main-system-sw.js?v=10', { scope: '/' });
       await registration.update();
     } catch (_) {}
   });

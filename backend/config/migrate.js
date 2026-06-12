@@ -358,6 +358,25 @@ const createTables = () => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS tenant_notification_logs (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      due_period TEXT,
+      reminder_date DATE,
+      notification_type TEXT NOT NULL,
+      status TEXT DEFAULT 'sent',
+      message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_tenant_notification_logs_daily
+    ON tenant_notification_logs(tenant_id, due_period, reminder_date, notification_type)
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS tenant_followups (
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,

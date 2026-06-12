@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
+import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
 import TenantPortalNav from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
@@ -116,11 +117,10 @@ const TenantPortalUpload = () => {
               </label>
               <div className="full tp-upload-field">
                 <span>Receipt image or PDF</span>
-                <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required />
-                <label className="tp-camera-receipt">
-                  Take receipt photo
-                  <input type="file" accept="image/*" capture="environment" onChange={(event) => setForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} />
-                </label>
+                <ReceiptCaptureInput
+                  file={form.receipt}
+                  onFileSelected={(file) => setForm((prev) => ({ ...prev, receipt: file }))}
+                />
               </div>
               <label className="full">
                 Notes

@@ -86,6 +86,114 @@ const navItems = [
   { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/forgot-password', extra: true }
 ];
 
+const LANGUAGE_STORAGE_KEY = 'tenantPortalLanguage';
+
+const languages = [
+  { code: 'en', label: 'English' },
+  { code: 'fr', label: 'Francais' },
+  { code: 'rw', label: 'Kinyarwanda' }
+];
+
+const navTranslations = {
+  en: {
+    dashboard: 'Home',
+    payments: 'Pay',
+    upload: 'Receipt',
+    maintenance: 'Repair',
+    messages: 'Messages',
+    announcements: 'Notices',
+    profile: 'Profile',
+    password: 'Password',
+    alertsOn: 'Alerts On',
+    enableAlerts: 'Enable Alerts',
+    enabling: 'Enabling...',
+    language: 'Language'
+  },
+  fr: {
+    dashboard: 'Accueil',
+    payments: 'Payer',
+    upload: 'Recu',
+    maintenance: 'Reparer',
+    messages: 'Messages',
+    announcements: 'Avis',
+    profile: 'Profil',
+    password: 'Mot passe',
+    alertsOn: 'Alertes',
+    enableAlerts: 'Activer',
+    enabling: 'Activation...',
+    language: 'Langue'
+  },
+  rw: {
+    dashboard: 'Ahabanza',
+    payments: 'Kwishyura',
+    upload: 'Risiti',
+    maintenance: 'Gusana',
+    messages: 'Ubutumwa',
+    announcements: 'Amatangazo',
+    profile: 'Umwirondoro',
+    password: 'Ijambo',
+    alertsOn: 'Birakora',
+    enableAlerts: 'Fungura',
+    enabling: 'Tegereza...',
+    language: 'Ururimi'
+  }
+};
+
+const getStoredLanguage = () => {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return languages.some((language) => language.code === stored) ? stored : 'en';
+  } catch (_) {
+    return 'en';
+  }
+};
+
+const setStoredLanguage = (languageCode) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, languageCode);
+    window.dispatchEvent(new CustomEvent('tp:language-changed', { detail: { language: languageCode } }));
+  } catch (_) {}
+};
+
+const useTenantLanguage = () => {
+  const [language, setLanguage] = React.useState(getStoredLanguage);
+
+  React.useEffect(() => {
+    const handleChange = (event) => {
+      setLanguage(event.detail?.language || getStoredLanguage());
+    };
+    window.addEventListener('tp:language-changed', handleChange);
+    window.addEventListener('storage', handleChange);
+    return () => {
+      window.removeEventListener('tp:language-changed', handleChange);
+      window.removeEventListener('storage', handleChange);
+    };
+  }, []);
+
+  return [language, navTranslations[language] || navTranslations.en];
+};
+
+const TenantLanguageSelect = ({ compact = false }) => {
+  const [language, copy] = useTenantLanguage();
+
+  const handleChange = (event) => {
+    setStoredLanguage(event.target.value);
+  };
+
+  return (
+    <label className={`tp-language-select${compact ? ' compact' : ''}`}>
+      <span>{copy.language}</span>
+      <select value={language} onChange={handleChange} aria-label="Tenant portal language">
+        {languages.map((item) => (
+          <option key={item.code} value={item.code}>{item.label}</option>
+        ))}
+      </select>
+    </label>
+  );
+};
+
 const getRealtimeCopy = (payload = {}) => {
   if (payload.sender_type === 'admin') {
     return {
@@ -109,6 +217,12 @@ const getRealtimeCopy = (payload = {}) => {
     return {
       title: payload.title || 'Maintenance update',
       message: payload.message || 'Your maintenance request was updated.'
+    };
+  }
+  if (payload.event_type === 'tenant_rent_due') {
+    return {
+      title: payload.title || 'Rent payment reminder',
+      message: payload.message || 'Your rent payment is due soon.'
     };
   }
   return null;
@@ -224,6 +338,7 @@ const TenantPortalRealtimeBridge = () => {
 };
 
 export const TenantNotificationPermissionButton = ({ inline = false, floating = false }) => {
+  const [, copy] = useTenantLanguage();
   const [permission, setPermission] = React.useState(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
     return Notification.permission;
@@ -285,7 +400,7 @@ export const TenantNotificationPermissionButton = ({ inline = false, floating = 
       title={enabled ? 'Test phone notifications' : 'Enable phone notifications'}
     >
       <span className="tp-phone-notification-icon"><BellGlyph /></span>
-      <span>{busy ? 'Enabling...' : enabled ? 'Alerts On' : 'Enable Alerts'}</span>
+      <span>{busy ? copy.enabling : enabled ? copy.alertsOn : copy.enableAlerts}</span>
     </button>
   );
 };
@@ -307,6 +422,7 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
   const navigate = useNavigate();
   const location = useLocation();
   const unreadMessages = useTenantUnread();
+  const [, copy] = useTenantLanguage();
   const activeItem = current || getCurrentFromPath(location.pathname);
 
   const handleClick = (item) => {
@@ -331,6 +447,7 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
     <>
       <TenantPortalRealtimeBridge />
       {mobileOnly ? <TenantNotificationPermissionButton floating /> : null}
+      {mobileOnly ? <TenantLanguageSelect compact /> : null}
       <nav className={`tp-nav${mobileOnly ? ' tp-mobile-nav' : ''}`} aria-label="Tenant portal navigation">
         {navItems.map((item) => (
           <button
@@ -347,7 +464,7 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
             title={item.label}
           >
             {icons[item.id]}
-            {!mobileOnly ? <span className="tp-nav-label">{item.shortLabel || item.label}</span> : null}
+            <span className="tp-nav-label">{copy[item.id] || item.shortLabel || item.label}</span>
             {item.id === 'messages' && unreadMessages > 0 ? (
               <span className="tp-nav-badge">{unreadMessages > 99 ? '99+' : unreadMessages}</span>
             ) : null}
@@ -359,3 +476,4 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
 };
 
 export default TenantPortalNav;
+export { TenantLanguageSelect };

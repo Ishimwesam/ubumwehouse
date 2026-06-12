@@ -680,6 +680,52 @@
   box-shadow: none;
 }
 
+.tp-language-select {
+  width: 100%;
+  min-height: 42px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tp-language-select select {
+  min-width: 112px;
+  border: 0;
+  border-radius: 9px;
+  padding: 7px 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #0f172a;
+  font: inherit;
+}
+
+.tp-language-select.compact {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: calc(158px + env(safe-area-inset-bottom, 0px));
+  z-index: 141;
+  width: auto;
+  min-height: 36px;
+  padding: 5px 6px 5px 10px;
+  grid-template-columns: auto auto;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.97), rgba(37, 99, 235, 0.97));
+  box-shadow: 0 18px 36px rgba(2, 8, 23, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.tp-language-select.compact select {
+  min-width: 104px;
+  padding: 5px 7px;
+  font-size: 11px;
+}
+
 .tp-main {
   min-width: 0;
   padding: 22px 28px;
@@ -1440,21 +1486,20 @@
 
   .tp-nav button {
     min-width: 0;
-    min-height: 50px;
+    min-height: 56px;
     min-inline-size: 44px;
-    aspect-ratio: 1 / 1;
     position: relative;
     justify-content: center;
     text-align: center;
-    padding: 0;
+    padding: 5px 2px 4px;
     border-radius: 16px;
     color: #ffffff;
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.14);
     white-space: nowrap;
     flex-direction: column;
-    gap: 0;
-    font-size: 0;
+    gap: 2px;
+    font-size: 10px;
     line-height: 1;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
@@ -1492,7 +1537,11 @@
   }
 
   .tp-nav-label {
-    display: none;
+    display: block;
+    max-width: 100%;
+    font-size: 9px;
+    line-height: 1.05;
+    font-weight: 900;
   }
 
   .tp-nav-badge {
@@ -1869,6 +1918,24 @@
     min-height: 32px;
     max-width: 170px;
     font-size: 11px;
+  }
+
+  .tp-language-select {
+    min-height: 32px;
+    max-width: 170px;
+    font-size: 11px;
+    padding: 5px 7px;
+  }
+
+  .tp-language-select select {
+    min-width: 96px;
+    padding: 5px 6px;
+    font-size: 11px;
+  }
+
+  .tp-language-select.compact {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(134px + env(safe-area-inset-bottom, 0px));
   }
 
   .tp-main {

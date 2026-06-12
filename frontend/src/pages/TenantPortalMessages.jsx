@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav, { TenantNotificationPermissionButton } from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantLanguageSelect, TenantNotificationPermissionButton } from '../components/TenantPortalNav';
 import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
 import useTenantUnread from '../hooks/useTenantUnread';
 import { clearUnread, registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
@@ -116,6 +116,7 @@ const TenantPortalMessages = () => {
           <TenantPortalNav current="messages" />
 
           <div className="tp-sidebar-actions">
+            <TenantLanguageSelect />
             <TenantNotificationPermissionButton inline />
             <button
               className="tp-logout"

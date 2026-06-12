@@ -49,6 +49,7 @@ const tenantPortalRoutes = require('./routes/tenantPortalRoutes');
 const realtimeRoutes = require('./routes/realtimeRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const { startWhatsAppReminderScheduler } = require('./services/whatsappReminderService');
+const { startTenantRentPushReminderScheduler } = require('./services/tenantRentPushReminderService');
 const { startBackupScheduler } = require('./services/backupService');
 const { broadcastRentalAppRefresh } = require('./services/realtimeService');
 const { enforceDeviceLock } = require('./services/deviceLockService');
@@ -253,6 +254,11 @@ const startServer = () => {
       startWhatsAppReminderScheduler();
     } catch (e) {
       console.error('WhatsApp scheduler failed to start:', e.message);
+    }
+    try {
+      startTenantRentPushReminderScheduler();
+    } catch (e) {
+      console.error('Tenant rent push scheduler failed to start:', e.message);
     }
     try {
       startBackupScheduler();
