@@ -544,7 +544,6 @@ const TenantPortal = () => {
             </button>
           </form>
           <TenantPortalInstallPrompt />
-          <TenantNotificationPermissionButton inline />
         </section>
       ) : (
         <div className="tp-dashboard">
@@ -738,7 +737,6 @@ const TenantPortal = () => {
                   <span>{text.messages}</span>
                   {unreadMessageCount > 0 ? <strong>{unreadMessageCount}</strong> : null}
                 </button>
-                <TenantLanguageSelect />
                 <TenantPortalInstallPrompt compact />
                 <div className="tp-user">
                   <span className="tp-user-avatar"><PortalGlyph type="user" /></span>
