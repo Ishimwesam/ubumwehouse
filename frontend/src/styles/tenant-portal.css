@@ -190,7 +190,8 @@
 }
 
 .tp-auth-card label,
-.tp-upload-form label {
+.tp-upload-form label,
+.tp-upload-field {
   display: grid;
   gap: 6px;
   font-size: 13px;
@@ -220,6 +221,26 @@
   min-height: 96px;
   padding: 10px 12px;
   resize: vertical;
+}
+
+.tp-camera-receipt {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 38px;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  background: #f0fdfa;
+  color: #0f766e;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.tp-camera-receipt input {
+  display: none;
 }
 
 .tp-auth-card input:focus,

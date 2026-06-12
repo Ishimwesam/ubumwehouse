@@ -114,10 +114,14 @@ const TenantPortalUpload = () => {
                   <option value="check">Check</option>
                 </select>
               </label>
-              <label className="full">
-                Receipt image or PDF
+              <div className="full tp-upload-field">
+                <span>Receipt image or PDF</span>
                 <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(event) => setForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} required />
-              </label>
+                <label className="tp-camera-receipt">
+                  Take receipt photo
+                  <input type="file" accept="image/*" capture="environment" onChange={(event) => setForm((prev) => ({ ...prev, receipt: event.target.files?.[0] || null }))} />
+                </label>
+              </div>
               <label className="full">
                 Notes
                 <textarea value={form.notes} onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))} rows={3} />

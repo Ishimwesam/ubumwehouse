@@ -1049,12 +1049,24 @@ const EnhancedPayments = () => {
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Receipt (Image/PDF)</label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  style={styles.input}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                />
+                <div style={styles.receiptInputRow}>
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    style={{ ...styles.input, flex: '1 1 220px' }}
+                    accept=".jpg,.jpeg,.png,.pdf"
+                  />
+                  <label style={styles.cameraButton}>
+                    Take Photo
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      capture="environment"
+                      style={styles.hiddenFileInput}
+                    />
+                  </label>
+                </div>
                 {formData.receipt ? (
                   <div style={styles.receiptUploadPreview}>
                     {receiptPreviewUrl ? (
@@ -1979,6 +1991,29 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem'
+  },
+  receiptInputRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    flexWrap: 'wrap'
+  },
+  cameraButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '44px',
+    padding: '0 1rem',
+    borderRadius: '0.75rem',
+    border: '1px solid #99f6e4',
+    backgroundColor: '#f0fdfa',
+    color: '#0f766e',
+    fontWeight: 800,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap'
+  },
+  hiddenFileInput: {
+    display: 'none'
   },
   receiptPreviewImage: {
     width: '72px',

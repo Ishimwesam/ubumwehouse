@@ -341,13 +341,26 @@ const Payments = () => {
 
               <div style={styles.formGroup}>
                 <label>Upload Receipt (Image/PDF)</label>
-                <input
-                  type="file"
-                  name="receipt"
-                  onChange={handleFileChange}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  required={!editingId}
-                />
+                <div style={styles.receiptInputRow}>
+                  <input
+                    type="file"
+                    name="receipt"
+                    onChange={handleFileChange}
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    required={!editingId}
+                  />
+                  <label style={styles.cameraButton}>
+                    Take Photo
+                    <input
+                      type="file"
+                      name="receipt"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      capture="environment"
+                      style={styles.hiddenFileInput}
+                    />
+                  </label>
+                </div>
               </div>
 
               {selectedTenant && (
@@ -704,6 +717,28 @@ const styles = {
   formGroup: {
     display: 'flex',
     flexDirection: 'column'
+  },
+  receiptInputRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    flexWrap: 'wrap'
+  },
+  cameraButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '38px',
+    padding: '0 0.9rem',
+    borderRadius: '0.5rem',
+    border: '1px solid #99f6e4',
+    backgroundColor: '#f0fdfa',
+    color: '#0f766e',
+    fontWeight: 700,
+    cursor: 'pointer'
+  },
+  hiddenFileInput: {
+    display: 'none'
   },
   formActions: {
     display: 'flex',
