@@ -3364,3 +3364,154 @@
     min-height: 116px;
   }
 }
+
+@media (max-width: 768px) {
+  .tp-main.tp-portal-overview {
+    font-size: 13px;
+  }
+
+  .tp-mobile-brand strong {
+    font-size: 16px;
+    line-height: 1.05;
+  }
+
+  .tp-mobile-brand small {
+    font-size: 10px;
+  }
+
+  .tp-mobile-header-actions button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .tp-portal-topbar h1 {
+    font-size: 24px;
+  }
+
+  .tp-portal-topbar p {
+    font-size: 14px;
+  }
+
+  .tp-portal-rent-alert p {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .tp-info-dot {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .tp-portal-summary-card:first-child > strong {
+    font-size: 28px;
+    line-height: 1.05;
+  }
+
+  .tp-portal-summary-card p {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .tp-summary-pay-button {
+    min-height: 42px !important;
+    font-size: 14px;
+  }
+
+  .tp-summary-icon {
+    width: 48px;
+    height: 48px;
+    padding: 14px;
+  }
+
+  .tp-portal-card h2 {
+    font-size: 14px;
+  }
+
+  .tp-action-grid button {
+    min-height: 98px;
+    padding: 10px 6px 8px;
+    gap: 5px;
+  }
+
+  .tp-action-grid span {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tp-action-grid strong {
+    font-size: 11px;
+    line-height: 1.12;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .tp-action-grid small {
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .tp-recent-payment-list strong,
+  .tp-recent-payment-list b {
+    font-size: 11px;
+  }
+
+  .tp-recent-payment-list small,
+  .tp-recent-payment-list em {
+    font-size: 10px;
+  }
+
+  .tp-mobile-menu-list button,
+  .tp-mobile-menu-list a {
+    min-height: 46px;
+  }
+
+  .tp-mobile-menu-list b {
+    font-size: 13px;
+    line-height: 1.15;
+  }
+
+  .tp-mobile-menu-list span {
+    width: 23px;
+    height: 23px;
+  }
+
+  .tp-mobile-menu-secure p {
+    font-size: 11px;
+  }
+
+  .tp-sidebar .tp-nav button,
+  .tp-mobile-nav button {
+    min-height: 58px;
+  }
+
+  .tp-sidebar .tp-nav-icon,
+  .tp-mobile-nav .tp-nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tp-sidebar .tp-nav-label,
+  .tp-mobile-nav .tp-nav-label {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .tp-portal-topbar h1 {
+    font-size: 22px;
+  }
+
+  .tp-action-grid strong {
+    font-size: 10px;
+  }
+
+  .tp-mobile-menu-list b {
+    font-size: 12px;
+  }
+
+  .tp-sidebar .tp-nav-label,
+  .tp-mobile-nav .tp-nav-label {
+    font-size: 9px;
+  }
+}
