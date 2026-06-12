@@ -13,23 +13,23 @@ const formatDate = (value) => {
   return parsed.toISOString().slice(0, 10);
 };
 
-const formatPaymentMethod = (value = '') => {
+const formatPaymentMethod = (value = '', text = {}) => {
   const method = String(value || '').toLowerCase();
-  if (method === 'bank_transfer') return 'Bank Deposit';
-  if (method === 'mobile_money') return 'Mobile Money';
-  if (method === 'cash') return 'Cash';
-  if (method === 'check') return 'Check';
+  if (method === 'bank_transfer') return text.bankDeposit || 'Bank Deposit';
+  if (method === 'mobile_money') return text.mobileMoney || 'Mobile Money';
+  if (method === 'cash') return text.cash || 'Cash';
+  if (method === 'check') return text.check || 'Check';
   return value || '-';
 };
 
-const formatPaymentStatus = (value = '') => {
+const formatPaymentStatus = (value = '', text = {}) => {
   const status = String(value || '').toLowerCase();
-  if (status === 'confirmed') return 'Approved';
-  if (status === 'pending') return 'Pending';
-  if (status === 'rejected') return 'Rejected';
-  if (status === 'partial') return 'Partial';
-  if (status === 'overpaid') return 'Overpaid';
-  return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Approved';
+  if (status === 'confirmed') return text.approved || 'Approved';
+  if (status === 'pending') return text.pending || 'Pending';
+  if (status === 'rejected') return text.rejected || 'Rejected';
+  if (status === 'partial') return text.partial || 'Partial';
+  if (status === 'overpaid') return text.overpaid || 'Overpaid';
+  return status ? status.charAt(0).toUpperCase() + status.slice(1) : (text.approved || 'Approved');
 };
 
 const TenantPortalPayments = () => {
@@ -52,9 +52,9 @@ const TenantPortalPayments = () => {
     date: formatDate(payment.payment_date),
     rentMonth: payment.payment_period || '-',
     amount: formatCurrency(payment.amount),
-    method: formatPaymentMethod(payment.payment_method),
+    method: formatPaymentMethod(payment.payment_method, text),
     reference: payment.verification_code || payment.id || '-',
-    status: formatPaymentStatus(payment.payment_status),
+    status: formatPaymentStatus(payment.payment_status, text),
     receipt: resolveTenantUploadUrl(payment.receipt_path) || '',
     rejectionReason: payment.rejection_reason || '',
     rejectedAt: payment.rejected_at || ''
@@ -71,14 +71,14 @@ const TenantPortalPayments = () => {
       const response = await tenantPortalService.me();
       setPortalData(response.data);
     } catch (err) {
-      if (!silent) setError(getReadableApiError(err, 'Failed to load payment history.'));
+      if (!silent) setError(getReadableApiError(err, text.failedLoadPaymentHistory || 'Failed to load payment history.'));
     } finally {
       if (!silent) setLoading(false);
     }
   };
 
   const handleDownloadStatement = () => {
-    const headers = ['Payment Date', 'Rent Month', 'Amount Paid', 'Payment Method', 'Transaction Reference', 'Payment Status', 'Rejection Reason'];
+    const headers = [text.paymentDate, text.rentMonth, text.amountPaid, text.paymentMethod, text.transactionReference, text.paymentStatus, text.rejectionReason];
     const csv = [
       headers.join(','),
       ...statementRows.map((row) => [row.date, row.rentMonth, row.amount, row.method, row.reference, row.status, row.rejectionReason].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
@@ -172,19 +172,19 @@ const TenantPortalPayments = () => {
               <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal/messages')}>{text.contactAdmin}</button>
             </div>
           </div>
-          {loading ? <p className="tp-empty">Loading payment history...</p> : null}
+          {loading ? <p className="tp-empty">{text.loadingPaymentHistory}</p> : null}
           {!loading ? (
             <div className="tp-table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Payment Date</th>
-                    <th>Rent Month</th>
-                    <th>Amount Paid</th>
-                    <th>Payment Method</th>
-                    <th>Transaction Reference</th>
-                    <th>Payment Status</th>
-                    <th>Receipt</th>
+                    <th>{text.paymentDate}</th>
+                    <th>{text.rentMonth}</th>
+                    <th>{text.amountPaid}</th>
+                    <th>{text.paymentMethod}</th>
+                    <th>{text.transactionReference}</th>
+                    <th>{text.paymentStatus}</th>
+                    <th>{text.receipt}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,14 +202,14 @@ const TenantPortalPayments = () => {
                           </span>
                           {String(payments[index]?.payment_status || '').toLowerCase() === 'rejected' ? (
                             <div className="tp-rejection-note">
-                              <strong>Reason:</strong> {payment.rejectionReason || 'No reason was recorded. Please contact admin.'}
-                              {payment.rejectedAt ? <small>Rejected {formatDate(payment.rejectedAt)}</small> : null}
+                              <strong>{text.reason}:</strong> {payment.rejectionReason || text.noRejectionReason}
+                              {payment.rejectedAt ? <small>{text.rejectedOn.replace('{date}', formatDate(payment.rejectedAt))}</small> : null}
                             </div>
                           ) : null}
                         </td>
                         <td>
                           {payment.receipt ? (
-                            <a href={payment.receipt} target="_blank" rel="noreferrer">View / Download</a>
+                            <a href={payment.receipt} target="_blank" rel="noreferrer">{text.viewDownloadReceipt}</a>
                           ) : (
                             <span>-</span>
                           )}
@@ -218,7 +218,7 @@ const TenantPortalPayments = () => {
                     );
                   }) : (
                     <tr>
-                      <td colSpan={7}>No payment history yet.</td>
+                      <td colSpan={7}>{text.noPaymentHistoryYet}</td>
                     </tr>
                   )}
                 </tbody>

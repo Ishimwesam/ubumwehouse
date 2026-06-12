@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
 import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
-import TenantPortalNav from '../components/TenantPortalNav';
+import TenantPortalNav, { useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
@@ -10,6 +10,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const TenantPortalUpload = () => {
   const navigate = useNavigate();
+  const [, text] = useTenantLanguage();
   const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -41,7 +42,7 @@ const TenantPortalUpload = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(getReadableApiError(err, 'Failed to load tenant account.'));
+        setError(getReadableApiError(err, text.failedLoadTenantAccount));
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -55,7 +56,7 @@ const TenantPortalUpload = () => {
   const handleUpload = async (event) => {
     event.preventDefault();
     if (!form.receipt) {
-      setError('Upload a receipt image or PDF before submitting proof.');
+      setError(text.uploadReceiptRequired);
       return;
     }
 
@@ -64,10 +65,10 @@ const TenantPortalUpload = () => {
     setSuccess('');
     try {
       await tenantPortalService.uploadPaymentProof(form);
-      setSuccess('Payment proof uploaded successfully.');
+      setSuccess(text.paymentProofUploaded);
       setForm((prev) => ({ ...prev, receipt: null, notes: '' }));
     } catch (err) {
-      setError(getReadableApiError(err, 'Failed to upload payment proof.'));
+      setError(getReadableApiError(err, text.failedUploadPaymentProof));
     } finally {
       setUploading(false);
     }
@@ -78,11 +79,11 @@ const TenantPortalUpload = () => {
       <section className="tp-main tp-subpage-main">
         <header className="tp-header">
           <div>
-            <h1>Upload Payment Receipt</h1>
-            <p>Bank deposit receipts for UBUMWE HOUSE LTD payment confirmation.</p>
+            <h1>{text.uploadPaymentReceipt}</h1>
+            <p>{text.uploadPaymentSubtitle}</p>
           </div>
           <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal')}>
-            Back To Dashboard
+            {text.backToDashboard}
           </button>
         </header>
 
@@ -90,49 +91,49 @@ const TenantPortalUpload = () => {
         {success ? <div className="tp-alert success">{success}</div> : null}
 
         <section className="tp-card" style={{ marginTop: 14 }}>
-          <h2>Receipt Details</h2>
-          {loading ? <p className="tp-empty">Loading account details...</p> : null}
+          <h2>{text.receiptDetails}</h2>
+          {loading ? <p className="tp-empty">{text.loadingAccountDetails}</p> : null}
           {!loading ? (
             <form className="tp-upload-form" onSubmit={handleUpload}>
               <label>
-                Amount
+                {text.amount}
                 <input type="number" min="1" value={form.amount} onChange={(event) => setForm((prev) => ({ ...prev, amount: event.target.value }))} required />
               </label>
               <label>
-                Payment date
+                {text.paymentDate}
                 <input type="date" value={form.payment_date} onChange={(event) => setForm((prev) => ({ ...prev, payment_date: event.target.value }))} required />
               </label>
               <label>
-                Payment period
+                {text.paymentPeriod}
                 <input type="month" value={form.payment_period} onChange={(event) => setForm((prev) => ({ ...prev, payment_period: event.target.value }))} required />
               </label>
               <label>
-                Method
+                {text.method}
                 <select value={form.payment_method} onChange={(event) => setForm((prev) => ({ ...prev, payment_method: event.target.value }))}>
-                  <option value="bank_transfer">Bank transfer</option>
-                  <option value="mobile_money">Mobile money</option>
-                  <option value="cash">Cash</option>
-                  <option value="check">Check</option>
+                  <option value="bank_transfer">{text.bankDeposit}</option>
+                  <option value="mobile_money">{text.mobileMoney}</option>
+                  <option value="cash">{text.cash}</option>
+                  <option value="check">{text.check}</option>
                 </select>
               </label>
               <div className="full tp-upload-field">
-                <span>Receipt image or PDF</span>
+                <span>{text.receiptFile}</span>
                 <ReceiptCaptureInput
                   file={form.receipt}
                   onFileSelected={(file) => setForm((prev) => ({ ...prev, receipt: file }))}
                 />
               </div>
               <label className="full">
-                Notes
+                {text.notes}
                 <textarea value={form.notes} onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))} rows={3} />
               </label>
               <button className="tp-btn-primary" type="submit" disabled={uploading}>
-                {uploading ? 'Uploading...' : 'Submit Proof'}
+                {uploading ? text.uploading : text.submitProof}
               </button>
             </form>
           ) : null}
 
-          {tenant ? <p className="tp-empty" style={{ marginTop: 10 }}>Tenant: {tenant.full_name || '-'} / Unit {tenant.unit_number || '-'}</p> : null}
+          {tenant ? <p className="tp-empty" style={{ marginTop: 10 }}>{text.tenantLabel}: {tenant.full_name || '-'} / {text.unit} {tenant.unit_number || '-'}</p> : null}
         </section>
       </section>
       <TenantPortalNav current="upload" mobileOnly />

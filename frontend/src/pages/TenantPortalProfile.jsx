@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav from '../components/TenantPortalNav';
+import TenantPortalNav, { useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const TenantPortalProfile = () => {
   const navigate = useNavigate();
+  const [, text] = useTenantLanguage();
   const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,7 +27,7 @@ const TenantPortalProfile = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(getReadableApiError(err, 'Failed to load profile.'));
+        setError(getReadableApiError(err, text.failedLoadProfile));
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -42,27 +43,27 @@ const TenantPortalProfile = () => {
       <section className="tp-main tp-subpage-main">
         <header className="tp-header">
           <div>
-            <h1>Profile</h1>
-            <p>Tenant account information linked to UBUMWE HOUSE LTD.</p>
+            <h1>{text.profile}</h1>
+            <p>{text.profileSubtitle}</p>
           </div>
           <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal')}>
-            Back To Dashboard
+            {text.backToDashboard}
           </button>
         </header>
 
         {error ? <div className="tp-alert error">{error}</div> : null}
 
         <section className="tp-card" style={{ marginTop: 14 }}>
-          <h2>Tenant Details</h2>
-          {loading ? <p className="tp-empty">Loading profile...</p> : null}
+          <h2>{text.tenantDetails}</h2>
+          {loading ? <p className="tp-empty">{text.loadingProfile}</p> : null}
           {!loading ? (
             <div className="tp-payment-list">
-              <div><span>Tenant Name</span><strong>{tenant?.full_name || '-'}</strong></div>
-              <div><span>Company</span><strong>UBUMWE HOUSE LTD</strong></div>
-              <div><span>Email</span><strong>{tenant?.email || '-'}</strong></div>
-              <div><span>Phone</span><strong>{tenant?.phone || '-'}</strong></div>
-              <div><span>Building</span><strong>{tenant?.building_name || '-'}</strong></div>
-              <div><span>Unit</span><strong>{tenant?.unit_number || '-'}</strong></div>
+              <div><span>{text.tenantName}</span><strong>{tenant?.full_name || '-'}</strong></div>
+              <div><span>{text.company}</span><strong>UBUMWE HOUSE LTD</strong></div>
+              <div><span>{text.email}</span><strong>{tenant?.email || '-'}</strong></div>
+              <div><span>{text.phone}</span><strong>{tenant?.phone || '-'}</strong></div>
+              <div><span>{text.building}</span><strong>{tenant?.building_name || '-'}</strong></div>
+              <div><span>{text.unit}</span><strong>{tenant?.unit_number || '-'}</strong></div>
             </div>
           ) : null}
         </section>

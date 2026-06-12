@@ -636,62 +636,62 @@ const TenantPortal = () => {
                   <div className="tp-mobile-menu-list">
                     <button className="active" type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal'); }}>
                       <span><PortalGlyph type="home" /></span>
-                      <b>Dashboard</b>
+                      <b>{text.dashboard}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/upload'); }}>
                       <span><PortalGlyph type="dollar" /></span>
-                      <b>Pay Rent</b>
+                      <b>{text.payRent}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
                       <span><PortalGlyph type="receipt" /></span>
-                      <b>Payment History</b>
+                      <b>{text.paymentHistory}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
                       <span><PortalGlyph type="document" /></span>
-                      <b>Receipts</b>
+                      <b>{text.receipts}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/announcements'); }}>
                       <span><PortalGlyph type="bell" /></span>
-                      <b>Notifications</b>
+                      <b>{text.notifications}</b>
                       {notificationCount > 0 ? <em>{notificationCount}</em> : null}
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>
                       <span><PortalGlyph type="message" /></span>
-                      <b>Messages</b>
+                      <b>{text.messages}</b>
                       {unreadMessageCount > 0 ? <em>{unreadMessageCount}</em> : null}
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/maintenance'); }}>
                       <span><PortalGlyph type="wrench" /></span>
-                      <b>Maintenance Requests</b>
+                      <b>{text.maintenanceTitle}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); scrollTo(profileSectionRef); }}>
                       <span><PortalGlyph type="document" /></span>
-                      <b>My Lease</b>
+                      <b>{text.lease}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
                       <span><PortalGlyph type="folder" /></span>
-                      <b>Documents</b>
+                      <b>{text.documents}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
                       <span><PortalGlyph type="user" /></span>
-                      <b>Profile</b>
+                      <b>{text.profile}</b>
                     </button>
                     <hr />
                     <a href={`mailto:${tenantPortalEmail}`}>
                       <span><PortalGlyph type="phone" /></span>
-                      <b>Contact Management</b>
+                      <b>{text.contactManagement}</b>
                     </a>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>
                       <span><PortalGlyph type="question" /></span>
-                      <b>Help & Support</b>
+                      <b>{text.helpSupport}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
                       <span><PortalGlyph type="settings" /></span>
-                      <b>Settings</b>
+                      <b>{text.settings}</b>
                     </button>
                     <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
                       <span><PortalGlyph type="shield" /></span>
-                      <b>Privacy & Security</b>
+                      <b>{text.privacySecurity}</b>
                     </button>
                     <hr />
                     <button
@@ -834,48 +834,48 @@ const TenantPortal = () => {
                 <form className="tp-upload-form" onSubmit={handleUpload}>
                   {editingPayment ? (
                     <div className="tp-alert info full">
-                      Editing rejected/pending receipt. Saving will resend it for staff confirmation.
+                      {text.editingReceiptNotice}
                     </div>
                   ) : null}
                   <label>
-                    Amount
+                    {text.amount}
                     <input type="number" min="1" value={paymentForm.amount} onChange={(event) => setPaymentForm((prev) => ({ ...prev, amount: event.target.value }))} required />
                   </label>
                   <label>
-                    Payment date
+                    {text.paymentDate}
                     <input type="date" value={paymentForm.payment_date} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_date: event.target.value }))} required />
                   </label>
                   <label>
-                    Payment period
+                    {text.paymentPeriod}
                     <input type="month" value={paymentForm.payment_period} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_period: event.target.value }))} required />
                   </label>
                   <label>
-                    Method
+                    {text.method}
                     <select value={paymentForm.payment_method} onChange={(event) => setPaymentForm((prev) => ({ ...prev, payment_method: event.target.value }))}>
-                      <option value="bank_transfer">Bank transfer</option>
-                      <option value="mobile_money">Mobile money</option>
-                      <option value="cash">Cash</option>
-                      <option value="check">Check</option>
+                      <option value="bank_transfer">{text.bankDeposit}</option>
+                      <option value="mobile_money">{text.mobileMoney}</option>
+                      <option value="cash">{text.cash}</option>
+                      <option value="check">{text.check}</option>
                     </select>
                   </label>
                   <div className="full tp-upload-field">
-                    <span>Receipt image or PDF</span>
+                    <span>{text.receiptFile}</span>
                     <ReceiptCaptureInput
                       file={paymentForm.receipt}
                       onFileSelected={(file) => setPaymentForm((prev) => ({ ...prev, receipt: file }))}
                     />
-                    {editingPayment ? <small>Leave empty to keep the current receipt file.</small> : null}
+                    {editingPayment ? <small>{text.keepCurrentReceipt}</small> : null}
                   </div>
                   <label className="full">
-                    Notes
+                    {text.notes}
                     <textarea value={paymentForm.notes} onChange={(event) => setPaymentForm((prev) => ({ ...prev, notes: event.target.value }))} rows={3} />
                   </label>
                   <button className="tp-btn-primary" type="submit" disabled={uploading}>
-                    {uploading ? (editingPayment ? 'Updating...' : 'Uploading...') : editingPayment ? 'Update Proof' : 'Submit Proof'}
+                    {uploading ? (editingPayment ? text.updating : text.uploading) : editingPayment ? text.updateProof : text.submitProof}
                   </button>
                   {editingPayment ? (
                     <button className="tp-btn-secondary" type="button" onClick={resetPaymentForm}>
-                      Cancel Edit
+                      {text.cancelEdit}
                     </button>
                   ) : null}
                 </form>
@@ -941,24 +941,24 @@ const TenantPortal = () => {
 
             {showChat ? (
               <section className="tp-card tp-chat-card" ref={chatSectionRef}>
-                <h2>Messages</h2>
+                <h2>{text.messagesTitle}</h2>
                 <div className="tp-chat-log">
                   {messages.length ? messages.map((message) => (
                     <div key={message.id} className={`tp-chat-bubble ${message.sender_type === 'tenant' ? 'tenant' : 'admin'}`}>
-                      <span>{message.sender_type === 'tenant' ? 'You' : (message.sender_name || 'Admin')}</span>
+                      <span>{message.sender_type === 'tenant' ? text.you : (message.sender_name || text.admin)}</span>
                       <p>{message.message}</p>
                     </div>
-                  )) : <div className="tp-empty">No messages yet. Start a conversation.</div>}
+                  )) : <div className="tp-empty">{text.noMessagesYet}</div>}
                 </div>
                 <form className="tp-chat-compose" onSubmit={handleSendMessage}>
                   <textarea
                     value={messageDraft}
                     onChange={(event) => setMessageDraft(event.target.value)}
-                    placeholder="Type your message to admin support..."
+                    placeholder={text.messagePlaceholder}
                     rows={3}
                   />
                   <button className="tp-btn-primary" type="submit" disabled={sendingMessage}>
-                    {sendingMessage ? 'Sending...' : 'Send Message'}
+                    {sendingMessage ? text.sending : text.sendMessage}
                   </button>
                 </form>
               </section>
