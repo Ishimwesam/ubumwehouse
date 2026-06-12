@@ -79,6 +79,34 @@ const validatePassword = (password) => {
   return '';
 };
 
+const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid) => {
+  const now = new Date();
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const moveInDate = tenant.move_in_date ? new Date(tenant.move_in_date) : null;
+  const preferredDueDay = moveInDate && !Number.isNaN(moveInDate.getTime()) ? moveInDate.getDate() : 1;
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dueDate = new Date(now.getFullYear(), now.getMonth(), Math.min(preferredDueDay, lastDayOfMonth));
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysUntilDue = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
+  const remainingAmount = Math.max(monthlyRent - currentPaid, 0);
+
+  let status = 'upcoming';
+  if (remainingAmount <= 0) status = 'paid';
+  else if (daysUntilDue < 0) status = 'overdue';
+  else if (daysUntilDue === 0) status = 'due_today';
+
+  return {
+    period,
+    due_date: `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}`,
+    days_until_due: daysUntilDue,
+    status,
+    monthly_rent: monthlyRent,
+    paid_amount: currentPaid,
+    pending_amount: parseFloat(tenant.pending_amount || 0),
+    remaining_amount: remainingAmount
+  };
+};
+
 const normalizeMaintenanceStatus = (value = 'open') => {
   const normalized = String(value || 'open').trim().toLowerCase();
   return maintenanceStatuses.has(normalized) ? normalized : 'open';
@@ -120,6 +148,7 @@ const createTenantToken = (account, tenant) => {
 const sanitizeTenant = (tenant) => {
   const monthlyRent = parseFloat(tenant.monthly_rent || 0);
   const currentPaid = parseFloat(tenant.current_period_paid || 0);
+  const pendingAmount = parseFloat(tenant.pending_amount || 0);
   return {
     id: tenant.id,
     full_name: tenant.full_name,
@@ -134,8 +163,9 @@ const sanitizeTenant = (tenant) => {
     building_name: tenant.building_name,
     monthly_rent: monthlyRent,
     current_period_paid: currentPaid,
-    pending_amount: parseFloat(tenant.pending_amount || 0),
-    balance: Math.max(monthlyRent - currentPaid, 0)
+    pending_amount: pendingAmount,
+    balance: Math.max(monthlyRent - currentPaid, 0),
+    rent_due: getCurrentTenantDueInfo(tenant, monthlyRent, currentPaid)
   };
 };
 

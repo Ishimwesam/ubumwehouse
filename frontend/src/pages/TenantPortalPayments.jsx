@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
+import TenantRentDueNotice from '../components/TenantRentDueNotice';
 import TenantPortalNav from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
@@ -131,6 +132,8 @@ const TenantPortalPayments = () => {
         </header>
 
         {error ? <div className="tp-alert error">{error}</div> : null}
+
+        <TenantRentDueNotice tenant={tenant} onUpload={() => navigate('/tenant-portal/upload')} />
 
         <section className="tp-stats-row" style={{ marginTop: 14 }}>
           <article className="tp-stat-card">

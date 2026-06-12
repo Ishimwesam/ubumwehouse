@@ -734,6 +734,91 @@
     #f8fafc;
 }
 
+.tp-rent-due-notice {
+  margin: 0 0 14px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  border-radius: 14px;
+  border: 1px solid #bae6fd;
+  background: linear-gradient(135deg, #eff6ff 0%, #ecfeff 100%);
+  color: #0f172a;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.tp-rent-due-notice.overdue {
+  border-color: #fecaca;
+  background: linear-gradient(135deg, #fff1f2 0%, #fff7ed 100%);
+}
+
+.tp-rent-due-notice.due_today {
+  border-color: #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%);
+}
+
+.tp-rent-due-notice.paid {
+  border-color: #bbf7d0;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+}
+
+.tp-rent-due-copy {
+  min-width: 0;
+}
+
+.tp-rent-due-copy span,
+.tp-rent-due-amounts span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tp-rent-due-copy h2 {
+  margin: 3px 0;
+  color: #0f172a;
+  font-size: 21px;
+  line-height: 1.15;
+}
+
+.tp-rent-due-copy p {
+  margin: 0;
+  color: #334155;
+  font-weight: 700;
+}
+
+.tp-rent-due-copy small {
+  display: block;
+  margin-top: 5px;
+  color: #0369a1;
+  font-weight: 800;
+}
+
+.tp-rent-due-amounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(110px, auto));
+  gap: 10px;
+}
+
+.tp-rent-due-amounts div {
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.tp-rent-due-amounts strong {
+  display: block;
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 17px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
 .tp-subpage {
   display: block;
 }
@@ -1723,6 +1808,35 @@
 
   .tp-card h2 {
     font-size: 18px;
+  }
+
+  .tp-rent-due-notice {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .tp-rent-due-copy h2 {
+    font-size: 18px;
+  }
+
+  .tp-rent-due-copy p {
+    font-size: 13px;
+  }
+
+  .tp-rent-due-amounts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tp-rent-due-amounts div {
+    padding: 9px;
+  }
+
+  .tp-rent-due-amounts strong {
+    font-size: 14px;
+    white-space: normal;
   }
 
   .tp-status-pill {

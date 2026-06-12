@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, isRecoverableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
+import TenantRentDueNotice from '../components/TenantRentDueNotice';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
 import TenantPortalNav, { TenantLanguageSelect, TenantNotificationPermissionButton } from '../components/TenantPortalNav';
 import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
@@ -534,6 +535,14 @@ const TenantPortal = () => {
 
             {error ? <div className="tp-alert error">{error}</div> : null}
             {success ? <div className="tp-alert success">{success}</div> : null}
+
+            <TenantRentDueNotice
+              tenant={tenant}
+              onUpload={() => {
+                setShowUploadForm(true);
+                setTimeout(() => uploadSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+              }}
+            />
 
             <section className="tp-stats-row">
               <article className="tp-stat-card">
