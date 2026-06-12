@@ -23,13 +23,24 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 export const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+const isNetlifyHost = () => {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname === 'ubumwehouse.netlify.app'
+    || window.location.hostname.endsWith('--ubumwehouse.netlify.app');
+};
+
+export const getBackendRootUrl = () => {
+  if (API_BASE_URL === '/api' && isNetlifyHost()) {
+    return 'https://ubumwehouse-prod.onrender.com';
+  }
+
+  return API_ROOT_URL;
+};
+
 const getRealtimeApiBaseUrl = () => {
   if (typeof window === 'undefined') return API_BASE_URL;
 
-  const isNetlifyApp = window.location.hostname === 'ubumwehouse.netlify.app'
-    || window.location.hostname.endsWith('--ubumwehouse.netlify.app');
-
-  if (API_BASE_URL === '/api' && isNetlifyApp) {
+  if (API_BASE_URL === '/api' && isNetlifyHost()) {
     return 'https://ubumwehouse-prod.onrender.com/api';
   }
 
@@ -39,11 +50,11 @@ const getRealtimeApiBaseUrl = () => {
 const REALTIME_API_BASE_URL = getRealtimeApiBaseUrl();
 
 export const resolveBackendUrl = (path = '') => {
-  if (!path) return API_ROOT_URL || '';
+  if (!path) return getBackendRootUrl() || '';
   if (/^https?:\/\//i.test(path)) return path;
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${API_ROOT_URL}${normalizedPath}`;
+  return `${getBackendRootUrl()}${normalizedPath}`;
 };
 
 export const resolveUploadUrl = (path = '') => {

@@ -61,6 +61,31 @@ const ImageIcon = () => (
   </svg>
 );
 
+const BuildingImage = ({ src, name }) => {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return (
+      <div style={styles.buildingImagePlaceholder}>
+        <ImageIcon />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      style={styles.buildingImage}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 const Buildings = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -504,13 +529,7 @@ const Buildings = () => {
             return (
             <div key={building.id} style={styles.buildingCard}>
               <div style={styles.buildingImageFrame}>
-                {buildingImageUrl ? (
-                  <img src={buildingImageUrl} alt={building.name} style={styles.buildingImage} />
-                ) : (
-                  <div style={styles.buildingImagePlaceholder}>
-                    <ImageIcon />
-                  </div>
-                )}
+                <BuildingImage src={buildingImageUrl} name={building.name} />
               </div>
               <h3 style={styles.buildingName}>{building.name}</h3>
               <p style={styles.buildingInfo}>

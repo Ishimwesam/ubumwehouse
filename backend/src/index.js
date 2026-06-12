@@ -153,6 +153,7 @@ app.use('/uploads', fileAccessAuth, express.static(uploadDir, {
   index: false,
   setHeaders(res) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.setHeader('Cache-Control', 'private, no-store');
   }
 }));
