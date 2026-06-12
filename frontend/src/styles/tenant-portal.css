@@ -2740,6 +2740,158 @@
   }
 }
 
+@media (max-width: 768px) {
+  .tp-subpage-dashboard .tp-subpage-main,
+  .tp-subpage-main {
+    padding: calc(env(safe-area-inset-top, 0px) + 6px) 14px calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tp-subpage-dashboard .tp-header,
+  .tp-header {
+    min-height: auto;
+    gap: 8px;
+    padding: 14px 15px;
+    border-radius: 10px;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.14);
+  }
+
+  .tp-header h1 {
+    font-size: 22px;
+    line-height: 1.08;
+  }
+
+  .tp-header p {
+    margin-top: 6px;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .tp-user {
+    width: auto;
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .tp-stats-row {
+    margin-top: 12px;
+    gap: 10px;
+  }
+
+  .tp-subpage-dashboard .tp-stat-card,
+  .tp-stat-card {
+    min-height: 0;
+    padding: 12px 13px;
+    gap: 11px;
+    border-radius: 10px;
+    align-items: center;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+  }
+
+  .tp-stat-icon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    border-radius: 10px;
+  }
+
+  .tp-stat-icon-svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .tp-stat-card span {
+    margin-bottom: 2px;
+    font-size: 12px;
+  }
+
+  .tp-stat-card strong {
+    font-size: 22px;
+    line-height: 1.06;
+  }
+
+  .tp-subpage-dashboard .tp-card,
+  .tp-card {
+    padding: 14px;
+    border-radius: 10px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+  }
+
+  .tp-card h2,
+  .tp-card-header-row h2 {
+    font-size: 17px;
+    line-height: 1.15;
+  }
+
+  .tp-main-grid,
+  .tp-main-grid.second-row {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tp-chat-log {
+    max-height: 220px;
+    padding: 9px;
+  }
+
+  .tp-chat-bubble {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .tp-chat-bubble span {
+    font-size: 10px;
+  }
+
+  .tp-chat-bubble p {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .tp-chat-compose {
+    gap: 8px;
+  }
+
+  .tp-chat-compose textarea {
+    min-height: 72px;
+  }
+
+  .tp-payment-list > div {
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .tp-subpage-dashboard .tp-subpage-main,
+  .tp-subpage-main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tp-header h1 {
+    font-size: 20px;
+  }
+
+  .tp-header p {
+    font-size: 12px;
+  }
+
+  .tp-stat-card strong {
+    font-size: 20px;
+  }
+
+  .tp-stat-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .tp-card h2,
+  .tp-card-header-row h2 {
+    font-size: 16px;
+  }
+}
+
 @media (max-width: 360px) {
   .tp-sidebar,
   .tp-mobile-nav {
