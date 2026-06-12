@@ -451,6 +451,9 @@ export const tenantPortalService = {
   access: (data) => apiClient.post('/tenant-portal/access', data, { __tenantPortalRetry: true }),
   register: (data) => apiClient.post('/tenant-portal/register', data),
   login: (data) => apiClient.post('/tenant-portal/login', data, { __tenantPortalRetry: true }),
+  changePassword: (data) => apiClient.put('/tenant-portal/password', data, {
+    headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }
+  }),
   me: () => apiClient.get('/tenant-portal/me', {
     __tenantPortalRetry: true,
     headers: { Authorization: `Bearer ${tenantPortalService.getToken() || ''}` }

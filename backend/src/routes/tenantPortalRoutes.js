@@ -9,6 +9,7 @@ const router = express.Router();
 router.post('/access', tenantPortalController.accessTenantPortal);
 router.post('/register', tenantPortalController.registerTenantPortal);
 router.post('/login', tenantPortalController.loginTenantPortal);
+router.put('/password', tenantPortalController.changeTenantPortalPassword);
 router.get('/me', tenantPortalController.getTenantPortalMe);
 router.post('/payment-proof', upload.single('receipt'), tenantPortalController.uploadTenantPaymentProof);
 router.put('/payment-proof/:paymentId', upload.single('receipt'), tenantPortalController.updateTenantPaymentProof);

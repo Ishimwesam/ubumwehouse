@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
 import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
-import TenantPortalNav, { TenantMobileAppHeader, useTenantLanguage } from '../components/TenantPortalNav';
+import { TenantMobileAppHeader, TenantPortalShell, useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
@@ -75,8 +75,7 @@ const TenantPortalUpload = () => {
   };
 
   return (
-    <main className="tp-page tp-subpage">
-      <section className="tp-main tp-subpage-main">
+    <TenantPortalShell current="upload">
         <TenantMobileAppHeader current="upload" />
         <header className="tp-header">
           <div>
@@ -91,7 +90,7 @@ const TenantPortalUpload = () => {
         {error ? <div className="tp-alert error">{error}</div> : null}
         {success ? <div className="tp-alert success">{success}</div> : null}
 
-        <section className="tp-card" style={{ marginTop: 14 }}>
+        <section className="tp-card tp-section-anchor" id="receipt" style={{ marginTop: 14 }}>
           <h2>{text.receiptDetails}</h2>
           {loading ? <p className="tp-empty">{text.loadingAccountDetails}</p> : null}
           {!loading ? (
@@ -136,9 +135,7 @@ const TenantPortalUpload = () => {
 
           {tenant ? <p className="tp-empty" style={{ marginTop: 10 }}>{text.tenantLabel}: {tenant.full_name || '-'} / {text.unit} {tenant.unit_number || '-'}</p> : null}
         </section>
-      </section>
-      <TenantPortalNav current="upload" mobileOnly />
-    </main>
+    </TenantPortalShell>
   );
 };
 

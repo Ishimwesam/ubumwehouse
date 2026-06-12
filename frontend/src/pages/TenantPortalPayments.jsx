@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import TenantRentDueNotice from '../components/TenantRentDueNotice';
-import TenantPortalNav, { TenantMobileAppHeader, useTenantLanguage } from '../components/TenantPortalNav';
+import { TenantMobileAppHeader, TenantPortalShell, useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -120,8 +120,7 @@ const TenantPortalPayments = () => {
   }, []);
 
   return (
-    <main className="tp-page tp-subpage">
-      <section className="tp-main tp-subpage-main">
+    <TenantPortalShell current="payments">
         <TenantMobileAppHeader current="payments" />
         <header className="tp-header">
           <div>
@@ -164,7 +163,7 @@ const TenantPortalPayments = () => {
           </article>
         </section>
 
-        <section className="tp-card" style={{ marginTop: 14 }}>
+        <section className="tp-card tp-section-anchor" id="history" style={{ marginTop: 14 }}>
           <div className="tp-card-header-row">
             <h2>{text.paymentsTitle}</h2>
             <div className="tp-payment-actions">
@@ -175,7 +174,7 @@ const TenantPortalPayments = () => {
           </div>
           {loading ? <p className="tp-empty">{text.loadingPaymentHistory}</p> : null}
           {!loading ? (
-            <div className="tp-table-wrap">
+            <div className="tp-table-wrap" id="receipts">
               <table>
                 <thead>
                   <tr>
@@ -227,9 +226,7 @@ const TenantPortalPayments = () => {
             </div>
           ) : null}
         </section>
-      </section>
-      <TenantPortalNav current="payments" mobileOnly />
-    </main>
+    </TenantPortalShell>
   );
 };
 

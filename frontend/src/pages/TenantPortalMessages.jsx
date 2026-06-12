@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav, { TenantLanguageSelect, TenantMobileAppHeader, TenantNotificationPermissionButton, useTenantLanguage } from '../components/TenantPortalNav';
+import { TenantMobileAppHeader, TenantPortalShell, useTenantLanguage } from '../components/TenantPortalNav';
 import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
 import useTenantUnread from '../hooks/useTenantUnread';
 import { clearUnread, registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
@@ -106,33 +106,7 @@ const TenantPortalMessages = () => {
   };
 
   return (
-    <main className="tp-page">
-      <div className="tp-dashboard">
-        <aside className="tp-sidebar">
-          <div className="tp-brand-block">
-            <div className="tp-brand-title">UBUMWE HOUSE SYSTEM</div>
-            <div className="tp-brand-subtitle">{text.homePriority}</div>
-          </div>
-
-          <TenantPortalNav current="messages" />
-
-          <div className="tp-sidebar-actions">
-            <TenantLanguageSelect />
-            <TenantNotificationPermissionButton inline />
-            <button
-              className="tp-logout"
-              type="button"
-              onClick={() => {
-                tenantPortalService.clearToken();
-                navigate('/tenant-portal');
-              }}
-            >
-              {text.logout}
-            </button>
-          </div>
-        </aside>
-
-        <section className="tp-main">
+    <TenantPortalShell current="messages">
           <TenantMobileAppHeader current="messages" />
           <header className="tp-header">
             <div>
@@ -176,7 +150,7 @@ const TenantPortalMessages = () => {
             </article>
           </section>
 
-          <section className="tp-card" style={{ marginTop: 14 }}>
+          <section className="tp-card tp-section-anchor" id="support" style={{ marginTop: 14 }}>
             <h2>{text.supportChat}</h2>
             <div className="tp-chat-log" ref={chatLogRef}>
               {loading ? <div className="tp-empty">{text.loadingMessages}</div> : null}
@@ -201,9 +175,7 @@ const TenantPortalMessages = () => {
               </button>
             </form>
           </section>
-        </section>
-      </div>
-    </main>
+    </TenantPortalShell>
   );
 };
 

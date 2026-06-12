@@ -102,15 +102,15 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', path: '/tenant-portal' },
   { id: 'messages', label: 'Messages', path: '/tenant-portal/messages' },
   { id: 'payments', label: 'Payments', path: '/tenant-portal/payments' },
-  { id: 'history', label: 'Payment History', shortLabel: 'History', path: '/tenant-portal/payments', extra: true },
+  { id: 'history', label: 'Payment History', shortLabel: 'History', path: '/tenant-portal/payments#history', extra: true },
   { id: 'maintenance', label: 'Maintenance', path: '/tenant-portal/maintenance' },
-  { id: 'documents', label: 'Documents & Receipts', shortLabel: 'Docs', path: '/tenant-portal/payments', extra: true },
-  { id: 'lease', label: 'My Lease', shortLabel: 'Lease', path: '/tenant-portal', extra: true },
+  { id: 'documents', label: 'Documents & Receipts', shortLabel: 'Docs', path: '/tenant-portal/payments#receipts', extra: true },
+  { id: 'lease', label: 'My Lease', shortLabel: 'Lease', path: '/tenant-portal/profile#lease', extra: true },
   { id: 'profile', label: 'Profile', path: '/tenant-portal/profile' },
-  { id: 'support', label: 'Support', path: '/tenant-portal/messages', extra: true },
-  { id: 'upload', label: 'Upload Receipt', shortLabel: 'Upload', path: '/tenant-portal/upload', extra: true },
-  { id: 'announcements', label: 'Announcements', shortLabel: 'Notices', path: '/tenant-portal/announcements', extra: true },
-  { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/forgot-password', extra: true }
+  { id: 'support', label: 'Support', path: '/tenant-portal/messages#support', extra: true },
+  { id: 'upload', label: 'Upload Receipt', shortLabel: 'Upload', path: '/tenant-portal/upload#receipt', extra: true },
+  { id: 'announcements', label: 'Announcements', shortLabel: 'Notices', path: '/tenant-portal/announcements#notices', extra: true },
+  { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/tenant-portal/profile#password', extra: true }
 ];
 
 const LANGUAGE_STORAGE_KEY = 'tenantPortalLanguage';
@@ -1023,6 +1023,29 @@ const getCurrentFromPath = (pathname = '') => {
   return '';
 };
 
+const splitTenantPath = (path = '') => {
+  const [pathname, hash = ''] = String(path || '').split('#');
+  return { pathname, hash };
+};
+
+const getCurrentTenantItem = (pathname = '', hash = '') => {
+  if (hash) {
+    const hashMatch = navItems.find((item) => {
+      const target = splitTenantPath(item.path);
+      return target.pathname === pathname && target.hash === hash.replace(/^#/, '');
+    });
+    if (hashMatch) return hashMatch.id;
+  }
+
+  return getCurrentFromPath(pathname);
+};
+
+const scrollTenantHash = (hash = '') => {
+  if (typeof document === 'undefined' || !hash) return;
+  const target = document.getElementById(hash);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 const TENANT_PORTAL_BRAND_NAME = 'UBUMWE HOUSE SYSTEM';
 const TENANT_PORTAL_EMAIL = 'ubumwehouseltd@gmail.com';
 
@@ -1039,15 +1062,17 @@ const TenantMobileAppHeader = ({
   const unreadMessages = useTenantUnread();
   const [, copy] = useTenantLanguage();
   const [open, setOpen] = React.useState(false);
-  const activeItem = current || getCurrentFromPath(location.pathname);
+  const activeItem = location.hash ? getCurrentTenantItem(location.pathname, location.hash) : current || getCurrentFromPath(location.pathname);
 
   const goTo = (path) => {
     setOpen(false);
-    if (path === '/tenant-portal' && onDashboardClick) {
+    const target = splitTenantPath(path);
+    if (target.pathname === '/tenant-portal' && onDashboardClick && !target.hash) {
       onDashboardClick();
       return;
     }
     navigate(path);
+    window.setTimeout(() => scrollTenantHash(target.hash), 80);
   };
 
   const handleLogout = () => {
@@ -1191,24 +1216,31 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
   const location = useLocation();
   const unreadMessages = useTenantUnread();
   const [, copy] = useTenantLanguage();
-  const activeItem = current || getCurrentFromPath(location.pathname);
+  const activeItem = location.hash ? getCurrentTenantItem(location.pathname, location.hash) : current || getCurrentFromPath(location.pathname);
 
   const handleClick = (item) => {
+    const target = splitTenantPath(item.path);
     if (item.id === 'messages') {
       clearUnread();
     }
 
-    if (item.id === 'dashboard' && onDashboardClick) {
+    if (item.id === 'dashboard' && onDashboardClick && !target.hash) {
       onDashboardClick();
       return;
     }
 
-    if (location.pathname === item.path) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (location.pathname === target.pathname) {
+      if (target.hash) {
+        navigate(item.path, { replace: location.hash === `#${target.hash}` });
+        scrollTenantHash(target.hash);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
     navigate(item.path);
+    window.setTimeout(() => scrollTenantHash(target.hash), 80);
   };
 
   return (
@@ -1242,4 +1274,56 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
 };
 
 export default TenantPortalNav;
-export { formatTenantText, TenantLanguageSelect, TenantMobileAppHeader, useTenantLanguage };
+const TenantPortalShell = ({ current = '', children, onDashboardClick }) => {
+  const navigate = useNavigate();
+  const [, copy] = useTenantLanguage();
+
+  return (
+    <main className="tp-page">
+      <div className="tp-dashboard tp-subpage-dashboard">
+        <aside className="tp-sidebar">
+          <div className="tp-brand-block">
+            <div className="tp-house-logo" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="tp-brand-title">{TENANT_PORTAL_BRAND_NAME}</div>
+            <div className="tp-brand-subtitle">{copy.homePriority}</div>
+          </div>
+
+          <TenantPortalNav current={current} onDashboardClick={onDashboardClick} />
+
+          <div className="tp-help-card">
+            <span>{icons.support}</span>
+            <strong>{copy.needHelp}</strong>
+            <p>{copy.hereForYou}</p>
+            <a href={`mailto:${TENANT_PORTAL_EMAIL}`}>{TENANT_PORTAL_EMAIL}</a>
+          </div>
+
+          <div className="tp-sidebar-actions">
+            <TenantLanguageSelect />
+            <TenantNotificationPermissionButton inline />
+            <button
+              className="tp-logout"
+              type="button"
+              onClick={() => {
+                tenantPortalService.clearToken();
+                navigate('/tenant-portal');
+              }}
+            >
+              {copy.logout}
+            </button>
+          </div>
+        </aside>
+
+        <section className="tp-main tp-subpage-main">
+          {children}
+        </section>
+      </div>
+      <TenantPortalNav current={current} mobileOnly />
+    </main>
+  );
+};
+
+export { formatTenantText, TenantLanguageSelect, TenantMobileAppHeader, TenantPortalShell, useTenantLanguage };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav, { TenantMobileAppHeader, useTenantLanguage } from '../components/TenantPortalNav';
+import { TenantMobileAppHeader, TenantPortalShell, useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const formatDateTime = (value) => {
@@ -60,8 +60,7 @@ const TenantPortalAnnouncements = () => {
   }, []);
 
   return (
-    <main className="tp-page tp-subpage">
-      <section className="tp-main tp-subpage-main">
+    <TenantPortalShell current="announcements">
         <TenantMobileAppHeader current="announcements" />
         <header className="tp-header">
           <div>
@@ -75,7 +74,7 @@ const TenantPortalAnnouncements = () => {
 
         {error ? <div className="tp-alert error">{error}</div> : null}
 
-        <section className="tp-card" style={{ marginTop: 14 }}>
+        <section className="tp-card tp-section-anchor" id="notices" style={{ marginTop: 14 }}>
           <h2>{text.latestUpdates}</h2>
           {loading ? <p className="tp-empty">{text.loadingAnnouncements}</p> : null}
           {!loading && announcements.length === 0 ? (
@@ -96,9 +95,7 @@ const TenantPortalAnnouncements = () => {
             </div>
           ) : null}
         </section>
-      </section>
-      <TenantPortalNav current="announcements" mobileOnly />
-    </main>
+    </TenantPortalShell>
   );
 };
 

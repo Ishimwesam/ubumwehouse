@@ -277,6 +277,62 @@ const findAdminFromToken = (req, callback) => {
   }
 };
 
+const changeTenantPortalPassword = (req, res) => {
+  const token = getTenantPortalToken(req);
+  const { currentPassword, newPassword } = req.body || {};
+  const passwordError = validatePassword(newPassword);
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new passwords are required.' });
+  }
+  if (passwordError) return res.status(400).json({ error: passwordError });
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ error: 'Tenant portal authentication is not configured.' });
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: [tenantPortalJwtOptions.algorithm],
+      issuer: tenantPortalJwtOptions.issuer,
+      audience: tenantPortalJwtOptions.audience
+    });
+  } catch (_) {
+    return res.status(401).json({ error: 'Invalid or expired tenant portal token.' });
+  }
+
+  if (decoded.type !== 'tenant_portal' || !decoded.account_id || !decoded.tenant_id) {
+    return res.status(401).json({ error: 'Invalid tenant portal token.' });
+  }
+
+  return db.get(
+    `SELECT a.id, a.password
+     FROM tenant_portal_accounts a
+     INNER JOIN tenants t ON t.id = a.tenant_id
+     WHERE a.id = ? AND a.tenant_id = ? AND a.is_active = 1 AND t.status = 'active'
+     LIMIT 1`,
+    [decoded.account_id, decoded.tenant_id],
+    (err, account) => {
+      if (err) return res.status(500).json({ error: 'Error loading tenant portal account.' });
+      if (!account) return res.status(401).json({ error: 'Tenant portal account is not active.' });
+      if (!bcrypt.compareSync(currentPassword, account.password)) {
+        return res.status(401).json({ error: 'Current password is incorrect.' });
+      }
+
+      const hashedPassword = bcrypt.hashSync(newPassword, 10);
+      return db.run(
+        'UPDATE tenant_portal_accounts SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [hashedPassword, decoded.account_id],
+        function onUpdate(updateErr) {
+          if (updateErr) return res.status(500).json({ error: 'Error changing tenant portal password.' });
+          if (!this.changes) return res.status(404).json({ error: 'Tenant portal account not found.' });
+          return res.json({ message: 'Password changed successfully.' });
+        }
+      );
+    }
+  );
+};
+
 const loadPortalPayload = (tenant, callback) => {
   db.all(
     `SELECT p.id, p.amount, p.payment_date,
@@ -1248,6 +1304,7 @@ module.exports = {
   accessTenantPortal,
   registerTenantPortal,
   loginTenantPortal,
+  changeTenantPortalPassword,
   getTenantPortalMe,
   getTenantPortalMaintenanceRequests,
   createTenantPortalMaintenanceRequest,

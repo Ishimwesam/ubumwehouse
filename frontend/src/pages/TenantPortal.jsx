@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, isRecoverableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
@@ -11,6 +11,7 @@ const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 const today = () => new Date().toISOString().slice(0, 10);
 const TENANT_PORTAL_CACHE_KEY = 'tenantPortalData';
+const RECONNECTING_PORTAL_MESSAGE = 'Connection is reconnecting. Showing your saved tenant details for now.';
 
 const readCachedPortalData = () => {
   if (typeof window === 'undefined') return null;
@@ -137,6 +138,7 @@ const TenantPortal = () => {
   const maintenanceSectionRef = useRef(null);
   const announcementsSectionRef = useRef(null);
   const profileSectionRef = useRef(null);
+  const portalDataRef = useRef(portalData);
 
   const statusLabel = (activeContract?.lifecycle_status || activeContract?.status || 'active').replace(/_/g, ' ');
   const latestPayment = payments[0] || null;
@@ -167,6 +169,7 @@ const TenantPortal = () => {
 
   useEffect(() => {
     writeCachedPortalData(portalData);
+    portalDataRef.current = portalData;
   }, [portalData]);
 
   const scrollTo = (sectionRef) => {
@@ -176,6 +179,16 @@ const TenantPortal = () => {
 
   const getReceiptPath = (payment) => resolveTenantUploadUrl(payment?.receipt_path || '') || '';
   const canManagePayment = (payment) => ['pending', 'rejected'].includes(String(payment?.payment_status || '').toLowerCase());
+
+  const applyPortalData = useCallback((data) => {
+    setPortalData(data);
+    setBootLoading(false);
+    setError((currentError) => (currentError === RECONNECTING_PORTAL_MESSAGE ? '' : currentError));
+    setPaymentForm((prev) => ({
+      ...prev,
+      amount: data?.tenant?.balance || data?.tenant?.monthly_rent || prev.amount || ''
+    }));
+  }, []);
 
   const resetPaymentForm = () => {
     setEditingPayment(null);
@@ -209,19 +222,15 @@ const TenantPortal = () => {
     tenantPortalService.me()
       .then((response) => {
         if (!mounted) return;
-        setPortalData(response.data);
-        setBootLoading(false);
-        setPaymentForm((prev) => ({
-          ...prev,
-          amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || ''
-        }));
+        applyPortalData(response.data);
       })
       .catch((err) => {
         if (!mounted) return;
         const cached = readCachedPortalData();
-        if (isRecoverableApiError(err) && (portalData || cached)) {
-          setPortalData(portalData || cached);
-          setError('Connection is reconnecting. Showing your saved tenant details for now.');
+        const currentPortalData = portalDataRef.current;
+        if (isRecoverableApiError(err) && (currentPortalData || cached)) {
+          setPortalData(currentPortalData || cached);
+          setError(RECONNECTING_PORTAL_MESSAGE);
           return;
         }
         tenantPortalService.clearToken();
@@ -238,7 +247,24 @@ const TenantPortal = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [applyPortalData]);
+
+  useEffect(() => {
+    if (error !== RECONNECTING_PORTAL_MESSAGE || !tenantPortalService.getToken() || !tenant) return undefined;
+
+    const retryPortalRefresh = () => {
+      tenantPortalService.me()
+        .then((response) => {
+          applyPortalData(response.data);
+        })
+        .catch(() => {});
+    };
+
+    const timer = setInterval(retryPortalRefresh, 10000);
+    retryPortalRefresh();
+
+    return () => clearInterval(timer);
+  }, [applyPortalData, error, tenant]);
 
   useEffect(() => {
     if (!tenantPortalService.getToken() || !tenant) return undefined;
@@ -259,11 +285,7 @@ const TenantPortal = () => {
 
       tenantPortalService.me()
         .then((response) => {
-          setPortalData(response.data);
-          setPaymentForm((prev) => ({
-            ...prev,
-            amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || prev.amount
-          }));
+          applyPortalData(response.data);
         })
         .catch(() => {});
     };
@@ -273,7 +295,7 @@ const TenantPortal = () => {
     return () => {
       window.removeEventListener('tp:portal-event', onPortalEvent);
     };
-  }, []);
+  }, [applyPortalData]);
 
   const handleAccess = async (event) => {
     event.preventDefault();
@@ -287,12 +309,7 @@ const TenantPortal = () => {
     setSuccess('');
     try {
       const response = await tenantPortalService.access(accessForm);
-      setPortalData(response.data);
-      setBootLoading(false);
-      setPaymentForm((prev) => ({
-        ...prev,
-        amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || ''
-      }));
+      applyPortalData(response.data);
     } catch (err) {
       setPortalData(null);
       setError(getReadableApiError(err, 'Tenant access failed.'));
@@ -322,8 +339,7 @@ const TenantPortal = () => {
         password: credentialForm.password
       });
       tenantPortalService.setToken(response.data.token, credentialForm.remember);
-      setPortalData(response.data);
-      setBootLoading(false);
+      applyPortalData(response.data);
       setSuccess('Your tenant portal account has been created and saved.');
     } catch (err) {
       setError(getReadableApiError(err, 'Tenant account registration failed.'));
@@ -345,8 +361,7 @@ const TenantPortal = () => {
         password: credentialForm.password
       });
       tenantPortalService.setToken(response.data.token, credentialForm.remember);
-      setPortalData(response.data);
-      setBootLoading(false);
+      applyPortalData(response.data);
       setSuccess('Signed in to tenant portal.');
     } catch (err) {
       setError(getReadableApiError(err, 'Tenant portal login failed.'));
@@ -357,8 +372,7 @@ const TenantPortal = () => {
 
   const refreshPortal = async () => {
     const response = await tenantPortalService.me();
-    setPortalData(response.data);
-    setBootLoading(false);
+    applyPortalData(response.data);
   };
 
   const handleUpload = async (event) => {
@@ -641,19 +655,19 @@ const TenantPortal = () => {
                       <span><PortalGlyph type="home" /></span>
                       <b>{text.dashboard}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/upload'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/upload#receipt'); }}>
                       <span><PortalGlyph type="dollar" /></span>
                       <b>{text.payRent}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments#history'); }}>
                       <span><PortalGlyph type="receipt" /></span>
                       <b>{text.paymentHistory}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments#receipts'); }}>
                       <span><PortalGlyph type="document" /></span>
                       <b>{text.receipts}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/announcements'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/announcements#notices'); }}>
                       <span><PortalGlyph type="bell" /></span>
                       <b>{text.notifications}</b>
                       {notificationCount > 0 ? <em>{notificationCount}</em> : null}
@@ -667,11 +681,11 @@ const TenantPortal = () => {
                       <span><PortalGlyph type="wrench" /></span>
                       <b>{text.maintenanceTitle}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); scrollTo(profileSectionRef); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile#lease'); }}>
                       <span><PortalGlyph type="document" /></span>
                       <b>{text.lease}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments#receipts'); }}>
                       <span><PortalGlyph type="folder" /></span>
                       <b>{text.documents}</b>
                     </button>
@@ -684,15 +698,15 @@ const TenantPortal = () => {
                       <span><PortalGlyph type="phone" /></span>
                       <b>{text.contactManagement}</b>
                     </a>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages#support'); }}>
                       <span><PortalGlyph type="question" /></span>
                       <b>{text.helpSupport}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile#password'); }}>
                       <span><PortalGlyph type="settings" /></span>
                       <b>{text.settings}</b>
                     </button>
-                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile#password'); }}>
                       <span><PortalGlyph type="shield" /></span>
                       <b>{text.privacySecurity}</b>
                     </button>
@@ -752,7 +766,7 @@ const TenantPortal = () => {
               <span className="tp-info-dot">i</span>
               <p><strong>{bannerText}</strong> {currentBalance > 0 ? text.avoidLateFees : ''}</p>
               {currentBalance > 0 ? (
-                <button type="button" className="tp-btn-primary" onClick={() => navigate('/tenant-portal/upload')}>
+                <button type="button" className="tp-btn-primary" onClick={() => navigate('/tenant-portal/upload#receipt')}>
                   {text.payRentNow}
                 </button>
               ) : null}
@@ -767,11 +781,11 @@ const TenantPortal = () => {
                 <strong>{formatCurrency(currentBalance)}</strong>
                 <p>{formatTenantText(text.rentDueReminderMessage, { date: formatShortDate(dueDate) })}</p>
                 {currentBalance > 0 ? (
-                  <button type="button" className="tp-summary-pay-button" onClick={() => navigate('/tenant-portal/upload')}>
+                  <button type="button" className="tp-summary-pay-button" onClick={() => navigate('/tenant-portal/upload#receipt')}>
                     {text.payRentNow}
                   </button>
                 ) : null}
-                <button type="button" onClick={() => navigate('/tenant-portal/payments')}>{text.viewDetails}<span>&rsaquo;</span></button>
+                <button type="button" onClick={() => navigate('/tenant-portal/payments#history')}>{text.viewDetails}<span>&rsaquo;</span></button>
               </article>
               <article className="tp-portal-summary-card">
                 <div className="tp-summary-head">
@@ -780,7 +794,7 @@ const TenantPortal = () => {
                 </div>
                 <strong className="green-text">{formatShortDate(dueDate)}</strong>
                 <p>{formatTenantText(text.daysRemaining, { days: dueDaysText })}</p>
-                <button type="button" onClick={() => navigate('/tenant-portal/upload')}>{text.makePayment}<span>&rsaquo;</span></button>
+                <button type="button" onClick={() => navigate('/tenant-portal/upload#receipt')}>{text.makePayment}<span>&rsaquo;</span></button>
               </article>
               <article className="tp-portal-summary-card">
                 <div className="tp-summary-head">
@@ -790,19 +804,19 @@ const TenantPortal = () => {
                 <strong>{propertyName}</strong>
                 <p>{formatTenantText(text.houseNo, { unit: tenant?.unit_number || 'N/A' })}</p>
                 <p>{text.cityCountry}</p>
-                <button type="button" onClick={() => scrollTo(profileSectionRef)}>{text.viewMyLease}<span>&rsaquo;</span></button>
+                <button type="button" onClick={() => navigate('/tenant-portal/profile#lease')}>{text.viewMyLease}<span>&rsaquo;</span></button>
               </article>
             </section>
 
             <section className="tp-portal-card tp-quick-action-panel">
               <h2>{text.quickActions}</h2>
               <div className="tp-action-grid">
-                <button type="button" onClick={() => navigate('/tenant-portal/upload')}>
+                <button type="button" onClick={() => navigate('/tenant-portal/upload#receipt')}>
                   <span className="blue"><PortalGlyph type="card" /></span>
                   <strong>{text.payRent}</strong>
                   <small>{text.securePayment}</small>
                 </button>
-                <button type="button" onClick={() => navigate('/tenant-portal/payments')}>
+                <button type="button" onClick={() => navigate('/tenant-portal/payments#history')}>
                   <span className="green"><PortalGlyph type="history" /></span>
                   <strong>{text.paymentHistory}</strong>
                   <small>{text.viewPayments}</small>
@@ -812,12 +826,12 @@ const TenantPortal = () => {
                   <strong>{text.maintenanceRequest}</strong>
                   <small>{text.reportIssue}</small>
                 </button>
-                <button type="button" onClick={() => navigate('/tenant-portal/payments')}>
+                <button type="button" onClick={() => navigate('/tenant-portal/payments#receipts')}>
                   <span className="purple"><PortalGlyph type="document" /></span>
                   <strong>{text.documentsReceipts}</strong>
                   <small>{text.viewDownload}</small>
                 </button>
-                <button type="button" onClick={() => navigate('/tenant-portal/messages')}>
+                <button type="button" onClick={() => navigate('/tenant-portal/messages#support')}>
                   <span className="blue"><PortalGlyph type="message" /></span>
                   <strong>{text.messages}</strong>
                   <small>{text.sendViewMessages}</small>
@@ -903,7 +917,7 @@ const TenantPortal = () => {
                 ) : (
                   <p className="tp-empty">{text.noAnnouncements}</p>
                 )}
-                <button type="button" className="tp-card-link" onClick={() => navigate('/tenant-portal/announcements')}>{text.viewAll}<span>&rsaquo;</span></button>
+                <button type="button" className="tp-card-link" onClick={() => navigate('/tenant-portal/announcements#notices')}>{text.viewAll}<span>&rsaquo;</span></button>
               </article>
               <article className="tp-portal-card tp-upcoming-card">
                 <h2><PortalGlyph type="calendar" /> {text.upcomingPayment}</h2>
@@ -913,7 +927,7 @@ const TenantPortal = () => {
                   <span>{text.dueDate}</span>
                   <b>{formatShortDate(dueDate)}</b>
                 </div>
-                <button type="button" className="tp-btn-primary" onClick={() => navigate('/tenant-portal/upload')}>{text.payRentNow}</button>
+                <button type="button" className="tp-btn-primary" onClick={() => navigate('/tenant-portal/upload#receipt')}>{text.payRentNow}</button>
               </article>
               <article className="tp-portal-card" ref={historySectionRef}>
                 <h2><PortalGlyph type="document" /> {text.recentPayments}</h2>
@@ -931,7 +945,7 @@ const TenantPortal = () => {
                     ))}
                   </div>
                 ) : <p className="tp-empty">{text.noRecentPayments}</p>}
-                <button type="button" className="tp-card-link" onClick={() => navigate('/tenant-portal/payments')}>{text.viewAllPayments}<span>&rsaquo;</span></button>
+                <button type="button" className="tp-card-link" onClick={() => navigate('/tenant-portal/payments#history')}>{text.viewAllPayments}<span>&rsaquo;</span></button>
               </article>
             </section>
 

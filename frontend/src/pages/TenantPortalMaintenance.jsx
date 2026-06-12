@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, tenantPortalService } from '../services/api';
-import TenantPortalNav, { TenantMobileAppHeader, useTenantLanguage } from '../components/TenantPortalNav';
+import { TenantMobileAppHeader, TenantPortalShell, useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const formatDateTime = (value) => {
@@ -125,8 +125,7 @@ const TenantPortalMaintenance = () => {
   };
 
   return (
-    <main className="tp-page tp-subpage">
-      <section className="tp-main tp-subpage-main">
+    <TenantPortalShell current="maintenance">
         <TenantMobileAppHeader current="maintenance" />
         <header className="tp-header">
           <div>
@@ -141,7 +140,7 @@ const TenantPortalMaintenance = () => {
         {error ? <div className="tp-alert error">{error}</div> : null}
         {success ? <div className="tp-alert success">{success}</div> : null}
 
-        <section className="tp-main-grid">
+        <section className="tp-main-grid tp-section-anchor" id="maintenance">
           <article className="tp-card">
             <div className="tp-card-header-row">
               <h2>{editingRequest ? text.updateRequest : text.createRequest}</h2>
@@ -240,9 +239,7 @@ const TenantPortalMaintenance = () => {
             ) : null}
           </article>
         </section>
-      </section>
-      <TenantPortalNav current="maintenance" mobileOnly />
-    </main>
+    </TenantPortalShell>
   );
 };
 
