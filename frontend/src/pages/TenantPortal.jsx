@@ -47,6 +47,9 @@ const formatDateTime = (value) => {
 const getTenantName = (tenant) => String(tenant?.full_name || tenant?.tenant_name || '').trim();
 const hasTenantDisplayName = (data) => Boolean(getTenantName(data?.tenant));
 const isRejectedPayment = (payment) => String(payment?.payment_status || '').toLowerCase() === 'rejected';
+const getTenantPaymentAmount = (tenant) => (
+  tenant?.rent_due?.remaining_amount || tenant?.balance || tenant?.monthly_rent || ''
+);
 
 const portalBrandText = 'UBUMWE HOUSE LTD TENANT PORTAL';
 
@@ -150,6 +153,8 @@ const TenantPortal = () => {
   const tenantFirstName = getFirstName(tenantName);
   const rentDue = tenant?.rent_due || {};
   const currentBalance = Number(rentDue.remaining_amount ?? tenant?.balance ?? 0);
+  const currentOutstandingBalance = Number(tenant?.balance || 0);
+  const isNextPaymentPeriod = currentOutstandingBalance <= 0 && currentBalance > 0 && rentDue.period && rentDue.period !== currentPeriod();
   const dueDate = rentDue.due_date || '';
   const daysUntilDue = Number(rentDue.days_until_due ?? 0);
   const dueDaysText = Math.max(daysUntilDue, 0);
@@ -158,7 +163,7 @@ const TenantPortal = () => {
   const propertyName = tenant?.building_name || accountName;
   const currentPeriodLabel = rentDue.period || currentPeriod();
   const recentPayments = payments.slice(0, 3);
-  const notificationCount = Math.min(99, announcements.length + openMaintenanceRequests.length + (currentBalance > 0 ? 1 : 0));
+  const notificationCount = Math.min(99, announcements.length + openMaintenanceRequests.length + (currentOutstandingBalance > 0 ? 1 : 0));
   const unreadMessageCount = Math.min(99, messages.filter((message) => message.sender_type === 'admin').length);
   const bannerText = currentBalance <= 0
     ? text.rentPaid
@@ -187,16 +192,17 @@ const TenantPortal = () => {
     setError((currentError) => (currentError === RECONNECTING_PORTAL_MESSAGE ? '' : currentError));
     setPaymentForm((prev) => ({
       ...prev,
-      amount: data?.tenant?.balance || data?.tenant?.monthly_rent || prev.amount || ''
+      amount: getTenantPaymentAmount(data?.tenant) || prev.amount || '',
+      payment_period: data?.tenant?.rent_due?.period || prev.payment_period || currentPeriod()
     }));
   }, []);
 
   const resetPaymentForm = () => {
     setEditingPayment(null);
     setPaymentForm({
-      amount: tenant?.balance || tenant?.monthly_rent || '',
+      amount: getTenantPaymentAmount(tenant),
       payment_date: today(),
-      payment_period: currentPeriod(),
+      payment_period: tenant?.rent_due?.period || currentPeriod(),
       payment_method: 'bank_transfer',
       notes: '',
       receipt: null
@@ -782,7 +788,7 @@ const TenantPortal = () => {
             <section className="tp-portal-summary-grid">
               <article className="tp-portal-summary-card">
                 <div className="tp-summary-head">
-                  <span>{text.currentBalance}</span>
+                  <span>{isNextPaymentPeriod ? (text.nextPaymentAmount || 'Next Payment Amount') : text.currentBalance}</span>
                   <div className="tp-summary-icon blue"><PortalGlyph type="wallet" /></div>
                 </div>
                 <strong>{formatCurrency(currentBalance)}</strong>

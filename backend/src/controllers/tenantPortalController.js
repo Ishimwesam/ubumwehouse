@@ -79,29 +79,50 @@ const validatePassword = (password) => {
   return '';
 };
 
-const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid) => {
+const resolveTenantDueDate = (referenceDate, preferredDueDay, monthOffset = 0) => {
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth() + monthOffset;
+  const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(preferredDueDay, lastDayOfMonth));
+};
+
+const formatDateOnly = (date) => (
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+);
+
+const formatPeriod = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid, options = {}) => {
   const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const moveInDate = tenant.move_in_date ? new Date(tenant.move_in_date) : null;
   const preferredDueDay = moveInDate && !Number.isNaN(moveInDate.getTime()) ? moveInDate.getDate() : 1;
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const dueDate = new Date(now.getFullYear(), now.getMonth(), Math.min(preferredDueDay, lastDayOfMonth));
+  let dueDate = resolveTenantDueDate(now, preferredDueDay);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysUntilDue = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
-  const remainingAmount = Math.max(monthlyRent - currentPaid, 0);
+  let paidAmount = currentPaid;
+  let remainingAmount = Math.max(monthlyRent - currentPaid, 0);
 
   let status = 'upcoming';
-  if (remainingAmount <= 0) status = 'paid';
-  else if (daysUntilDue < 0) status = 'overdue';
-  else if (daysUntilDue === 0) status = 'due_today';
+  if (remainingAmount <= 0) {
+    status = 'paid';
+    if (options.rollPaidToNextPeriod) {
+      dueDate = resolveTenantDueDate(now, preferredDueDay, 1);
+      paidAmount = 0;
+      remainingAmount = monthlyRent;
+      status = 'upcoming';
+    }
+  }
+
+  const daysUntilDue = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
+  if (remainingAmount > 0 && daysUntilDue < 0) status = 'overdue';
+  else if (remainingAmount > 0 && daysUntilDue === 0) status = 'due_today';
 
   return {
-    period,
-    due_date: `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}`,
+    period: formatPeriod(dueDate),
+    due_date: formatDateOnly(dueDate),
     days_until_due: daysUntilDue,
     status,
     monthly_rent: monthlyRent,
-    paid_amount: currentPaid,
+    paid_amount: paidAmount,
     pending_amount: parseFloat(tenant.pending_amount || 0),
     remaining_amount: remainingAmount
   };
@@ -165,7 +186,7 @@ const sanitizeTenant = (tenant) => {
     current_period_paid: currentPaid,
     pending_amount: pendingAmount,
     balance: Math.max(monthlyRent - currentPaid, 0),
-    rent_due: getCurrentTenantDueInfo(tenant, monthlyRent, currentPaid)
+    rent_due: getCurrentTenantDueInfo(tenant, monthlyRent, currentPaid, { rollPaidToNextPeriod: true })
   };
 };
 

@@ -7,6 +7,9 @@ import '../styles/tenant-portal.css';
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 const today = () => new Date().toISOString().slice(0, 10);
+const getTenantPaymentAmount = (tenant) => (
+  tenant?.rent_due?.remaining_amount || tenant?.balance || tenant?.monthly_rent || ''
+);
 
 const TenantPortalUpload = () => {
   const navigate = useNavigate();
@@ -38,7 +41,11 @@ const TenantPortalUpload = () => {
       .then((response) => {
         if (!mounted) return;
         setTenant(response.data?.tenant || null);
-        setForm((prev) => ({ ...prev, amount: response.data?.tenant?.balance || response.data?.tenant?.monthly_rent || '' }));
+        setForm((prev) => ({
+          ...prev,
+          amount: getTenantPaymentAmount(response.data?.tenant),
+          payment_period: response.data?.tenant?.rent_due?.period || prev.payment_period || currentPeriod()
+        }));
       })
       .catch((err) => {
         if (!mounted) return;
