@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, isRecoverableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
+import TenantRentDueNotice from '../components/TenantRentDueNotice';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
 import TenantPortalNav, { formatTenantText, TenantLanguageSelect, TenantNotificationPermissionButton, useTenantLanguage } from '../components/TenantPortalNav';
 import { registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
@@ -281,7 +282,7 @@ const TenantPortal = () => {
         return;
       }
 
-      if (!['tenant_payment_update', 'tenant_announcement', 'tenant_maintenance_update'].includes(payload.event_type)) return;
+      if (!['tenant_payment_update', 'tenant_rent_due', 'tenant_announcement', 'tenant_maintenance_update'].includes(payload.event_type)) return;
 
       tenantPortalService.me()
         .then((response) => {
@@ -761,6 +762,12 @@ const TenantPortal = () => {
 
             {error ? <div className="tp-alert error">{error}</div> : null}
             {success ? <div className="tp-alert success">{success}</div> : null}
+
+            <TenantRentDueNotice
+              tenant={tenant}
+              checkedAt={portalData?.checked_at}
+              onUpload={() => navigate('/tenant-portal/upload#receipt')}
+            />
 
             <section className="tp-portal-rent-alert">
               <span className="tp-info-dot">i</span>

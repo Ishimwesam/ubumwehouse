@@ -10,6 +10,18 @@ const formatDate = (value) => {
   return parsed.toISOString().slice(0, 10);
 };
 
+const formatDateTime = (value) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleString([], {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 const getDueCopy = (rentDue = {}, text) => {
   if (rentDue.status === 'paid') {
     return {
@@ -42,7 +54,7 @@ const getDueCopy = (rentDue = {}, text) => {
   };
 };
 
-const TenantRentDueNotice = ({ tenant, onUpload }) => {
+const TenantRentDueNotice = ({ tenant, checkedAt, onUpload }) => {
   const [, text] = useTenantLanguage();
   const rentDue = tenant?.rent_due;
   if (!rentDue) return null;
@@ -50,6 +62,9 @@ const TenantRentDueNotice = ({ tenant, onUpload }) => {
   const copy = getDueCopy(rentDue, text);
   const remaining = Number(rentDue.remaining_amount || 0);
   const pending = Number(rentDue.pending_amount || 0);
+  const paid = Number(rentDue.paid_amount || tenant?.current_period_paid || 0);
+  const monthlyRent = Number(rentDue.monthly_rent || tenant?.monthly_rent || 0);
+  const syncedAt = formatDateTime(checkedAt);
 
   return (
     <section className={`tp-rent-due-notice ${copy.tone}`} aria-live="polite">
@@ -57,12 +72,23 @@ const TenantRentDueNotice = ({ tenant, onUpload }) => {
         <span>{rentDue.period || text.currentPeriod}</span>
         <h2>{copy.title}</h2>
         <p>{copy.message}</p>
+        <small className="tp-rent-live-source">
+          Live from admin account{syncedAt ? ` - synced ${syncedAt}` : ''}
+        </small>
         {pending > 0 ? <small>{formatTenantText(text.pendingConfirmation, { amount: formatCurrency(pending) })}</small> : null}
       </div>
       <div className="tp-rent-due-amounts">
         <div>
           <span>{text.dueAmount}</span>
           <strong>{formatCurrency(remaining)}</strong>
+        </div>
+        <div>
+          <span>Paid this period</span>
+          <strong>{formatCurrency(paid)}</strong>
+        </div>
+        <div>
+          <span>Monthly rent</span>
+          <strong>{formatCurrency(monthlyRent)}</strong>
         </div>
         <div>
           <span>{text.dueDate}</span>

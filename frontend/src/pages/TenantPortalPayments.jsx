@@ -112,7 +112,7 @@ const TenantPortalPayments = () => {
 
   useEffect(() => {
     const onPortalEvent = (event) => {
-      if (event.detail?.event_type !== 'tenant_payment_update') return;
+      if (!['tenant_payment_update', 'tenant_rent_due'].includes(event.detail?.event_type)) return;
       loadPortalData({ silent: true });
     };
     window.addEventListener('tp:portal-event', onPortalEvent);
