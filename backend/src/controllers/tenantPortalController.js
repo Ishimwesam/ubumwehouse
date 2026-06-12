@@ -29,6 +29,11 @@ const tenantPortalJwtOptions = {
   audience: 'tenant-portal-client',
   algorithm: 'HS256'
 };
+const currentTenantWhereSql = `
+  t.status = 'active'
+  AND (t.move_in_date IS NULL OR DATE(t.move_in_date) <= DATE('now'))
+  AND (t.move_out_date IS NULL OR DATE(t.move_out_date) > DATE('now'))
+`;
 
 const getTenantPortalToken = (req) => {
   const headerToken = req.headers.authorization?.split(' ')[1];
@@ -93,6 +98,21 @@ const formatDateOnly = (date) => (
 const formatPeriod = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
 const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid, options = {}) => {
+  if (!isCurrentTenant(tenant)) {
+    return {
+      period: formatPeriod(new Date()),
+      due_date: tenant.move_out_date || null,
+      days_until_due: 0,
+      status: 'moved_out',
+      monthly_rent: monthlyRent,
+      paid_amount: currentPaid,
+      pending_amount: 0,
+      remaining_amount: 0,
+      is_next_payment: false,
+      message: 'Tenant moved out. No dues.'
+    };
+  }
+
   const now = new Date();
   const moveInDate = tenant.move_in_date ? new Date(tenant.move_in_date) : null;
   const preferredDueDay = moveInDate && !Number.isNaN(moveInDate.getTime()) ? moveInDate.getDate() : 1;
@@ -130,6 +150,30 @@ const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid, options = {})
     is_next_payment: isNextPayment
   };
 };
+
+const isPastOrTodayDate = (dateValue) => {
+  if (!dateValue) return false;
+  const date = new Date(String(dateValue).slice(0, 10));
+  if (Number.isNaN(date.getTime())) return false;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return date <= today;
+};
+
+const isFutureDate = (dateValue) => {
+  if (!dateValue) return false;
+  const date = new Date(String(dateValue).slice(0, 10));
+  if (Number.isNaN(date.getTime())) return false;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return date > today;
+};
+
+const isCurrentTenant = (tenant = {}) => (
+  tenant.status === 'active'
+  && !isFutureDate(tenant.move_in_date)
+  && !isPastOrTodayDate(tenant.move_out_date)
+);
 
 const normalizeMaintenanceStatus = (value = 'open') => {
   const normalized = String(value || 'open').trim().toLowerCase();
@@ -211,7 +255,7 @@ const findTenantForPortal = ({ identifier, accessCode }, callback) => {
      FROM tenants t
      LEFT JOIN units u ON t.unit_id = u.id
      LEFT JOIN buildings b ON u.building_id = b.id
-     WHERE t.status = 'active'
+     WHERE ${currentTenantWhereSql}
        AND (
          LOWER(t.email) = ?
          OR LOWER(t.phone) = ?
@@ -264,7 +308,7 @@ const findTenantFromToken = (req, callback) => {
        LEFT JOIN units u ON t.unit_id = u.id
        LEFT JOIN buildings b ON u.building_id = b.id
        INNER JOIN tenant_portal_accounts a ON a.tenant_id = t.id
-      WHERE t.id = ? AND t.status = 'active' AND a.id = ? AND a.is_active = 1
+      WHERE t.id = ? AND ${currentTenantWhereSql} AND a.id = ? AND a.is_active = 1
        LIMIT 1`,
       [decoded.tenant_id, decoded.account_id],
       (err, tenant) => {
@@ -333,7 +377,7 @@ const changeTenantPortalPassword = (req, res) => {
     `SELECT a.id, a.password
      FROM tenant_portal_accounts a
      INNER JOIN tenants t ON t.id = a.tenant_id
-     WHERE a.id = ? AND a.tenant_id = ? AND a.is_active = 1 AND t.status = 'active'
+     WHERE a.id = ? AND a.tenant_id = ? AND a.is_active = 1 AND ${currentTenantWhereSql}
      LIMIT 1`,
     [decoded.account_id, decoded.tenant_id],
     (err, account) => {
@@ -509,7 +553,7 @@ const loginTenantPortal = (req, res) => {
      INNER JOIN tenants t ON t.id = a.tenant_id
      LEFT JOIN units u ON t.unit_id = u.id
      LEFT JOIN buildings b ON u.building_id = b.id
-    WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1 AND t.status = 'active'
+    WHERE LOWER(a.username) = LOWER(?) AND a.is_active = 1 AND ${currentTenantWhereSql}
      LIMIT 1`,
     [normalizedUsername],
     (err, row) => {
@@ -1054,6 +1098,7 @@ const listTenantPortalAccounts = (req, res) => {
   db.all(
     `SELECT a.id, a.tenant_id, a.username, a.is_active, a.last_login_at, a.created_at,
             t.full_name as tenant_name, t.email as tenant_email, t.phone as tenant_phone,
+            t.status as tenant_status,
             t.move_in_date, t.move_out_date,
             u.unit_number, b.name as building_name,
             ${currentTenantRentExpression} as monthly_rent,
@@ -1090,12 +1135,15 @@ const listTenantPortalAccounts = (req, res) => {
       const accounts = rows.map((row) => {
         const monthlyRent = parseFloat(row.monthly_rent || 0);
         const currentPaid = parseFloat(row.current_period_paid || 0);
-        const pendingAmount = parseFloat(row.pending_amount || 0);
+        const tenantIsCurrent = isCurrentTenant(row);
+        const pendingAmount = tenantIsCurrent ? parseFloat(row.pending_amount || 0) : 0;
         const due = getCurrentTenantDueInfo(row, monthlyRent, currentPaid);
 
         return {
           ...row,
-          is_active: Boolean(row.is_active),
+          is_active: Boolean(row.is_active) && tenantIsCurrent,
+          tenant_lifecycle_status: tenantIsCurrent ? 'active' : 'moved_out',
+          portal_status_message: tenantIsCurrent ? '' : 'Tenant moved out. No dues.',
           monthly_rent: monthlyRent,
           current_period_paid: currentPaid,
           pending_amount: pendingAmount,
@@ -1129,13 +1177,29 @@ const updateTenantPortalAccountStatus = (req, res) => {
   const { is_active } = req.body || {};
   const nextStatus = is_active ? 1 : 0;
 
-  db.run(
-    'UPDATE tenant_portal_accounts SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [nextStatus, accountId],
-    function onUpdate(err) {
-      if (err) return res.status(500).json({ error: 'Error updating tenant portal account status.' });
-      if (!this.changes) return res.status(404).json({ error: 'Tenant portal account not found.' });
-      return res.json({ message: `Tenant portal account ${nextStatus ? 'activated' : 'deactivated'} successfully.` });
+  db.get(
+    `SELECT a.id, t.status, t.move_in_date, t.move_out_date
+     FROM tenant_portal_accounts a
+     INNER JOIN tenants t ON t.id = a.tenant_id
+     WHERE a.id = ?
+     LIMIT 1`,
+    [accountId],
+    (findErr, account) => {
+      if (findErr) return res.status(500).json({ error: 'Error checking tenant portal account.' });
+      if (!account) return res.status(404).json({ error: 'Tenant portal account not found.' });
+      if (nextStatus && !isCurrentTenant(account)) {
+        return res.status(400).json({ error: 'This tenant moved out. Portal access cannot be activated and there are no dues.' });
+      }
+
+      return db.run(
+        'UPDATE tenant_portal_accounts SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [nextStatus, accountId],
+        function onUpdate(err) {
+          if (err) return res.status(500).json({ error: 'Error updating tenant portal account status.' });
+          if (!this.changes) return res.status(404).json({ error: 'Tenant portal account not found.' });
+          return res.json({ message: `Tenant portal account ${nextStatus ? 'activated' : 'deactivated'} successfully.` });
+        }
+      );
     }
   );
 };

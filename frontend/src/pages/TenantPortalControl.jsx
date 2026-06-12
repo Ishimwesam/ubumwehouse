@@ -20,11 +20,23 @@ const formatShortDate = (value) => {
 };
 
 const getDueLabel = (account) => {
+  if (account?.tenant_lifecycle_status === 'moved_out') return 'Moved out - no dues';
   const status = String(account?.due_status || '').toLowerCase();
   if (status === 'paid') return 'Paid';
+  if (status === 'moved_out') return 'Moved out - no dues';
   if (status === 'overdue') return `${Math.abs(Number(account?.days_until_due || 0))} days overdue`;
   if (status === 'due_today') return 'Due today';
   return `${Math.max(Number(account?.days_until_due || 0), 0)} days left`;
+};
+
+const getAccountStatusLabel = (account) => {
+  if (account?.tenant_lifecycle_status === 'moved_out') return 'Former';
+  return account?.is_active ? 'Active' : 'Inactive';
+};
+
+const getAccountStatusClass = (account) => {
+  if (account?.tenant_lifecycle_status === 'moved_out') return 'inactive';
+  return account?.is_active ? 'active' : 'inactive';
 };
 
 const TenantPortalControl = () => {
@@ -506,11 +518,12 @@ const TenantPortalControl = () => {
                       </button>
                       <div className="meta">{account.tenant_email || account.tenant_phone || 'No contact'}</div>
                       <div className="meta">{account.unit_number ? `${account.building_name || 'Building'} / ${account.unit_number}` : 'Unassigned'}</div>
+                      {account.portal_status_message ? <div className="meta">{account.portal_status_message}</div> : null}
                     </td>
                     <td>{account.username}</td>
                     <td>
-                      <span className={`status ${account.is_active ? 'active' : 'inactive'}`}>
-                        {account.is_active ? 'Active' : 'Inactive'}
+                      <span className={`status ${getAccountStatusClass(account)}`}>
+                        {getAccountStatusLabel(account)}
                       </span>
                     </td>
                     <td>
@@ -530,7 +543,7 @@ const TenantPortalControl = () => {
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(account)}
-                          disabled={workingId === account.id}
+                          disabled={workingId === account.id || account.tenant_lifecycle_status === 'moved_out'}
                         >
                           {account.is_active ? 'Deactivate' : 'Activate'}
                         </button>

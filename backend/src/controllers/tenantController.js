@@ -110,7 +110,21 @@ const validateStayDates = ({ moveInDate, moveOutDate }) => {
 
 const resolveTenantStatus = ({ requestedStatus, moveInDate, moveOutDate, fallbackStatus = 'active' }) => {
   if (requestedStatus === 'inactive') return 'inactive';
+  if (moveOutDate && moveOutDate <= getTodayDate()) return 'inactive';
   return requestedStatus === 'active' ? 'active' : (fallbackStatus || 'active');
+};
+
+const deactivateTenantPortalAccounts = (tenantId, callback = () => {}) => {
+  if (!tenantId) {
+    callback();
+    return;
+  }
+
+  db.run(
+    'UPDATE tenant_portal_accounts SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ?',
+    [tenantId],
+    callback
+  );
 };
 
 const syncUnitStatus = (unitId, callback = () => {}) => {
@@ -595,6 +609,13 @@ const updateTenant = (req, res) => {
 
           syncUnitStatus(existingTenant.unit_id, () => {
             syncUnitStatus(normalizedUnitId, () => {
+              if (normalizedStatus === 'inactive') {
+                deactivateTenantPortalAccounts(id, () => {
+                  res.json({ message: 'Tenant updated successfully' });
+                });
+                return;
+              }
+
               res.json({ message: 'Tenant updated successfully' });
             });
           });
@@ -768,7 +789,9 @@ const deleteTenant = (req, res) => {
         }
 
         syncUnitStatus(tenant.unit_id, () => {
-          res.json({ message: 'Tenant moved out and archived. Payment history was kept.' });
+          deactivateTenantPortalAccounts(id, () => {
+            res.json({ message: 'Tenant moved out and archived. Unit is available and portal access was disabled.' });
+          });
         });
       }
     );
