@@ -133,6 +133,12 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
+.tenant-portal-control-summary-grid article.has-due {
+  border-color: #f97316;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.14);
+}
+
 .tenant-portal-control-summary-grid article.has-unread span {
   color: #1d4ed8;
   font-weight: 800;
@@ -140,6 +146,11 @@
 
 .tenant-portal-control-summary-grid article.has-unread strong {
   color: #1e40af;
+}
+
+.tenant-portal-control-summary-grid article.has-due span,
+.tenant-portal-control-summary-grid article.has-due strong {
+  color: #9a3412;
 }
 
 .tenant-portal-control-alert {
@@ -243,6 +254,125 @@
   outline: none;
   border-color: var(--tpc-blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.tenant-portal-control-panel.real-time-dues {
+  border-color: #bfdbfe;
+  background:
+    linear-gradient(135deg, rgba(239, 246, 255, 0.82), rgba(236, 253, 245, 0.72)),
+    #ffffff;
+}
+
+.rent-dues-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rent-dues-strip article {
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.rent-dues-strip article.danger {
+  border-color: #fecaca;
+  background: #fff7f7;
+}
+
+.rent-dues-strip article.warn {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.rent-dues-strip span,
+.rent-due-row span {
+  color: var(--tpc-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.rent-dues-strip strong {
+  color: var(--tpc-ink);
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.05;
+}
+
+.rent-dues-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rent-due-row {
+  border: 1px solid #dbe7f2;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(190px, 1.2fr) repeat(3, minmax(110px, 0.65fr)) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.rent-due-row.overdue {
+  border-color: #fecaca;
+  background: linear-gradient(90deg, #fff7f7, #ffffff);
+}
+
+.rent-due-row.due_today {
+  border-color: #fed7aa;
+  background: linear-gradient(90deg, #fff7ed, #ffffff);
+}
+
+.rent-due-row.paid {
+  border-color: #bbf7d0;
+}
+
+.rent-due-row div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.rent-due-row strong {
+  color: var(--tpc-ink);
+  overflow-wrap: anywhere;
+}
+
+.rent-due-row > div:first-child strong {
+  font-size: 15px;
+}
+
+.due-chip {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: #eff6ff;
+  color: #1d4ed8 !important;
+  font-size: 12px;
+  font-weight: 900 !important;
+  white-space: nowrap;
+}
+
+.due-chip.overdue {
+  background: #fee2e2;
+  color: #991b1b !important;
+}
+
+.due-chip.due_today {
+  background: #ffedd5;
+  color: #9a3412 !important;
+}
+
+.due-chip.paid {
+  background: #dcfce7;
+  color: #166534 !important;
 }
 
 .tenant-portal-control-filter-row {
@@ -628,6 +758,18 @@
   .tenant-portal-control-panel.chat {
     position: static;
   }
+
+  .rent-dues-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rent-due-row {
+    grid-template-columns: minmax(0, 1fr) minmax(110px, auto);
+  }
+
+  .due-chip {
+    justify-self: start;
+  }
 }
 
 @media (max-width: 640px) {
@@ -653,5 +795,10 @@
   .portal-maintenance-actions {
     justify-content: flex-start;
     min-width: 0;
+  }
+
+  .rent-dues-strip,
+  .rent-due-row {
+    grid-template-columns: 1fr;
   }
 }

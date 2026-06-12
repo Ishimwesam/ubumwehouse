@@ -10,6 +10,23 @@ const formatDateTime = (value) => {
   return parsed.toLocaleString();
 };
 
+const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
+
+const formatShortDate = (value) => {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toISOString().slice(0, 10);
+};
+
+const getDueLabel = (account) => {
+  const status = String(account?.due_status || '').toLowerCase();
+  if (status === 'paid') return 'Paid';
+  if (status === 'overdue') return `${Math.abs(Number(account?.days_until_due || 0))} days overdue`;
+  if (status === 'due_today') return 'Due today';
+  return `${Math.max(Number(account?.days_until_due || 0), 0)} days left`;
+};
+
 const TenantPortalControl = () => {
   const [accounts, setAccounts] = useState([]);
   const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0 });
@@ -65,6 +82,33 @@ const TenantPortalControl = () => {
   const openMaintenanceRequests = useMemo(
     () => maintenanceRequests.filter((request) => !['resolved', 'closed'].includes(String(request.status || '').toLowerCase())),
     [maintenanceRequests]
+  );
+
+  const dueAccounts = useMemo(
+    () => accounts
+      .filter((account) => Number(account.remaining_amount || 0) > 0)
+      .sort((a, b) => Number(a.days_until_due || 0) - Number(b.days_until_due || 0)),
+    [accounts]
+  );
+
+  const overdueAccounts = useMemo(
+    () => dueAccounts.filter((account) => account.due_status === 'overdue'),
+    [dueAccounts]
+  );
+
+  const dueTodayAccounts = useMemo(
+    () => dueAccounts.filter((account) => account.due_status === 'due_today'),
+    [dueAccounts]
+  );
+
+  const totalRemainingDue = useMemo(
+    () => accounts.reduce((sum, account) => sum + Number(account.remaining_amount || 0), 0),
+    [accounts]
+  );
+
+  const totalPendingDue = useMemo(
+    () => accounts.reduce((sum, account) => sum + Number(account.pending_amount || 0), 0),
+    [accounts]
   );
 
   const loadAccounts = async () => {
@@ -162,6 +206,12 @@ const TenantPortalControl = () => {
         if (payload?.event_type === 'maintenance_request') {
           emitAppToast(`Live update: maintenance request${payload.tenant_name ? ` from ${payload.tenant_name}` : ''}`, 'realtime');
           loadMaintenanceRequests();
+          return;
+        }
+
+        if (payload?.event_type === 'tenant_payment_update' || payload?.event_type === 'tenant_rent_due') {
+          emitAppToast('Live update: rent dues changed', 'realtime');
+          loadAccounts();
           return;
         }
 
@@ -344,10 +394,68 @@ const TenantPortalControl = () => {
           <span>Announcements</span>
           <strong>{announcements.length}</strong>
         </article>
+        <article className={overdueAccounts.length > 0 ? 'has-due' : ''}>
+          <span>Real-Time Due</span>
+          <strong>{formatCurrency(totalRemainingDue)}</strong>
+        </article>
       </section>
 
       {error ? <div className="tenant-portal-control-alert error">{error}</div> : null}
       {success ? <div className="tenant-portal-control-alert success">{success}</div> : null}
+
+      <section className="tenant-portal-control-panel real-time-dues">
+        <div className="tenant-portal-control-panel-header">
+          <h2>Real-Time Rent Dues</h2>
+          <span className={`stream-pill ${streamLive ? 'live' : 'offline'}`}>
+            {streamLive ? 'Live dues on' : 'Live reconnecting...'}
+          </span>
+        </div>
+
+        <div className="rent-dues-strip">
+          <article>
+            <span>Total Outstanding</span>
+            <strong>{formatCurrency(totalRemainingDue)}</strong>
+          </article>
+          <article className={overdueAccounts.length > 0 ? 'danger' : ''}>
+            <span>Overdue Tenants</span>
+            <strong>{overdueAccounts.length}</strong>
+          </article>
+          <article className={dueTodayAccounts.length > 0 ? 'warn' : ''}>
+            <span>Due Today</span>
+            <strong>{dueTodayAccounts.length}</strong>
+          </article>
+          <article>
+            <span>Pending Confirmation</span>
+            <strong>{formatCurrency(totalPendingDue)}</strong>
+          </article>
+        </div>
+
+        <div className="rent-dues-list">
+          {dueAccounts.length ? dueAccounts.slice(0, 10).map((account) => (
+            <article key={account.id} className={`rent-due-row ${account.due_status || 'upcoming'}`}>
+              <div>
+                <strong>{account.tenant_name || 'Unknown tenant'}</strong>
+                <span>{account.building_name || 'Building'} / Unit {account.unit_number || '-'}</span>
+              </div>
+              <div>
+                <span>Period</span>
+                <strong>{account.due_period || '-'}</strong>
+              </div>
+              <div>
+                <span>Due Date</span>
+                <strong>{formatShortDate(account.due_date)}</strong>
+              </div>
+              <div>
+                <span>Remaining</span>
+                <strong>{formatCurrency(account.remaining_amount)}</strong>
+              </div>
+              <span className={`due-chip ${account.due_status || 'upcoming'}`}>{getDueLabel(account)}</span>
+            </article>
+          )) : (
+            <div className="empty">No live rent dues right now.</div>
+          )}
+        </div>
+      </section>
 
       <section className="tenant-portal-control-layout">
         <article className="tenant-portal-control-panel">

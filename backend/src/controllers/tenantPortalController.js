@@ -1030,7 +1030,25 @@ const listTenantPortalAccounts = (req, res) => {
   db.all(
     `SELECT a.id, a.tenant_id, a.username, a.is_active, a.last_login_at, a.created_at,
             t.full_name as tenant_name, t.email as tenant_email, t.phone as tenant_phone,
+            t.move_in_date, t.move_out_date,
             u.unit_number, b.name as building_name,
+            ${currentTenantRentExpression} as monthly_rent,
+            (
+              SELECT COALESCE(SUM(p.amount), 0)
+              FROM payments p
+              WHERE p.tenant_id = t.id
+                AND p.unit_id = t.unit_id
+                AND ${paymentPeriodForAlias('p')} = strftime('%Y-%m', 'now')
+                AND COALESCE(p.payment_status, 'confirmed') = 'confirmed'
+            ) as current_period_paid,
+            (
+              SELECT COALESCE(SUM(p.amount), 0)
+              FROM payments p
+              WHERE p.tenant_id = t.id
+                AND p.unit_id = t.unit_id
+                AND ${paymentPeriodForAlias('p')} = strftime('%Y-%m', 'now')
+                AND COALESCE(p.payment_status, 'confirmed') = 'pending'
+            ) as pending_amount,
             (
               SELECT COUNT(*)
               FROM tenant_portal_messages m
@@ -1045,17 +1063,37 @@ const listTenantPortalAccounts = (req, res) => {
     (err, rows = []) => {
       if (err) return res.status(500).json({ error: 'Error loading tenant portal accounts.' });
 
-      const accounts = rows.map((row) => ({
-        ...row,
-        is_active: Boolean(row.is_active)
-      }));
+      const accounts = rows.map((row) => {
+        const monthlyRent = parseFloat(row.monthly_rent || 0);
+        const currentPaid = parseFloat(row.current_period_paid || 0);
+        const pendingAmount = parseFloat(row.pending_amount || 0);
+        const due = getCurrentTenantDueInfo(row, monthlyRent, currentPaid);
+
+        return {
+          ...row,
+          is_active: Boolean(row.is_active),
+          monthly_rent: monthlyRent,
+          current_period_paid: currentPaid,
+          pending_amount: pendingAmount,
+          due_period: due.period,
+          due_date: due.due_date,
+          due_status: due.status,
+          days_until_due: due.days_until_due,
+          remaining_amount: due.remaining_amount
+        };
+      });
 
       return res.json({
         accounts,
         summary: {
           total: accounts.length,
           active: accounts.filter((account) => account.is_active).length,
-          inactive: accounts.filter((account) => !account.is_active).length
+          inactive: accounts.filter((account) => !account.is_active).length,
+          rent_due: accounts.filter((account) => Number(account.remaining_amount || 0) > 0).length,
+          overdue: accounts.filter((account) => account.due_status === 'overdue').length,
+          due_today: accounts.filter((account) => account.due_status === 'due_today').length,
+          total_remaining_amount: accounts.reduce((sum, account) => sum + Number(account.remaining_amount || 0), 0),
+          total_pending_amount: accounts.reduce((sum, account) => sum + Number(account.pending_amount || 0), 0)
         }
       });
     }
