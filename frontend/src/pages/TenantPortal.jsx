@@ -62,7 +62,15 @@ const PortalGlyph = ({ type }) => {
     document: [<path key="a" d="M7 3h7l4 4v14H7z" />, <path key="b" d="M14 3v5h5M9.5 12h5M9.5 16h7" />],
     megaphone: [<path key="a" d="M4 11v2a2 2 0 0 0 2 2h2l7 4V5L8 9H6a2 2 0 0 0-2 2z" />, <path key="b" d="M18 9.5a3.5 3.5 0 0 1 0 5" />],
     lock: [<path key="a" d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" />],
-    support: [<path key="a" d="M4 12a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2h-2" />, <path key="b" d="M4 12v3a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2zM20 12v3a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM12 19h4" />]
+    support: [<path key="a" d="M4 12a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2h-2" />, <path key="b" d="M4 12v3a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2zM20 12v3a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM12 19h4" />],
+    dollar: [<path key="a" d="M12 2v20M16.5 7.5A4.5 4.5 0 0 0 12 5c-2.5 0-4.5 1.3-4.5 3s2 3 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3a5.2 5.2 0 0 1-4.8-2.7" />],
+    receipt: [<path key="a" d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1z" />, <path key="b" d="M10 8h4M10 12h4M10 16h3" />],
+    folder: [<path key="a" d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />],
+    phone: [<path key="a" d="M8 4h3l1.5 4-2 1.2a10 10 0 0 0 4.3 4.3l1.2-2 4 1.5v3a2 2 0 0 1-2 2A14 14 0 0 1 6 6a2 2 0 0 1 2-2z" />],
+    question: [<path key="a" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" />, <path key="b" d="M9.5 9a2.6 2.6 0 0 1 5 1c0 2-2.5 2.1-2.5 4M12 18h.01" />],
+    settings: [<path key="a" d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z" />, <path key="b" d="m19 12 2-1-2-3-2 .7a7 7 0 0 0-1.4-.8L15.2 5h-3.4l-.4 2.6a7 7 0 0 0-1.4.8L8 7.7l-2 3 2 1a7 7 0 0 0 0 1.6l-2 1 2 3 2-.7a7 7 0 0 0 1.4.8l.4 2.6h3.4l.4-2.6a7 7 0 0 0 1.4-.8l2 .7 2-3-2-1a7 7 0 0 0 0-1.6z" />],
+    shield: [<path key="a" d="M12 3 5 6v5c0 4.4 2.8 8.4 7 10 4.2-1.6 7-5.6 7-10V6z" />, <path key="b" d="m9.5 12 1.6 1.6 3.4-3.6" />],
+    logout: [<path key="a" d="M14 8V5a2 2 0 0 0-2-2H6v18h6a2 2 0 0 0 2-2v-3" />, <path key="b" d="M10 12h10M17 9l3 3-3 3" />]
   };
 
   return (
@@ -142,7 +150,8 @@ const TenantPortal = () => {
   const dueDate = rentDue.due_date || '';
   const daysUntilDue = Number(rentDue.days_until_due ?? 0);
   const dueDaysText = Math.max(daysUntilDue, 0);
-  const tenantPortalBrandName = 'IHURIRO HOUSE';
+  const tenantPortalBrandName = 'UBUMWE HOUSE SYSTEM';
+  const tenantPortalEmail = 'ubumwehouseltd@gmail.com';
   const propertyName = tenant?.building_name || accountName;
   const currentPeriodLabel = rentDue.period || currentPeriod();
   const recentPayments = payments.slice(0, 3);
@@ -560,7 +569,7 @@ const TenantPortal = () => {
               <strong>{text.needHelp}</strong>
               <p>{text.hereForYou}</p>
               <a href="tel:+250788123456">+250 788 123 456</a>
-              <a href="mailto:info@ihurirohouse.rw">info@ihurirohouse.rw</a>
+              <a href={`mailto:${tenantPortalEmail}`}>{tenantPortalEmail}</a>
             </div>
 
             <div className="tp-sidebar-actions">
@@ -611,27 +620,102 @@ const TenantPortal = () => {
             </header>
 
             {mobileMenuOpen ? (
-              <section className="tp-mobile-menu-panel" aria-label="Tenant quick menu">
-                <TenantLanguageSelect />
-                <TenantNotificationPermissionButton inline />
-                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/upload'); }}>{text.uploadReceipt}</button>
-                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>{text.documentsReceipts}</button>
-                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/announcements'); }}>{text.announcementsTitle}</button>
-                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>{text.support}</button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    tenantPortalService.clearToken();
-                    setPortalData(null);
-                    setMessages([]);
-                    writeCachedPortalData(null);
-                    setMobileMenuOpen(false);
-                    setBootLoading(false);
-                  }}
-                >
-                  {text.logout}
-                </button>
-              </section>
+              <div className="tp-mobile-drawer-shell" role="presentation">
+                <button className="tp-mobile-drawer-backdrop" type="button" aria-label="Close tenant menu" onClick={() => setMobileMenuOpen(false)} />
+                <aside className="tp-mobile-menu-panel" aria-label="Tenant app sidebar">
+                  <button className="tp-mobile-menu-close" type="button" aria-label="Close tenant menu" onClick={() => setMobileMenuOpen(false)}>x</button>
+                  <div className="tp-mobile-menu-brand">
+                    <div className="tp-house-logo" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                    <strong>{tenantPortalBrandName}</strong>
+                    <small>{text.homePriority}</small>
+                  </div>
+                  <div className="tp-mobile-menu-list">
+                    <button className="active" type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal'); }}>
+                      <span><PortalGlyph type="home" /></span>
+                      <b>Dashboard</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/upload'); }}>
+                      <span><PortalGlyph type="dollar" /></span>
+                      <b>Pay Rent</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
+                      <span><PortalGlyph type="receipt" /></span>
+                      <b>Payment History</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
+                      <span><PortalGlyph type="document" /></span>
+                      <b>Receipts</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/announcements'); }}>
+                      <span><PortalGlyph type="bell" /></span>
+                      <b>Notifications</b>
+                      {notificationCount > 0 ? <em>{notificationCount}</em> : null}
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>
+                      <span><PortalGlyph type="message" /></span>
+                      <b>Messages</b>
+                      {unreadMessageCount > 0 ? <em>{unreadMessageCount}</em> : null}
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/maintenance'); }}>
+                      <span><PortalGlyph type="wrench" /></span>
+                      <b>Maintenance Requests</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); scrollTo(profileSectionRef); }}>
+                      <span><PortalGlyph type="document" /></span>
+                      <b>My Lease</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/payments'); }}>
+                      <span><PortalGlyph type="folder" /></span>
+                      <b>Documents</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
+                      <span><PortalGlyph type="user" /></span>
+                      <b>Profile</b>
+                    </button>
+                    <hr />
+                    <a href={`mailto:${tenantPortalEmail}`}>
+                      <span><PortalGlyph type="phone" /></span>
+                      <b>Contact Management</b>
+                    </a>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/messages'); }}>
+                      <span><PortalGlyph type="question" /></span>
+                      <b>Help & Support</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
+                      <span><PortalGlyph type="settings" /></span>
+                      <b>Settings</b>
+                    </button>
+                    <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/tenant-portal/profile'); }}>
+                      <span><PortalGlyph type="shield" /></span>
+                      <b>Privacy & Security</b>
+                    </button>
+                    <hr />
+                    <button
+                      className="logout"
+                      type="button"
+                      onClick={() => {
+                        tenantPortalService.clearToken();
+                        setPortalData(null);
+                        setMessages([]);
+                        writeCachedPortalData(null);
+                        setMobileMenuOpen(false);
+                        setBootLoading(false);
+                      }}
+                    >
+                      <span><PortalGlyph type="logout" /></span>
+                      <b>{text.logout}</b>
+                    </button>
+                  </div>
+                  <div className="tp-mobile-menu-secure">
+                    <span><PortalGlyph type="shield" /></span>
+                    <p>{text.secureProtected}</p>
+                  </div>
+                </aside>
+              </div>
             ) : null}
 
             <header className="tp-portal-topbar">
