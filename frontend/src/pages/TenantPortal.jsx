@@ -154,7 +154,9 @@ const TenantPortal = () => {
   const rentDue = tenant?.rent_due || {};
   const currentBalance = Number(rentDue.remaining_amount ?? tenant?.balance ?? 0);
   const currentOutstandingBalance = Number(tenant?.balance || 0);
-  const isNextPaymentPeriod = currentOutstandingBalance <= 0 && currentBalance > 0 && rentDue.period && rentDue.period !== currentPeriod();
+  const isNextPaymentPeriod = Boolean(rentDue.is_next_payment) || (
+    currentOutstandingBalance <= 0 && currentBalance > 0 && rentDue.period && rentDue.period !== currentPeriod()
+  );
   const dueDate = rentDue.due_date || '';
   const daysUntilDue = Number(rentDue.days_until_due ?? 0);
   const dueDaysText = Math.max(daysUntilDue, 0);
@@ -165,7 +167,9 @@ const TenantPortal = () => {
   const recentPayments = payments.slice(0, 3);
   const notificationCount = Math.min(99, announcements.length + openMaintenanceRequests.length + (currentOutstandingBalance > 0 ? 1 : 0));
   const unreadMessageCount = Math.min(99, messages.filter((message) => message.sender_type === 'admin').length);
-  const bannerText = currentBalance <= 0
+  const bannerText = isNextPaymentPeriod
+    ? formatTenantText(text.nextPaymentMessage || 'Your next rent payment is due on {date}.', { date: formatShortDate(dueDate) })
+    : currentBalance <= 0
     ? text.rentPaid
     : daysUntilDue < 0
       ? text.rentOverdueBanner
@@ -777,7 +781,7 @@ const TenantPortal = () => {
 
             <section className="tp-portal-rent-alert">
               <span className="tp-info-dot">i</span>
-              <p><strong>{bannerText}</strong> {currentBalance > 0 ? text.avoidLateFees : ''}</p>
+              <p><strong>{bannerText}</strong> {currentOutstandingBalance > 0 ? text.avoidLateFees : ''}</p>
               {currentBalance > 0 ? (
                 <button type="button" className="tp-btn-primary" onClick={() => navigate('/tenant-portal/upload#receipt')}>
                   {text.payRentNow}

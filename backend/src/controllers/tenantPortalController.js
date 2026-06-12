@@ -100,6 +100,7 @@ const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid, options = {})
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   let paidAmount = currentPaid;
   let remainingAmount = Math.max(monthlyRent - currentPaid, 0);
+  let isNextPayment = false;
 
   let status = 'upcoming';
   if (remainingAmount <= 0) {
@@ -109,6 +110,7 @@ const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid, options = {})
       paidAmount = 0;
       remainingAmount = monthlyRent;
       status = 'upcoming';
+      isNextPayment = true;
     }
   }
 
@@ -124,7 +126,8 @@ const getCurrentTenantDueInfo = (tenant, monthlyRent, currentPaid, options = {})
     monthly_rent: monthlyRent,
     paid_amount: paidAmount,
     pending_amount: parseFloat(tenant.pending_amount || 0),
-    remaining_amount: remainingAmount
+    remaining_amount: remainingAmount,
+    is_next_payment: isNextPayment
   };
 };
 

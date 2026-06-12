@@ -23,6 +23,14 @@ const formatDateTime = (value) => {
 };
 
 const getDueCopy = (rentDue = {}, text) => {
+  if (rentDue.is_next_payment) {
+    return {
+      tone: 'upcoming',
+      title: text.nextPaymentDue || 'Next Payment Due',
+      message: formatTenantText(text.nextPaymentMessage || 'Your next rent payment is due on {date}.', { date: formatDate(rentDue.due_date) })
+    };
+  }
+
   if (rentDue.status === 'paid') {
     return {
       tone: 'paid',
@@ -65,6 +73,7 @@ const TenantRentDueNotice = ({ tenant, checkedAt, onUpload }) => {
   const paid = Number(rentDue.paid_amount || tenant?.current_period_paid || 0);
   const monthlyRent = Number(rentDue.monthly_rent || tenant?.monthly_rent || 0);
   const syncedAt = formatDateTime(checkedAt);
+  const isNextPayment = Boolean(rentDue.is_next_payment);
 
   return (
     <section className={`tp-rent-due-notice ${copy.tone}`} aria-live="polite">
@@ -79,15 +88,15 @@ const TenantRentDueNotice = ({ tenant, checkedAt, onUpload }) => {
       </div>
       <div className="tp-rent-due-amounts">
         <div>
-          <span>{text.dueAmount}</span>
+          <span>{isNextPayment ? (text.nextPaymentAmount || 'Next Payment Amount') : text.dueAmount}</span>
           <strong>{formatCurrency(remaining)}</strong>
         </div>
         <div>
-          <span>Paid this period</span>
+          <span>{text.paidAmount || 'Paid Amount'}</span>
           <strong>{formatCurrency(paid)}</strong>
         </div>
         <div>
-          <span>Monthly rent</span>
+          <span>{text.monthlyRent || 'Monthly Rent'}</span>
           <strong>{formatCurrency(monthlyRent)}</strong>
         </div>
         <div>
