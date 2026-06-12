@@ -1139,19 +1139,19 @@ const TenantMobileAppHeader = ({
                 {icons.dashboard}
                 <b>{copy.dashboard}</b>
               </button>
-              <button className={activeItem === 'upload' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/upload')}>
+              <button className={activeItem === 'upload' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/upload#receipt')}>
                 {icons.payments}
                 <b>{copy.payRent}</b>
               </button>
-              <button className={activeItem === 'payments' || activeItem === 'history' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/payments')}>
+              <button className={activeItem === 'payments' || activeItem === 'history' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/payments#history')}>
                 {icons.history}
                 <b>{copy.paymentHistory}</b>
               </button>
-              <button type="button" onClick={() => goTo('/tenant-portal/payments')}>
+              <button className={activeItem === 'documents' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/payments#receipts')}>
                 {icons.documents}
                 <b>{copy.receipts}</b>
               </button>
-              <button className={activeItem === 'announcements' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/announcements')}>
+              <button className={activeItem === 'announcements' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/announcements#notices')}>
                 {icons.announcements}
                 <b>{copy.notifications}</b>
                 {notificationCount > 0 ? <em>{notificationCount > 99 ? '99+' : notificationCount}</em> : null}
@@ -1165,11 +1165,11 @@ const TenantMobileAppHeader = ({
                 {icons.maintenance}
                 <b>{copy.maintenanceTitle}</b>
               </button>
-              <button type="button" onClick={() => goTo('/tenant-portal')}>
+              <button className={activeItem === 'lease' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/profile#lease')}>
                 {icons.lease}
                 <b>{copy.lease}</b>
               </button>
-              <button type="button" onClick={() => goTo('/tenant-portal/payments')}>
+              <button className={activeItem === 'documents' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/payments#receipts')}>
                 {icons.documents}
                 <b>{copy.documents}</b>
               </button>
@@ -1182,15 +1182,15 @@ const TenantMobileAppHeader = ({
                 {icons.support}
                 <b>{copy.contactManagement}</b>
               </a>
-              <button type="button" onClick={() => goTo('/tenant-portal/messages')}>
+              <button className={activeItem === 'support' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/messages#support')}>
                 {icons.support}
                 <b>{copy.helpSupport}</b>
               </button>
-              <button type="button" onClick={() => goTo('/tenant-portal/profile')}>
+              <button className={activeItem === 'password' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/profile#password')}>
                 {icons.password}
                 <b>{copy.settings}</b>
               </button>
-              <button type="button" onClick={() => goTo('/tenant-portal/profile')}>
+              <button className={activeItem === 'password' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/profile#password')}>
                 {icons.password}
                 <b>{copy.privacySecurity}</b>
               </button>
