@@ -107,7 +107,33 @@ const navTranslations = {
     alertsOn: 'Alerts On',
     enableAlerts: 'Enable Alerts',
     enabling: 'Enabling...',
-    language: 'Language'
+    language: 'Language',
+    rentPaid: 'Rent paid',
+    rentPaidMessage: 'Your rent for {period} is fully paid.',
+    rentOverdue: 'Rent overdue',
+    rentOverdueMessage: 'Your rent was due on {date}. Please upload your payment receipt.',
+    rentDueToday: 'Rent due today',
+    rentDueTodayMessage: 'Your rent is due today. Please upload your payment receipt after paying.',
+    rentDueReminder: 'Rent due reminder',
+    rentDueReminderMessage: 'Your rent is due on {date}.',
+    currentPeriod: 'Current period',
+    pendingConfirmation: '{amount} is waiting for admin confirmation.',
+    dueAmount: 'Due amount',
+    dueDate: 'Due date',
+    uploadReceipt: 'Upload Receipt',
+    monthlyRent: 'Monthly Rent',
+    paidAmount: 'Paid Amount',
+    outstandingBalance: 'Outstanding Balance',
+    paymentHistory: 'Payment History',
+    paymentHistorySubtitle: 'All receipts and payment records for your tenant portal account.',
+    totalPaid: 'Total Paid',
+    lastPaymentDate: 'Last Payment Date',
+    pendingPayments: 'Pending Payments',
+    backToDashboard: 'Back To Dashboard',
+    uploadNewReceipt: 'Upload New Receipt',
+    downloadStatement: 'Download Statement',
+    contactAdmin: 'Contact Admin',
+    paymentsTitle: 'Payments'
   },
   fr: {
     dashboard: 'Accueil',
@@ -121,7 +147,33 @@ const navTranslations = {
     alertsOn: 'Alertes',
     enableAlerts: 'Activer',
     enabling: 'Activation...',
-    language: 'Langue'
+    language: 'Langue',
+    rentPaid: 'Loyer paye',
+    rentPaidMessage: 'Votre loyer pour {period} est entierement paye.',
+    rentOverdue: 'Loyer en retard',
+    rentOverdueMessage: 'Votre loyer etait du le {date}. Veuillez televerser le recu de paiement.',
+    rentDueToday: 'Loyer du aujourd hui',
+    rentDueTodayMessage: 'Votre loyer est du aujourd hui. Veuillez televerser le recu apres paiement.',
+    rentDueReminder: 'Rappel de loyer',
+    rentDueReminderMessage: 'Votre loyer est du le {date}.',
+    currentPeriod: 'Periode actuelle',
+    pendingConfirmation: '{amount} attend la confirmation de l admin.',
+    dueAmount: 'Montant du',
+    dueDate: 'Date due',
+    uploadReceipt: 'Televerser recu',
+    monthlyRent: 'Loyer mensuel',
+    paidAmount: 'Montant paye',
+    outstandingBalance: 'Solde restant',
+    paymentHistory: 'Historique paiements',
+    paymentHistorySubtitle: 'Tous les recus et paiements de votre compte locataire.',
+    totalPaid: 'Total paye',
+    lastPaymentDate: 'Dernier paiement',
+    pendingPayments: 'Paiements en attente',
+    backToDashboard: 'Retour',
+    uploadNewReceipt: 'Nouveau recu',
+    downloadStatement: 'Telecharger releve',
+    contactAdmin: 'Contacter admin',
+    paymentsTitle: 'Paiements'
   },
   rw: {
     dashboard: 'Ahabanza',
@@ -135,7 +187,33 @@ const navTranslations = {
     alertsOn: 'Birakora',
     enableAlerts: 'Fungura',
     enabling: 'Tegereza...',
-    language: 'Ururimi'
+    language: 'Ururimi',
+    rentPaid: 'Ubukode bwishyuwe',
+    rentPaidMessage: 'Ubukode bwa {period} bwishyuwe bwose.',
+    rentOverdue: 'Ubukode bwararenze',
+    rentOverdueMessage: 'Ubukode bwagombaga kwishyurwa ku wa {date}. Ohereza risiti y ubwishyu.',
+    rentDueToday: 'Ubukode ni uyu munsi',
+    rentDueTodayMessage: 'Ubukode bugomba kwishyurwa uyu munsi. Ohereza risiti nyuma yo kwishyura.',
+    rentDueReminder: 'Kwibutsa ubukode',
+    rentDueReminderMessage: 'Ubukode buzishyurwa ku wa {date}.',
+    currentPeriod: 'Ukwezi kurebwa',
+    pendingConfirmation: '{amount} iri gutegereza kwemezwa na admin.',
+    dueAmount: 'Amafaranga asigaye',
+    dueDate: 'Itariki yo kwishyura',
+    uploadReceipt: 'Ohereza risiti',
+    monthlyRent: 'Ubukode bw ukwezi',
+    paidAmount: 'Ayishyuwe',
+    outstandingBalance: 'Asigaye',
+    paymentHistory: 'Amateka y ubwishyu',
+    paymentHistorySubtitle: 'Risiti n ubwishyu bwa konti yawe y umupangayi.',
+    totalPaid: 'Yose yishyuwe',
+    lastPaymentDate: 'Ubwishyu bwa nyuma',
+    pendingPayments: 'Ibitegereje',
+    backToDashboard: 'Subira',
+    uploadNewReceipt: 'Risiti nshya',
+    downloadStatement: 'Kuramo raporo',
+    contactAdmin: 'Vugana na admin',
+    paymentsTitle: 'Ubwishyu'
   }
 };
 
@@ -174,6 +252,10 @@ const useTenantLanguage = () => {
 
   return [language, navTranslations[language] || navTranslations.en];
 };
+
+const formatTenantText = (template = '', values = {}) => (
+  String(template).replace(/\{(\w+)\}/g, (_match, key) => values[key] ?? '')
+);
 
 const TenantLanguageSelect = ({ compact = false }) => {
   const [language, copy] = useTenantLanguage();
@@ -476,4 +558,4 @@ const TenantPortalNav = ({ current = '', mobileOnly = false, onDashboardClick })
 };
 
 export default TenantPortalNav;
-export { TenantLanguageSelect };
+export { formatTenantText, TenantLanguageSelect, useTenantLanguage };

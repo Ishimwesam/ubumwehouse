@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getReadableApiError, resolveTenantUploadUrl, tenantPortalService } from '../services/api';
 import TenantRentDueNotice from '../components/TenantRentDueNotice';
-import TenantPortalNav from '../components/TenantPortalNav';
+import TenantPortalNav, { useTenantLanguage } from '../components/TenantPortalNav';
 import '../styles/tenant-portal.css';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
@@ -34,6 +34,7 @@ const formatPaymentStatus = (value = '') => {
 
 const TenantPortalPayments = () => {
   const navigate = useNavigate();
+  const [, text] = useTenantLanguage();
   const [portalData, setPortalData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -123,11 +124,11 @@ const TenantPortalPayments = () => {
       <section className="tp-main tp-subpage-main">
         <header className="tp-header">
           <div>
-            <h1>{companyName} Payment History</h1>
-            <p>All receipts and payment records for your tenant portal account.</p>
+            <h1>{companyName} {text.paymentHistory}</h1>
+            <p>{text.paymentHistorySubtitle}</p>
           </div>
           <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal')}>
-            Back To Dashboard
+            {text.backToDashboard}
           </button>
         </header>
 
@@ -138,25 +139,25 @@ const TenantPortalPayments = () => {
         <section className="tp-stats-row" style={{ marginTop: 14 }}>
           <article className="tp-stat-card">
             <div>
-              <span>Total Paid</span>
+              <span>{text.totalPaid}</span>
               <strong className="paid">{formatCurrency(totalPaid)}</strong>
             </div>
           </article>
           <article className="tp-stat-card">
             <div>
-              <span>Outstanding Balance</span>
+              <span>{text.outstandingBalance}</span>
               <strong className="outstanding">{formatCurrency(outstandingBalance)}</strong>
             </div>
           </article>
           <article className="tp-stat-card">
             <div>
-              <span>Last Payment Date</span>
+              <span>{text.lastPaymentDate}</span>
               <strong>{formatDate(lastPaymentDate)}</strong>
             </div>
           </article>
           <article className="tp-stat-card">
             <div>
-              <span>Pending Payments</span>
+              <span>{text.pendingPayments}</span>
               <strong>{pendingCount}</strong>
             </div>
           </article>
@@ -164,11 +165,11 @@ const TenantPortalPayments = () => {
 
         <section className="tp-card" style={{ marginTop: 14 }}>
           <div className="tp-card-header-row">
-            <h2>Payments</h2>
+            <h2>{text.paymentsTitle}</h2>
             <div className="tp-payment-actions">
-              <button className="tp-btn-primary" type="button" onClick={() => navigate('/tenant-portal/upload')}>Upload New Receipt</button>
-              <button className="tp-btn-secondary" type="button" onClick={handleDownloadStatement}>Download Statement</button>
-              <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal/messages')}>Contact Admin</button>
+              <button className="tp-btn-primary" type="button" onClick={() => navigate('/tenant-portal/upload')}>{text.uploadNewReceipt}</button>
+              <button className="tp-btn-secondary" type="button" onClick={handleDownloadStatement}>{text.downloadStatement}</button>
+              <button className="tp-btn-secondary" type="button" onClick={() => navigate('/tenant-portal/messages')}>{text.contactAdmin}</button>
             </div>
           </div>
           {loading ? <p className="tp-empty">Loading payment history...</p> : null}

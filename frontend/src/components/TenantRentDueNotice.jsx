@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatTenantText, useTenantLanguage } from './TenantPortalNav';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} RWF`;
 
@@ -9,67 +10,68 @@ const formatDate = (value) => {
   return parsed.toISOString().slice(0, 10);
 };
 
-const getDueCopy = (rentDue = {}) => {
+const getDueCopy = (rentDue = {}, text) => {
   if (rentDue.status === 'paid') {
     return {
       tone: 'paid',
-      title: 'Rent paid',
-      message: `Your rent for ${rentDue.period || 'this month'} is fully paid.`
+      title: text.rentPaid,
+      message: formatTenantText(text.rentPaidMessage, { period: rentDue.period || text.currentPeriod })
     };
   }
 
   if (rentDue.status === 'overdue') {
     return {
       tone: 'overdue',
-      title: 'Rent overdue',
-      message: `Your rent was due on ${formatDate(rentDue.due_date)}. Please upload your payment receipt.`
+      title: text.rentOverdue,
+      message: formatTenantText(text.rentOverdueMessage, { date: formatDate(rentDue.due_date) })
     };
   }
 
   if (rentDue.status === 'due_today') {
     return {
       tone: 'due_today',
-      title: 'Rent due today',
-      message: 'Your rent is due today. Please upload your payment receipt after paying.'
+      title: text.rentDueToday,
+      message: text.rentDueTodayMessage
     };
   }
 
   return {
     tone: 'upcoming',
-    title: 'Rent due reminder',
-    message: `Your rent is due on ${formatDate(rentDue.due_date)}.`
+    title: text.rentDueReminder,
+    message: formatTenantText(text.rentDueReminderMessage, { date: formatDate(rentDue.due_date) })
   };
 };
 
 const TenantRentDueNotice = ({ tenant, onUpload }) => {
+  const [, text] = useTenantLanguage();
   const rentDue = tenant?.rent_due;
   if (!rentDue) return null;
 
-  const copy = getDueCopy(rentDue);
+  const copy = getDueCopy(rentDue, text);
   const remaining = Number(rentDue.remaining_amount || 0);
   const pending = Number(rentDue.pending_amount || 0);
 
   return (
     <section className={`tp-rent-due-notice ${copy.tone}`} aria-live="polite">
       <div className="tp-rent-due-copy">
-        <span>{rentDue.period || 'Current period'}</span>
+        <span>{rentDue.period || text.currentPeriod}</span>
         <h2>{copy.title}</h2>
         <p>{copy.message}</p>
-        {pending > 0 ? <small>{formatCurrency(pending)} is waiting for admin confirmation.</small> : null}
+        {pending > 0 ? <small>{formatTenantText(text.pendingConfirmation, { amount: formatCurrency(pending) })}</small> : null}
       </div>
       <div className="tp-rent-due-amounts">
         <div>
-          <span>Due amount</span>
+          <span>{text.dueAmount}</span>
           <strong>{formatCurrency(remaining)}</strong>
         </div>
         <div>
-          <span>Due date</span>
+          <span>{text.dueDate}</span>
           <strong>{formatDate(rentDue.due_date)}</strong>
         </div>
       </div>
       {remaining > 0 && onUpload ? (
         <button type="button" className="tp-btn-primary" onClick={onUpload}>
-          Upload Receipt
+          {text.uploadReceipt}
         </button>
       ) : null}
     </section>

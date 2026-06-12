@@ -4,7 +4,7 @@ import { getReadableApiError, isRecoverableApiError, resolveTenantUploadUrl, ten
 import ReceiptCaptureInput from '../components/ReceiptCaptureInput';
 import TenantRentDueNotice from '../components/TenantRentDueNotice';
 import TenantPortalInstallPrompt from '../components/TenantPortalInstallPrompt';
-import TenantPortalNav, { TenantLanguageSelect, TenantNotificationPermissionButton } from '../components/TenantPortalNav';
+import TenantPortalNav, { TenantLanguageSelect, TenantNotificationPermissionButton, useTenantLanguage } from '../components/TenantPortalNav';
 import { StatIconCheck, StatIconFile, StatIconWallet } from '../components/TenantPortalStatIcons';
 import { registerTenantPushSubscription, requestNotificationPermission } from '../utils/tenantNotification';
 import '../styles/tenant-portal.css';
@@ -52,6 +52,7 @@ const portalBrandText = 'UBUMWE HOUSE LTD TENANT PORTAL';
 
 const TenantPortal = () => {
   const navigate = useNavigate();
+  const [, text] = useTenantLanguage();
   const [accessForm, setAccessForm] = useState({ identifier: '', accessCode: '' });
   const [mode, setMode] = useState('login');
   const [credentialForm, setCredentialForm] = useState({ username: '', password: '', confirmPassword: '', remember: true });
@@ -548,21 +549,21 @@ const TenantPortal = () => {
               <article className="tp-stat-card">
                 <div className="tp-stat-icon rent"><StatIconWallet /></div>
                 <div>
-                  <span>Monthly Rent</span>
+                  <span>{text.monthlyRent}</span>
                   <strong>{formatCurrency(tenant.monthly_rent)}</strong>
                 </div>
               </article>
               <article className="tp-stat-card">
                 <div className="tp-stat-icon paid"><StatIconCheck /></div>
                 <div>
-                  <span>Paid Amount</span>
+                  <span>{text.paidAmount}</span>
                   <strong className="paid">{formatCurrency(tenant.current_period_paid)}</strong>
                 </div>
               </article>
               <article className="tp-stat-card">
                 <div className="tp-stat-icon outstanding"><StatIconFile /></div>
                 <div>
-                  <span>Outstanding Balance</span>
+                  <span>{text.outstandingBalance}</span>
                   <strong className="outstanding">{formatCurrency(tenant.balance)}</strong>
                 </div>
               </article>
