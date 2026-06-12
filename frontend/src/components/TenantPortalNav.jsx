@@ -41,6 +41,12 @@ const icons = {
       <path d="M4 9h16M7 15h4" />
     </NavIcon>
   ),
+  history: (
+    <NavIcon>
+      <path d="M4 12a8 8 0 1 0 2.34-5.66" />
+      <path d="M4 4v5h5M12 8v5l3 2" />
+    </NavIcon>
+  ),
   upload: (
     <NavIcon>
       <path d="M6 20h12a2 2 0 0 0 2-2v-3M12 4v11M8 8l4-4 4 4" />
@@ -72,17 +78,38 @@ const icons = {
     <NavIcon>
       <path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" />
     </NavIcon>
+  ),
+  documents: (
+    <NavIcon>
+      <path d="M7 3h7l4 4v14H7z" />
+      <path d="M14 3v5h5M9.5 12h5M9.5 16h7" />
+    </NavIcon>
+  ),
+  lease: (
+    <NavIcon>
+      <path d="M6 3h12v18H6z" />
+      <path d="M9 7h6M9 11h6M9 15h4" />
+    </NavIcon>
+  ),
+  support: (
+    <NavIcon>
+      <path d="M4 12a8 8 0 0 1 16 0v5a2 2 0 0 1-2 2h-2v-7h4M4 12h4v7H6a2 2 0 0 1-2-2z" />
+    </NavIcon>
   )
 };
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', path: '/tenant-portal' },
-  { id: 'payments', label: 'Payments', path: '/tenant-portal/payments' },
-  { id: 'upload', label: 'Upload Receipt', shortLabel: 'Upload', path: '/tenant-portal/upload' },
-  { id: 'maintenance', label: 'Maintenance', path: '/tenant-portal/maintenance' },
   { id: 'messages', label: 'Messages', path: '/tenant-portal/messages' },
-  { id: 'announcements', label: 'Announcements', shortLabel: 'Notices', path: '/tenant-portal/announcements' },
+  { id: 'payments', label: 'Payments', path: '/tenant-portal/payments' },
+  { id: 'history', label: 'Payment History', shortLabel: 'History', path: '/tenant-portal/payments', extra: true },
+  { id: 'maintenance', label: 'Maintenance', path: '/tenant-portal/maintenance' },
+  { id: 'documents', label: 'Documents & Receipts', shortLabel: 'Docs', path: '/tenant-portal/payments', extra: true },
+  { id: 'lease', label: 'My Lease', shortLabel: 'Lease', path: '/tenant-portal', extra: true },
   { id: 'profile', label: 'Profile', path: '/tenant-portal/profile', extra: true },
+  { id: 'support', label: 'Support', path: '/tenant-portal/messages', extra: true },
+  { id: 'upload', label: 'Upload Receipt', shortLabel: 'Upload', path: '/tenant-portal/upload' },
+  { id: 'announcements', label: 'Announcements', shortLabel: 'Notices', path: '/tenant-portal/announcements', extra: true },
   { id: 'password', label: 'Change Password', shortLabel: 'Password', path: '/forgot-password', extra: true }
 ];
 
@@ -98,10 +125,14 @@ const navTranslations = {
   en: {
     dashboard: 'Home',
     payments: 'Pay',
+    history: 'History',
     upload: 'Receipt',
     maintenance: 'Repair',
     messages: 'Messages',
     announcements: 'Notices',
+    documents: 'Documents & Receipts',
+    lease: 'My Lease',
+    support: 'Support',
     profile: 'Profile',
     password: 'Password',
     alertsOn: 'Alerts On',
@@ -133,15 +164,59 @@ const navTranslations = {
     uploadNewReceipt: 'Upload New Receipt',
     downloadStatement: 'Download Statement',
     contactAdmin: 'Contact Admin',
-    paymentsTitle: 'Payments'
+    paymentsTitle: 'Payments',
+    homePriority: 'Your Home, Our Priority',
+    welcomeBack: 'Welcome back, {name}!',
+    tenancySummary: "Here's what's happening with your tenancy.",
+    notifications: 'Notifications',
+    rentDueInDays: 'Your rent is due in {days} days.',
+    rentDueTodayBanner: 'Your rent is due today.',
+    rentOverdueBanner: 'Your rent is overdue.',
+    avoidLateFees: 'Please make your payment to avoid late fees.',
+    payRentNow: 'Pay Rent Now',
+    currentBalance: 'Current Balance',
+    nextPaymentDue: 'Next Payment Due',
+    daysRemaining: '{days} days remaining',
+    property: 'Property',
+    viewDetails: 'View Details',
+    makePayment: 'Make a Payment',
+    viewMyLease: 'View My Lease',
+    quickActions: 'Quick Actions',
+    payRent: 'Pay Rent',
+    securePayment: 'Make a secure payment',
+    viewPayments: 'View your payments',
+    maintenanceRequest: 'Maintenance Request',
+    reportIssue: 'Report an issue',
+    documentsReceipts: 'Documents & Receipts',
+    viewDownload: 'View and download',
+    sendViewMessages: 'Send or view messages',
+    announcementsTitle: 'Announcements',
+    upcomingPayment: 'Upcoming Payment',
+    recentPayments: 'Recent Payments',
+    viewAll: 'View All',
+    viewAllPayments: 'View All Payments',
+    needHelp: 'Need Help?',
+    hereForYou: "We're here for you",
+    secureProtected: 'Your information is secure and protected.',
+    noAnnouncements: 'No announcements yet.',
+    noRecentPayments: 'No recent payments yet.',
+    paid: 'Paid',
+    rentForPeriod: 'Rent for {period}',
+    houseNo: 'House No. {unit}',
+    cityCountry: 'Kigali, Rwanda',
+    logout: 'Logout'
   },
   fr: {
     dashboard: 'Accueil',
     payments: 'Payer',
+    history: 'Historique',
     upload: 'Recu',
     maintenance: 'Reparer',
     messages: 'Messages',
     announcements: 'Avis',
+    documents: 'Documents et recus',
+    lease: 'Mon bail',
+    support: 'Support',
     profile: 'Profil',
     password: 'Mot passe',
     alertsOn: 'Alertes',
@@ -173,15 +248,59 @@ const navTranslations = {
     uploadNewReceipt: 'Nouveau recu',
     downloadStatement: 'Telecharger releve',
     contactAdmin: 'Contacter admin',
-    paymentsTitle: 'Paiements'
+    paymentsTitle: 'Paiements',
+    homePriority: 'Votre maison, notre priorite',
+    welcomeBack: 'Bon retour, {name}!',
+    tenancySummary: 'Voici ce qui se passe avec votre location.',
+    notifications: 'Notifications',
+    rentDueInDays: 'Votre loyer est du dans {days} jours.',
+    rentDueTodayBanner: 'Votre loyer est du aujourd hui.',
+    rentOverdueBanner: 'Votre loyer est en retard.',
+    avoidLateFees: 'Veuillez payer pour eviter les frais de retard.',
+    payRentNow: 'Payer maintenant',
+    currentBalance: 'Solde actuel',
+    nextPaymentDue: 'Prochain paiement',
+    daysRemaining: '{days} jours restants',
+    property: 'Propriete',
+    viewDetails: 'Voir details',
+    makePayment: 'Faire un paiement',
+    viewMyLease: 'Voir mon bail',
+    quickActions: 'Actions rapides',
+    payRent: 'Payer loyer',
+    securePayment: 'Paiement securise',
+    viewPayments: 'Voir vos paiements',
+    maintenanceRequest: 'Demande maintenance',
+    reportIssue: 'Signaler un probleme',
+    documentsReceipts: 'Documents et recus',
+    viewDownload: 'Voir et telecharger',
+    sendViewMessages: 'Envoyer ou voir messages',
+    announcementsTitle: 'Annonces',
+    upcomingPayment: 'Paiement a venir',
+    recentPayments: 'Paiements recents',
+    viewAll: 'Voir tout',
+    viewAllPayments: 'Voir tous paiements',
+    needHelp: 'Besoin d aide?',
+    hereForYou: 'Nous sommes la pour vous',
+    secureProtected: 'Vos informations sont securisees et protegees.',
+    noAnnouncements: 'Aucune annonce pour le moment.',
+    noRecentPayments: 'Aucun paiement recent.',
+    paid: 'Paye',
+    rentForPeriod: 'Loyer pour {period}',
+    houseNo: 'Maison No. {unit}',
+    cityCountry: 'Kigali, Rwanda',
+    logout: 'Deconnexion'
   },
   rw: {
     dashboard: 'Ahabanza',
     payments: 'Kwishyura',
+    history: 'Amateka',
     upload: 'Risiti',
     maintenance: 'Gusana',
     messages: 'Ubutumwa',
     announcements: 'Amatangazo',
+    documents: 'Inyandiko na risiti',
+    lease: 'Amasezerano',
+    support: 'Ubufasha',
     profile: 'Umwirondoro',
     password: 'Ijambo',
     alertsOn: 'Birakora',
@@ -213,7 +332,47 @@ const navTranslations = {
     uploadNewReceipt: 'Risiti nshya',
     downloadStatement: 'Kuramo raporo',
     contactAdmin: 'Vugana na admin',
-    paymentsTitle: 'Ubwishyu'
+    paymentsTitle: 'Ubwishyu',
+    homePriority: 'Urugo rwawe, inshingano zacu',
+    welcomeBack: 'Murakaza neza, {name}!',
+    tenancySummary: 'Dore ibireba ubukode bwawe.',
+    notifications: 'Amamenyesha',
+    rentDueInDays: 'Ubukode buzishyurwa mu minsi {days}.',
+    rentDueTodayBanner: 'Ubukode bugomba kwishyurwa uyu munsi.',
+    rentOverdueBanner: 'Ubukode bwararenze.',
+    avoidLateFees: 'Nyamuneka wishyure wirinde ibihano byo gukererwa.',
+    payRentNow: 'Ishyura ubu',
+    currentBalance: 'Asigaye',
+    nextPaymentDue: 'Itariki ikurikira',
+    daysRemaining: 'Hasigaye iminsi {days}',
+    property: 'Inyubako',
+    viewDetails: 'Reba ibisobanuro',
+    makePayment: 'Kora ubwishyu',
+    viewMyLease: 'Reba amasezerano',
+    quickActions: 'Ibikorwa byihuse',
+    payRent: 'Ishyura ubukode',
+    securePayment: 'Kwishyura mu mutekano',
+    viewPayments: 'Reba ubwishyu bwawe',
+    maintenanceRequest: 'Gusaba gusanirwa',
+    reportIssue: 'Menyesha ikibazo',
+    documentsReceipts: 'Inyandiko na risiti',
+    viewDownload: 'Reba kandi ukuremo',
+    sendViewMessages: 'Ohereza cyangwa urebe ubutumwa',
+    announcementsTitle: 'Amatangazo',
+    upcomingPayment: 'Ubwishyu butaha',
+    recentPayments: 'Ubwishyu bwa vuba',
+    viewAll: 'Reba byose',
+    viewAllPayments: 'Reba ubwishyu bwose',
+    needHelp: 'Ukeneye ubufasha?',
+    hereForYou: 'Turi hano kubafasha',
+    secureProtected: 'Amakuru yawe ararinzwe.',
+    noAnnouncements: 'Nta tangazo rirahari.',
+    noRecentPayments: 'Nta bwishyu bwa vuba.',
+    paid: 'Byemejwe',
+    rentForPeriod: 'Ubukode bwa {period}',
+    houseNo: 'Inzu No. {unit}',
+    cityCountry: 'Kigali, Rwanda',
+    logout: 'Sohoka'
   }
 };
 
