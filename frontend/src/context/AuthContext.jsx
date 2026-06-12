@@ -29,6 +29,12 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   }, []);
 
+  const applyUserUpdate = useCallback((nextUser) => {
+    if (!nextUser) return null;
+    setUser((currentUser) => ({ ...(currentUser || {}), ...nextUser }));
+    return nextUser;
+  }, []);
+
   // Activity tracking
   const updateActivity = useCallback(() => {
     setLastActivity(Date.now());
@@ -229,7 +235,8 @@ export const AuthProvider = ({ children }) => {
       isAdmin,
       isManager,
       isUser,
-      refreshProfile
+      refreshProfile,
+      applyUserUpdate
     }}>
       {children}
       <LogoutFarewellOverlay open={farewellOpen} userName={farewellUserName} />

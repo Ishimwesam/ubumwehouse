@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ubumwe-main-system-v8';
+const CACHE_NAME = 'ubumwe-main-system-v9';
 
 const APP_SHELL = [
   '/',

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { buildingService, dashboardService } from '../services/api';
+import { buildingService, dashboardService, resolveUploadUrl } from '../services/api';
 import { useDataSync } from '../context/DataSyncContext';
 import { FLOOR_OPTIONS, parseBuildingFloors } from '../utils/floorOptions';
 import useFeedbackToast from '../hooks/useFeedbackToast';
@@ -53,6 +53,14 @@ const TrashIcon = () => (
   </svg>
 );
 
+const ImageIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <circle cx="8.5" cy="10" r="1.5" />
+    <path d="m21 15-4.5-4.5L11 16l-2-2-6 6" />
+  </svg>
+);
+
 const Buildings = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,6 +78,7 @@ const Buildings = () => {
   const [newFloorName, setNewFloorName] = useState('');
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [uploadingImageId, setUploadingImageId] = useState(null);
   const canManageOperations = isManager();
   useFeedbackToast(error, 'error');
   useFeedbackToast(success, 'success');
@@ -196,6 +205,42 @@ const Buildings = () => {
       } finally {
         setDeletingId(null);
       }
+    }
+  };
+
+  const handleBuildingImageChange = async (building, file) => {
+    if (!file) return;
+
+    setError('');
+    setSuccess('');
+
+    if (!canManageOperations) {
+      setError('You have view-only access on this page.');
+      return;
+    }
+
+    if (!file.type?.startsWith('image/')) {
+      setError('Choose a JPG or PNG image for the building.');
+      return;
+    }
+
+    try {
+      setUploadingImageId(building.id);
+      const response = await buildingService.updateImage(building.id, file);
+      const updatedBuilding = response.data?.building;
+      if (updatedBuilding) {
+        setBuildings((currentBuildings) => currentBuildings.map((item) => (
+          idsEqual(item.id, updatedBuilding.id) ? updatedBuilding : item
+        )));
+      } else {
+        await fetchBuildings();
+      }
+      notifyDataChanged(['buildings', 'dashboard']);
+      setSuccess(`Picture updated for ${building.name}.`);
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Failed to update building picture');
+    } finally {
+      setUploadingImageId(null);
     }
   };
 
@@ -455,8 +500,18 @@ const Buildings = () => {
             const expected = performance?.expected_income || 0;
             const collected = performance?.this_month_income ?? 0;
             const tenantCount = performance?.tenant_count || 0;
+            const buildingImageUrl = resolveUploadUrl(building.image_url);
             return (
             <div key={building.id} style={styles.buildingCard}>
+              <div style={styles.buildingImageFrame}>
+                {buildingImageUrl ? (
+                  <img src={buildingImageUrl} alt={building.name} style={styles.buildingImage} />
+                ) : (
+                  <div style={styles.buildingImagePlaceholder}>
+                    <ImageIcon />
+                  </div>
+                )}
+              </div>
               <h3 style={styles.buildingName}>{building.name}</h3>
               <p style={styles.buildingInfo}>
                 <strong>Address:</strong> {building.address}
@@ -529,6 +584,30 @@ const Buildings = () => {
                     <span>Edit</span>
                   </span>
                 </button>
+                <label
+                  style={{
+                    ...styles.btnSmall,
+                    ...styles.btnImage,
+                    ...(!canManageOperations || uploadingImageId === building.id ? styles.btnDisabled : {})
+                  }}
+                  title="Change house picture"
+                >
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    style={styles.hiddenFileInput}
+                    disabled={!canManageOperations || uploadingImageId === building.id}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] || null;
+                      event.target.value = '';
+                      handleBuildingImageChange(building, file);
+                    }}
+                  />
+                  <span style={styles.buttonInner}>
+                    <ImageIcon />
+                    <span>{uploadingImageId === building.id ? 'Uploading...' : 'Change Picture'}</span>
+                  </span>
+                </label>
                 <button
                   type="button"
                   style={{ ...styles.btnSmall, ...styles.btnDanger, ...(!canManageOperations || deletingId === building.id ? styles.btnDisabled : {}) }}
@@ -662,6 +741,11 @@ const styles = {
     backgroundColor: '#f8fafc',
     color: '#334155',
     border: '1px solid #cbd5e1'
+  },
+  btnImage: {
+    backgroundColor: '#f0fdfa',
+    color: '#0f766e',
+    border: '1px solid #99f6e4'
   },
   btnDanger: {
     backgroundColor: '#fef2f2',
@@ -860,6 +944,30 @@ const styles = {
     border: '1px solid #cbd5e1',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
+  buildingImageFrame: {
+    width: '100%',
+    aspectRatio: '16 / 9',
+    borderRadius: '0.5rem',
+    overflow: 'hidden',
+    marginBottom: '1rem',
+    backgroundColor: '#e2e8f0',
+    border: '1px solid #cbd5e1'
+  },
+  buildingImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block'
+  },
+  buildingImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#0f766e',
+    background: 'linear-gradient(135deg, #ecfeff 0%, #f8fafc 58%, #dbeafe 100%)'
+  },
   buildingName: {
     fontSize: '1.25rem',
     fontWeight: '600',
@@ -898,6 +1006,9 @@ const styles = {
     gap: '0.5rem',
     marginTop: '1rem',
     flexWrap: 'wrap'
+  },
+  hiddenFileInput: {
+    display: 'none'
   },
   noData: {
     textAlign: 'center',

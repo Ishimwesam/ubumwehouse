@@ -69,6 +69,33 @@ const HeaderIconButton = ({ children, badge, onClick, title }) => (
   </button>
 );
 
+const ProfileAvatarImage = ({ src, alt, imageStyle, fallbackStyle, fallbackText }) => {
+  const [loaded, setLoaded] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+
+  React.useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return <span style={fallbackStyle}>{fallbackText}</span>;
+  }
+
+  return (
+    <>
+      {!loaded ? <span style={fallbackStyle}>{fallbackText}</span> : null}
+      <img
+        src={src}
+        alt={alt}
+        style={{ ...imageStyle, display: loaded ? imageStyle?.display : 'none' }}
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+    </>
+  );
+};
+
 const BellIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2d6d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
@@ -474,6 +501,7 @@ const Layout = ({ children }) => {
     const cacheBuster = encodeURIComponent(user?.updated_at || user?.profile_image);
     return `${resolvedUrl}${separator}v=${cacheBuster}`;
   }, [user?.profile_image, user?.updated_at]);
+  const profileAvatarText = (user?.full_name || user?.username || 'A').charAt(0).toUpperCase();
   const chatSeenStoreKey = user?.id ? `rms-chat-last-seen-${user.id}-${selectedChatTarget}` : null;
 
   useEffect(() => {
@@ -1808,22 +1836,26 @@ const Layout = ({ children }) => {
                   }}
                   style={styles.accountButton}
                 >
-                  {profileImageUrl ? (
-                    <img src={profileImageUrl} alt={user?.full_name || user?.username || 'User'} style={styles.accountAvatarImage} />
-                  ) : (
-                    <span style={styles.accountAvatar}>{(user?.full_name || user?.username || 'A').charAt(0).toUpperCase()}</span>
-                  )}
+                  <ProfileAvatarImage
+                    src={profileImageUrl}
+                    alt={user?.full_name || user?.username || 'User'}
+                    imageStyle={styles.accountAvatarImage}
+                    fallbackStyle={styles.accountAvatar}
+                    fallbackText={profileAvatarText}
+                  />
                 </button>
 
                 {showProfileMenu ? (
                   <div className="animated-dropdown profile-dropdown-shell" style={{ ...styles.headerDropdown, ...styles.profileDropdown, width: isMobile ? 'min(92vw, 320px)' : 320 }}>
                     <div style={styles.dropdownTitle}>Current User</div>
                     <div style={styles.profileMenuHeader}>
-                      {profileImageUrl ? (
-                        <img src={profileImageUrl} alt={user?.full_name || user?.username || 'User'} style={styles.profileMenuAvatarImage} />
-                      ) : (
-                        <span style={styles.profileMenuAvatar}>{(user?.full_name || user?.username || 'A').charAt(0).toUpperCase()}</span>
-                      )}
+                      <ProfileAvatarImage
+                        src={profileImageUrl}
+                        alt={user?.full_name || user?.username || 'User'}
+                        imageStyle={styles.profileMenuAvatarImage}
+                        fallbackStyle={styles.profileMenuAvatar}
+                        fallbackText={profileAvatarText}
+                      />
                       <div style={styles.profileMenuIdentity}>
                         <div style={styles.profileMenuName}>{user?.full_name || user?.username || 'Administrator'}</div>
                         <div style={styles.profileMenuEmail}>{user?.email || 'administrator@ubumwe.com'}</div>

@@ -397,6 +397,7 @@ const createTables = () => {
   `);
   addColumnIfMissing('buildings', 'total_floors', 'INTEGER DEFAULT 1');
   addColumnIfMissing('buildings', 'available_floors', 'TEXT');
+  addColumnIfMissing('buildings', 'image_url', 'TEXT');
   addColumnIfMissing('units', 'floor', 'TEXT DEFAULT "GROUND FLOOR"');
   db.run(`
     INSERT INTO tenant_rent_history (id, tenant_id, unit_id, amount, start_period, end_period)

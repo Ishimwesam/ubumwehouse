@@ -173,10 +173,43 @@ const deleteBuilding = (req, res) => {
   });
 };
 
+const updateBuildingImage = (req, res) => {
+  const { id } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Choose a building image before uploading.' });
+  }
+
+  const imageUrl = `/uploads/${req.file.filename}`;
+
+  db.run(
+    'UPDATE buildings SET image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [imageUrl, id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error updating building image' });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Building not found' });
+      }
+
+      db.get('SELECT * FROM buildings WHERE id = ?', [id], (getErr, building) => {
+        if (getErr || !building) {
+          return res.status(500).json({ error: 'Building image updated, but failed to fetch building' });
+        }
+
+        return res.json({ message: 'Building image updated successfully', building });
+      });
+    }
+  );
+};
+
 module.exports = {
   getAllBuildings,
   getBuildingById,
   createBuilding,
   updateBuilding,
-  deleteBuilding
+  deleteBuilding,
+  updateBuildingImage
 };

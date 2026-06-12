@@ -35,6 +35,33 @@ const formatBackupAge = (hours) => {
   return `${(hours / 24).toFixed(1)} days ago`;
 };
 
+const ProfileAvatarImage = ({ src, alt, imageStyle, fallbackStyle, fallbackText }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return <div style={fallbackStyle}>{fallbackText}</div>;
+  }
+
+  return (
+    <>
+      {!loaded ? <div style={fallbackStyle}>{fallbackText}</div> : null}
+      <img
+        src={src}
+        alt={alt}
+        style={{ ...imageStyle, display: loaded ? imageStyle?.display : 'none' }}
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+    </>
+  );
+};
+
 const getAuditStatusStyle = (statusCode) => {
   if (!statusCode) return styles.auditStatusMuted;
   if (statusCode >= 500) return styles.auditStatusDanger;
@@ -43,7 +70,7 @@ const getAuditStatusStyle = (statusCode) => {
 };
 
 const Settings = () => {
-  const { user, logoutWithFarewell, refreshProfile } = useAuth();
+  const { user, logoutWithFarewell, refreshProfile, applyUserUpdate } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -107,6 +134,7 @@ const Settings = () => {
     return `${resolvedUrl}${separator}v=${cacheBuster}`;
   }, [user?.profile_image, user?.updated_at, profileImageRefreshKey]);
   const displayedProfileImageUrl = selectedImagePreviewUrl || profileImageUrl;
+  const profileFallbackText = (user?.username || user?.full_name || 'A').charAt(0).toUpperCase();
 
   useEffect(() => {
     setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -307,8 +335,12 @@ const Settings = () => {
 
     try {
       const fileToUpload = await buildCroppedProfileImage(selectedImage);
-      await authService.uploadProfilePicture(fileToUpload);
-      await refreshProfile();
+      const response = await authService.uploadProfilePicture(fileToUpload);
+      if (response.data?.user) {
+        applyUserUpdate(response.data.user);
+      } else {
+        await refreshProfile();
+      }
       setSelectedImage(null);
       setProfileImageRefreshKey((previous) => previous + 1);
       setSuccess('Profile picture updated successfully');
@@ -538,13 +570,13 @@ const Settings = () => {
             <p style={styles.subtitle}>Update your profile, security, and account controls clearly.</p>
           </div>
           <div style={styles.headerProfileCard}>
-            {displayedProfileImageUrl ? (
-              <img src={displayedProfileImageUrl} alt="Profile" style={styles.headerProfileImage} />
-            ) : (
-              <div style={styles.headerProfilePlaceholder}>
-                {(user?.username || user?.full_name || 'A').charAt(0).toUpperCase()}
-              </div>
-            )}
+            <ProfileAvatarImage
+              src={displayedProfileImageUrl}
+              alt="Profile"
+              imageStyle={styles.headerProfileImage}
+              fallbackStyle={styles.headerProfilePlaceholder}
+              fallbackText={profileFallbackText}
+            />
             <div style={styles.headerProfileText}>{profileData.full_name || user?.username || 'Administrator'}</div>
           </div>
         </div>
@@ -558,13 +590,13 @@ const Settings = () => {
           <div style={styles.tabsPanelTitle}>Settings Sections</div>
           <div style={styles.tabsPanelText}>Choose a section to manage your profile, password, account details, and admin tools.</div>
           <div style={styles.tabsProfileCard}>
-            {displayedProfileImageUrl ? (
-              <img src={displayedProfileImageUrl} alt="Profile" style={styles.tabsProfileImage} />
-            ) : (
-              <div style={styles.tabsProfilePlaceholder}>
-                {(user?.username || user?.full_name || 'A').charAt(0).toUpperCase()}
-              </div>
-            )}
+            <ProfileAvatarImage
+              src={displayedProfileImageUrl}
+              alt="Profile"
+              imageStyle={styles.tabsProfileImage}
+              fallbackStyle={styles.tabsProfilePlaceholder}
+              fallbackText={profileFallbackText}
+            />
             <div style={styles.tabsProfileMeta}>
               <div style={styles.tabsProfileName}>{profileData.full_name || user?.username || 'Administrator'}</div>
               <div style={styles.tabsProfileEmail}>{profileData.email || user?.email || 'No email set'}</div>
@@ -604,13 +636,13 @@ const Settings = () => {
             <div style={styles.profileHero}>
               <div style={styles.profilePreviewCard}>
                 <div style={styles.profileImageWrap}>
-                  {displayedProfileImageUrl ? (
-                    <img src={displayedProfileImageUrl} alt="Profile" style={styles.profileImage} />
-                  ) : (
-                    <div style={styles.profilePlaceholder}>
-                      {(user?.username || 'U').charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <ProfileAvatarImage
+                    src={displayedProfileImageUrl}
+                    alt="Profile"
+                    imageStyle={styles.profileImage}
+                    fallbackStyle={styles.profilePlaceholder}
+                    fallbackText={profileFallbackText}
+                  />
                 </div>
                 <div style={styles.profileMeta}>
                   <div style={styles.profileName}>{profileData.full_name || 'Administrator'}</div>

@@ -223,9 +223,8 @@ export const authService = {
     const formData = new FormData();
     formData.append('profile_picture', file);
 
-    // Must unset Content-Type so axios/browser sets multipart boundary automatically
     return apiClient.post('/auth/profile-picture', formData, {
-      headers: { 'Content-Type': undefined }
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
   }
 };
@@ -256,6 +255,18 @@ export const buildingService = {
   getById: (id) => apiClient.get(`/buildings/${id}`),
   create: (data) => apiClient.post('/buildings', data),
   update: (id, data) => apiClient.put(`/buildings/${id}`, data),
+  updateImage: (id, file) => {
+    if (!file || !file.type?.startsWith('image/')) {
+      throw new Error('Choose a JPG or PNG image before uploading.');
+    }
+
+    const formData = new FormData();
+    formData.append('building_image', file);
+
+    return apiClient.put(`/buildings/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
   delete: (id) => apiClient.delete(`/buildings/${id}`)
 };
 
