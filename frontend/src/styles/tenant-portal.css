@@ -3807,6 +3807,434 @@
   }
 }
 
+/* Web/tablet tenant portal pass to match the same app-style direction as mobile. */
+@media (min-width: 769px) {
+  .tp-page {
+    --tp-ink: #070b24;
+    --tp-muted: #5f6b82;
+    --tp-soft: #f6f8fc;
+    --tp-line: #d7dfec;
+    --tp-panel: #ffffff;
+    --tp-blue: #0052d9;
+    --tp-blue-dark: #003eb7;
+    min-height: 100vh;
+    background: #ffffff;
+    color: var(--tp-ink);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    font-size: 14px;
+    letter-spacing: 0;
+  }
+
+  .tp-page * {
+    letter-spacing: 0;
+  }
+
+  .tp-dashboard,
+  .tp-subpage-dashboard {
+    background: #ffffff;
+  }
+
+  .tp-dashboard {
+    grid-template-columns: 248px minmax(0, 1fr);
+  }
+
+  .tp-sidebar,
+  .tp-subpage-dashboard .tp-sidebar {
+    background: #ffffff;
+    color: var(--tp-ink);
+    border-right: 1px solid #e5eaf4;
+    box-shadow: 8px 0 24px rgba(8, 16, 42, 0.04);
+    padding: 22px 16px;
+  }
+
+  .tp-brand-block {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    text-align: center;
+  }
+
+  .tp-brand-title {
+    color: var(--tp-blue);
+    font-size: 21px;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  .tp-brand-subtitle {
+    color: #25324a;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .tp-nav {
+    gap: 5px;
+  }
+
+  .tp-nav button {
+    min-height: 42px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--tp-ink);
+    font-size: 13px;
+    font-weight: 750;
+    padding: 0 11px;
+  }
+
+  .tp-nav button.active {
+    background: #eef5ff;
+    color: var(--tp-blue);
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .tp-nav button:hover:not(.active) {
+    background: #f6f8fc;
+    color: var(--tp-blue);
+    border-color: transparent;
+    transform: none;
+  }
+
+  .tp-nav-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .tp-help-card {
+    margin: auto 0 14px;
+    padding: 14px;
+    border: 1px solid #e2e8f2;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #f8fbff;
+  }
+
+  .tp-help-card strong {
+    font-size: 14px;
+  }
+
+  .tp-help-card p,
+  .tp-help-card a {
+    font-size: 12px;
+  }
+
+  .tp-sidebar-actions .tp-phone-notification-button.inline,
+  .tp-sidebar .tp-language-select {
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .tp-main,
+  .tp-main.tp-portal-overview,
+  .tp-subpage-dashboard .tp-subpage-main,
+  .tp-subpage-main {
+    background: #ffffff;
+  }
+
+  .tp-main.tp-portal-overview,
+  .tp-subpage-dashboard .tp-subpage-main {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    padding: 30px 34px;
+  }
+
+  .tp-portal-topbar,
+  .tp-header,
+  .tp-subpage-dashboard .tp-header {
+    margin: 0 0 18px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--tp-ink);
+  }
+
+  .tp-portal-topbar h1,
+  .tp-header h1 {
+    color: var(--tp-ink);
+    font-size: 27px;
+    line-height: 1.12;
+    font-weight: 850;
+  }
+
+  .tp-subpage-dashboard .tp-header h1,
+  .tp-subpage-dashboard .tp-header p,
+  .tp-subpage-dashboard .tp-header p strong,
+  .tp-header h1,
+  .tp-header p,
+  .tp-header p strong {
+    color: var(--tp-ink);
+  }
+
+  .tp-portal-topbar p,
+  .tp-header p {
+    color: var(--tp-muted);
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+
+  .tp-user,
+  .tp-subpage-dashboard .tp-user,
+  .tp-portal-top-actions .tp-language-select,
+  .tp-install-card.compact {
+    border: 1px solid #e2e8f2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--tp-muted);
+    box-shadow: none;
+  }
+
+  .tp-btn-primary,
+  .tp-summary-pay-button,
+  .tp-portal-rent-alert .tp-btn-primary,
+  .tp-upcoming-card .tp-btn-primary {
+    border-color: var(--tp-blue);
+    border-radius: 7px;
+    background: var(--tp-blue) !important;
+    color: #ffffff;
+    box-shadow: 0 8px 16px rgba(0, 82, 217, 0.16);
+    font-weight: 800;
+  }
+
+  .tp-btn-secondary,
+  .tp-subpage-dashboard .tp-header .tp-btn-secondary,
+  .tp-card-link,
+  .tp-portal-summary-card button {
+    border: 1px solid #d7dfec;
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--tp-blue);
+    box-shadow: none;
+    font-weight: 800;
+  }
+
+  .tp-btn-primary:hover:not(:disabled),
+  .tp-btn-secondary:hover:not(:disabled),
+  .tp-card-link:hover,
+  .tp-portal-summary-card button:hover {
+    transform: none;
+    box-shadow: 0 8px 16px rgba(0, 82, 217, 0.12);
+  }
+
+  .tp-portal-rent-alert,
+  .tp-rent-due-notice,
+  .tp-portal-summary-card,
+  .tp-portal-card,
+  .tp-card,
+  .tp-subpage-dashboard .tp-card,
+  .tp-stat-card,
+  .tp-subpage-dashboard .tp-stat-card,
+  .tp-request-item,
+  .tp-announcement-item,
+  .tp-payment-list,
+  .tp-table-wrap {
+    border: 1px solid #e2e8f2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(8, 16, 42, 0.05);
+  }
+
+  .tp-portal-rent-alert {
+    min-height: 0;
+    padding: 13px 16px;
+    background: #eef5ff;
+    border-color: #d8e7ff;
+  }
+
+  .tp-info-dot {
+    width: 28px;
+    height: 28px;
+    background: var(--tp-blue);
+    font-size: 14px;
+  }
+
+  .tp-portal-rent-alert p {
+    color: var(--tp-ink);
+    font-size: 13px;
+  }
+
+  .tp-rent-due-notice {
+    padding: 14px;
+    background: #ffffff;
+  }
+
+  .tp-rent-due-copy span,
+  .tp-rent-due-amounts span,
+  .tp-stat-card span,
+  .tp-portal-summary-card span,
+  .tp-auth-card label,
+  .tp-upload-form label,
+  .tp-upload-field {
+    color: var(--tp-ink);
+    font-size: 12px;
+    font-weight: 750;
+    text-transform: none;
+  }
+
+  .tp-rent-due-copy h2,
+  .tp-portal-card h2,
+  .tp-card h2,
+  .tp-card-header-row h2 {
+    color: var(--tp-ink);
+    font-size: 17px;
+    font-weight: 850;
+  }
+
+  .tp-rent-due-copy p,
+  .tp-rent-due-copy small,
+  .tp-portal-summary-card p,
+  .tp-card > h2 + p,
+  .tp-empty {
+    color: var(--tp-muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .tp-rent-due-amounts div {
+    border-radius: 7px;
+    background: #f8fafc;
+  }
+
+  .tp-rent-due-amounts strong {
+    color: var(--tp-ink);
+    font-size: 14px;
+    font-weight: 850;
+  }
+
+  .tp-portal-summary-grid {
+    gap: 14px;
+  }
+
+  .tp-portal-summary-card,
+  .tp-portal-card,
+  .tp-card,
+  .tp-subpage-dashboard .tp-card,
+  .tp-stat-card,
+  .tp-subpage-dashboard .tp-stat-card {
+    padding: 18px;
+  }
+
+  .tp-summary-icon,
+  .tp-stat-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    padding: 13px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .tp-portal-summary-card > strong,
+  .tp-stat-card strong,
+  .tp-stat-card strong.paid,
+  .tp-stat-card strong.outstanding,
+  .tp-upcoming-card > strong {
+    color: var(--tp-blue);
+    font-size: 25px;
+    line-height: 1.08;
+    font-weight: 900;
+  }
+
+  .tp-action-grid {
+    gap: 12px;
+  }
+
+  .tp-action-grid button {
+    min-height: 112px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #f4f7fc;
+    box-shadow: none;
+  }
+
+  .tp-action-grid strong {
+    color: var(--tp-ink);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .tp-action-grid small {
+    color: var(--tp-muted);
+    font-size: 11px;
+  }
+
+  .tp-auth-card input,
+  .tp-upload-form input,
+  .tp-upload-form select,
+  .tp-upload-form textarea,
+  .tp-chat-compose textarea {
+    border: 1px solid #cfd8e6;
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--tp-ink);
+    box-shadow: none;
+  }
+
+  .tp-upload-form {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .tp-table-wrap {
+    overflow: hidden;
+  }
+
+  .tp-table-wrap th {
+    background: #f8fafc;
+    color: var(--tp-muted);
+    font-size: 11px;
+    font-weight: 850;
+    text-transform: none;
+  }
+
+  .tp-table-wrap td {
+    color: var(--tp-ink);
+    font-size: 13px;
+  }
+
+  .tp-status-pill {
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 850;
+    text-transform: capitalize;
+  }
+
+  .tp-request-item,
+  .tp-announcement-item {
+    padding: 14px;
+  }
+
+  .tp-request-item p,
+  .tp-announcement-item p,
+  .tp-feed-item p {
+    color: var(--tp-muted);
+    font-size: 12px;
+  }
+
+  .tp-chat-log {
+    border: 0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .tp-chat-bubble {
+    box-shadow: none;
+  }
+
+  .tp-chat-bubble.admin {
+    background: #eef1f6;
+    color: var(--tp-ink);
+  }
+
+  .tp-chat-bubble.tenant {
+    background: var(--tp-blue);
+    color: #ffffff;
+  }
+}
+
 /* Mobile app visual pass inspired by the supplied tenant-portal mockups. */
 @media (max-width: 768px) {
   .tp-page {
