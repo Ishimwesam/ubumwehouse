@@ -1057,7 +1057,7 @@ const TENANT_PORTAL_EMAIL = 'ubumwehouseltd@gmail.com';
 
 const TenantMobileAppHeader = ({
   current = '',
-  notificationCount = 0,
+  notificationCount = null,
   brandName = TENANT_PORTAL_BRAND_NAME,
   contactEmail = TENANT_PORTAL_EMAIL,
   onDashboardClick,
@@ -1068,7 +1068,9 @@ const TenantMobileAppHeader = ({
   const unreadMessages = useTenantUnread();
   const [, copy] = useTenantLanguage();
   const [open, setOpen] = React.useState(false);
+  const [headerNotificationCount, setHeaderNotificationCount] = React.useState(0);
   const activeItem = location.hash ? getCurrentTenantItem(location.pathname, location.hash) : current || getCurrentFromPath(location.pathname);
+  const visibleNotificationCount = notificationCount ?? headerNotificationCount;
 
   const goTo = (path) => {
     setOpen(false);
@@ -1080,6 +1082,44 @@ const TenantMobileAppHeader = ({
     navigate(path);
     window.setTimeout(() => scrollTenantHash(target.hash), 80);
   };
+
+  React.useEffect(() => {
+    if (notificationCount !== null) return undefined;
+    let mounted = true;
+    const token = tenantPortalService.getToken();
+    if (!token) return undefined;
+
+    const loadHeaderNotifications = async () => {
+      try {
+        const response = await tenantPortalService.me();
+        if (!mounted) return;
+        const data = response.data || {};
+        const announcements = Array.isArray(data.announcements) ? data.announcements.length : 0;
+        const maintenance = Array.isArray(data.maintenance_requests)
+          ? data.maintenance_requests.filter((request) => !['completed', 'closed', 'cancelled'].includes(String(request.status || '').toLowerCase())).length
+          : 0;
+        const dues = Number(data.rent_due?.outstanding_balance ?? data.rent_due?.balance ?? data.outstanding_balance ?? 0) > 0 ? 1 : 0;
+        setHeaderNotificationCount(Math.min(99, announcements + maintenance + dues));
+      } catch (_) {
+        if (mounted) setHeaderNotificationCount(0);
+      }
+    };
+
+    loadHeaderNotifications();
+
+    const onPortalEvent = (event) => {
+      const type = event.detail?.event_type;
+      if (['tenant_announcement', 'tenant_payment_update', 'tenant_maintenance_update', 'tenant_rent_due'].includes(type)) {
+        loadHeaderNotifications();
+      }
+    };
+    window.addEventListener('tp:portal-event', onPortalEvent);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('tp:portal-event', onPortalEvent);
+    };
+  }, [notificationCount]);
 
   const handleLogout = () => {
     setOpen(false);
@@ -1109,11 +1149,11 @@ const TenantMobileAppHeader = ({
           <small>{copy.homePriority}</small>
         </div>
         <div className="tp-mobile-header-actions">
-          <button type="button" aria-label={copy.notifications} onClick={() => navigate('/tenant-portal/announcements')}>
-            {icons.announcements}
-            {notificationCount > 0 ? <strong>{notificationCount > 99 ? '99+' : notificationCount}</strong> : null}
+          <button type="button" aria-label={copy.notifications} title={copy.notifications} onClick={() => goTo('/tenant-portal/announcements#notices')}>
+            <span className="tp-header-bell-icon"><BellGlyph /></span>
+            {visibleNotificationCount > 0 ? <strong>{visibleNotificationCount > 99 ? '99+' : visibleNotificationCount}</strong> : null}
           </button>
-          <button type="button" aria-label={copy.messages} onClick={() => navigate('/tenant-portal/messages')}>
+          <button type="button" aria-label={copy.messages} title={copy.messages} onClick={() => goTo('/tenant-portal/messages')}>
             {icons.messages}
             {unreadMessages > 0 ? <strong>{unreadMessages > 99 ? '99+' : unreadMessages}</strong> : null}
           </button>
@@ -1158,9 +1198,9 @@ const TenantMobileAppHeader = ({
                 <b>{copy.receipts}</b>
               </button>
               <button className={activeItem === 'announcements' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/announcements#notices')}>
-                {icons.announcements}
+                <span className="tp-header-bell-icon"><BellGlyph /></span>
                 <b>{copy.notifications}</b>
-                {notificationCount > 0 ? <em>{notificationCount > 99 ? '99+' : notificationCount}</em> : null}
+                {visibleNotificationCount > 0 ? <em>{visibleNotificationCount > 99 ? '99+' : visibleNotificationCount}</em> : null}
               </button>
               <button className={activeItem === 'messages' ? 'active' : ''} type="button" onClick={() => goTo('/tenant-portal/messages')}>
                 {icons.messages}

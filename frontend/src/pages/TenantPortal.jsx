@@ -632,7 +632,7 @@ const TenantPortal = () => {
                 <small>{text.homePriority}</small>
               </div>
               <div className="tp-mobile-header-actions">
-                <button type="button" aria-label={text.notifications} onClick={() => navigate('/tenant-portal/announcements')}>
+                <button type="button" aria-label={text.notifications} onClick={() => navigate('/tenant-portal/announcements#notices')}>
                   <PortalGlyph type="bell" />
                   {notificationCount > 0 ? <strong>{notificationCount}</strong> : null}
                 </button>
