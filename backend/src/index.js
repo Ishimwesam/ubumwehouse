@@ -48,6 +48,7 @@ const systemRoutes = require('./routes/systemRoutes');
 const tenantPortalRoutes = require('./routes/tenantPortalRoutes');
 const realtimeRoutes = require('./routes/realtimeRoutes');
 const pushRoutes = require('./routes/pushRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
 const { startWhatsAppReminderScheduler } = require('./services/whatsappReminderService');
 const { startTenantRentPushReminderScheduler } = require('./services/tenantRentPushReminderService');
 const { startBackupScheduler } = require('./services/backupService');
@@ -210,6 +211,7 @@ app.use('/api/system', systemRoutes);
 app.use('/api/tenant-portal', tenantPortalRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 if (isProduction) {
   app.use(express.static(frontendDistPath));

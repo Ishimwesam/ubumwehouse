@@ -45,6 +45,7 @@ const TenantPortalMessages = lazy(() => import('./pages/TenantPortalMessages'));
 const TenantPortalAnnouncements = lazy(() => import('./pages/TenantPortalAnnouncements'));
 const TenantPortalProfile = lazy(() => import('./pages/TenantPortalProfile'));
 const TenantPortalControl = lazy(() => import('./pages/TenantPortalControl'));
+const WhatsAppMessages = lazy(() => import('./pages/WhatsAppMessages'));
 
 const PageFallback = () => <PageLoader text="Loading..." minHeight="60vh" />;
 import { applyAppFont, getStoredAppFont } from './utils/appFont';
@@ -90,6 +91,7 @@ const ProtectedPageRoutes = () => {
           <Route path="/daily-income" element={withRoles(<DailyIncomeSummary />, ['manager', 'admin'])} />
           <Route path="/monthly-rent-sheet" element={<MonthlyRentSheet />} />
           <Route path="/calendar-events" element={<CalendarEvents />} />
+          <Route path="/whatsapp-messages" element={withRoles(<WhatsAppMessages />, ['manager', 'admin'])} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/operations" element={<OperationsCenter />} />
           <Route path="/export-center" element={<ExportCenter />} />

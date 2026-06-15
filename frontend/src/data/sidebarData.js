@@ -86,6 +86,14 @@ export const sidebarItems = [
     description: 'Plan reminders, due dates, and follow-up events.'
   },
   {
+    key: 'whatsapp-messages',
+    label: 'WhatsApp Messages',
+    path: '/whatsapp-messages',
+    icon: 'whatsapp',
+    allowedRoles: ['manager', 'admin'],
+    description: 'Send tenant reminders, receipts, and announcements.'
+  },
+  {
     key: 'operations',
     label: 'Operations Center',
     path: '/operations',

@@ -162,6 +162,52 @@ const createTables = () => {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS whatsapp_message_templates (
+      id TEXT PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL,
+      category TEXT DEFAULT 'utility',
+      language TEXT DEFAULT 'en',
+      body TEXT NOT NULL,
+      status TEXT DEFAULT 'draft',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS whatsapp_message_logs (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT,
+      tenant_name TEXT,
+      phone TEXT,
+      message_type TEXT NOT NULL,
+      template_name TEXT,
+      message_body TEXT NOT NULL,
+      status TEXT DEFAULT 'queued',
+      provider_message_id TEXT,
+      response TEXT,
+      sent_by TEXT,
+      sent_at DATETIME,
+      delivered_at DATETIME,
+      read_at DATETIME,
+      failed_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+      FOREIGN KEY (sent_by) REFERENCES users(id)
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_message_logs_created
+    ON whatsapp_message_logs(created_at)
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_message_logs_tenant
+    ON whatsapp_message_logs(tenant_id, created_at)
+  `);
+
   // Expenses table
   db.run(`
     CREATE TABLE IF NOT EXISTS expenses (
@@ -538,6 +584,31 @@ addColumnIfMissing('tenant_portal_announcements', 'is_published', 'INTEGER DEFAU
 addColumnIfMissing('tenant_portal_announcements', 'created_by', 'TEXT');
 addColumnIfMissing('tenant_portal_announcements', 'published_at', 'DATETIME');
 addColumnIfMissing('tenant_portal_announcements', 'expires_at', 'DATETIME');
+addColumnIfMissing('whatsapp_message_logs', 'provider_message_id', 'TEXT');
+addColumnIfMissing('whatsapp_message_logs', 'delivered_at', 'DATETIME');
+addColumnIfMissing('whatsapp_message_logs', 'read_at', 'DATETIME');
+addColumnIfMissing('whatsapp_message_logs', 'failed_at', 'DATETIME');
+
+const seedDefaultWhatsAppTemplates = () => {
+  const defaultWhatsAppTemplates = [
+    ['rent_due', 'Rent due', 'utility', 'Hello {{tenant_name}}, your rent for {{month}} is {{amount}} RWF. Please pay before {{due_date}}. Thank you, {{company_name}}.'],
+    ['overdue', 'Overdue reminder', 'utility', 'Hello {{tenant_name}}, your rent balance of {{balance}} RWF is overdue. Please clear it as soon as possible to avoid penalties.'],
+    ['payment_received', 'Payment received', 'utility', 'Hello {{tenant_name}}, we have received your payment of {{amount}} RWF for {{month}}. Thank you.'],
+    ['receipt_link', 'Receipt link', 'utility', 'Hello {{tenant_name}}, your payment receipt is ready. Download it here: {{receipt_link}}.'],
+    ['penalty_notice', 'Penalty notice', 'utility', 'Hello {{tenant_name}}, a penalty may apply because your rent balance is {{balance}} RWF. Please contact {{company_name}} if you need help.'],
+    ['announcement', 'General announcement', 'utility', 'Dear tenant, {{announcement}}']
+  ];
+
+  defaultWhatsAppTemplates.forEach(([id, name, category, body]) => {
+    db.run(
+      `INSERT OR IGNORE INTO whatsapp_message_templates (id, name, category, language, body, status)
+       VALUES (?, ?, ?, 'en', ?, 'draft')`,
+      [id, name, category, body]
+    );
+  });
+};
+
+setTimeout(seedDefaultWhatsAppTemplates, 1000);
 
 setTimeout(() => {
   db.all('PRAGMA table_info(calendar_events)', [], (schemaErr, columns = []) => {

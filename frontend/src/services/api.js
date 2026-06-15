@@ -554,6 +554,13 @@ export const tenantPortalAdminService = {
   deleteAnnouncement: (announcementId) => apiClient.delete(`/tenant-portal/accounts/announcements/${announcementId}`)
 };
 
+export const whatsappService = {
+  getDashboard: () => apiClient.get('/whatsapp/dashboard'),
+  getHistory: (params = {}) => apiClient.get('/whatsapp/history', { params }),
+  sendMessage: (data) => apiClient.post('/whatsapp/send', data),
+  sendOpenBalanceReminders: (overdueOnly = false) => apiClient.post('/whatsapp/reminders/open-balances', { overdue_only: overdueOnly })
+};
+
 // Dashboard Service
 export const dashboardService = {
   getSummary: () => apiClient.get('/dashboard/summary'),
