@@ -41,6 +41,22 @@ services:
         value: /api
       - key: WHATSAPP_REMINDERS_ENABLED
         value: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_GRAPH_VERSION
+        value: v20.0
+      - key: WHATSAPP_COMPANY_NAME
+        value: UBUMWE SYSTEM COMPANY
+      - key: WHATSAPP_DEFAULT_COUNTRY_CODE
+        value: 250
+      - key: WHATSAPP_DEFAULT_DUE_DATE
+        value: month end
+      - key: WHATSAPP_REMINDER_DAYS_BEFORE
+        value: 3
+      - key: WHATSAPP_REMINDER_INTERVAL_HOURS
+        value: 24
       - key: ALLOW_DEV_TOKEN
         value: false
       - key: VAPID_PUBLIC_KEY
